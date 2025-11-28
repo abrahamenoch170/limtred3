@@ -78,13 +78,18 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
         setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
     }, 60000);
 
-    // Keys Sales Simulation
+    // Keys Sales Simulation (Bonding Curve Logic)
     const keysTimer = setInterval(() => {
-      if (Math.random() > 0.6) { // 40% chance to sell a key every 2s
-        setKeysSold(prev => prev + 1);
-        setKeyPrice(prev => prev + (0.0005 * (Math.random() + 0.5))); // Slight price increase (bonding curve)
+      // Simulate market demand: 60% chance to sell a key every 1.5s
+      if (Math.random() > 0.4) { 
+        setKeysSold(prev => {
+            const nextCount = prev + 1;
+            // Linear Bonding Curve: Price increases by 0.0015 SOL for every key sold
+            setKeyPrice(currentPrice => currentPrice + 0.0015);
+            return nextCount;
+        });
       }
-    }, 2000);
+    }, 1500);
 
     return () => {
         clearInterval(interval);
@@ -271,7 +276,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                                 <div>
                                     <div className="font-bold text-white mb-1 uppercase tracking-wider">Liquidity Graduation</div>
                                     <p className="leading-relaxed">
-                                        Once the bonding curve hits <span className="text-[#39b54a]">$60k</span>, liquidity is automatically seeded into Raydium and burned.
+                                        When market cap hits <span className="text-[#39b54a]">$60k</span>, all liquidity is deposited into a Raydium AMM pool and burned.
                                     </p>
                                     <div className="mt-2 text-[#39b54a] font-bold">
                                         ✅ Rug-proof.
