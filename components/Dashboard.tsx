@@ -50,6 +50,10 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
   return null;
 };
 
+// Bonding Curve Config
+const BONDING_SLOPE = 0.0015;
+const BASE_KEY_PRICE = 0.12; // Start price lower for realism
+
 const Dashboard: React.FC<DashboardProps> = ({ 
     appData, 
     isConnected, 
@@ -71,8 +75,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   
   // App Simulation State
   const [keysSold, setKeysSold] = useState(482);
-  const [keyPrice, setKeyPrice] = useState(0.85);
   const [userKeys, setUserKeys] = useState(0); // Track user's keys
+  
+  // Calculate price based on keys sold (Linear Curve: P = Base + Slope * Supply)
+  const keyPrice = BASE_KEY_PRICE + (keysSold * BONDING_SLOPE);
 
   useEffect(() => {
     // Market Simulation
@@ -104,9 +110,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         setKeysSold(prev => {
             // Sell a random batch (2-5 keys) to make update feel significant
             const batch = Math.floor(Math.random() * 4) + 2;
-            const nextCount = prev + batch;
-            setKeyPrice(currentPrice => currentPrice + (0.0015 * batch));
-            return nextCount;
+            return prev + batch;
         });
       }
     }, 4000);
@@ -127,7 +131,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         onTradeKeys('BUY', 1, keyPrice);
         setUserKeys(prev => prev + 1);
         setKeysSold(prev => prev + 1);
-        setKeyPrice(prev => prev + 0.0015);
     }
   };
 
@@ -139,12 +142,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (userKeys > 0) {
         // Tax logic: 20% if time > 0, else 1%
         const taxRate = timeLeft > 0 ? 0.20 : 0.01;
+        // Selling happens at current price (simplified) minus slippage/tax
+        // In real curve, selling reduces supply, thus price drops for next person
         const revenue = keyPrice * (1 - taxRate);
         
         onTradeKeys('SELL', 1, revenue);
         setUserKeys(prev => prev - 1);
-        // Selling decreases price slightly in bonding curve
-        setKeyPrice(prev => Math.max(0.001, prev - 0.0015));
+        setKeysSold(prev => Math.max(0, prev - 1));
     }
   };
 
