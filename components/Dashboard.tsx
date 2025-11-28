@@ -1,0 +1,267 @@
+import React, { useState, useEffect } from 'react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, Button, Badge } from './ui/GlintComponents';
+import { GeneratedApp, MarketData } from '../types';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench } from 'lucide-react';
+import { COLORS } from '../constants';
+
+interface DashboardProps {
+  appData: GeneratedApp;
+}
+
+const generateInitialData = (): MarketData[] => {
+  const data = [];
+  let price = 0.002;
+  for (let i = 0; i < 20; i++) {
+    price = price * (1 + (Math.random() * 0.05 - 0.01));
+    data.push({ time: i, price });
+  }
+  return data;
+};
+
+const Dashboard: React.FC<DashboardProps> = ({ appData }) => {
+  const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData());
+  const [marketCap, setMarketCap] = useState(12450);
+  const [timeLeft, setTimeLeft] = useState(48); // Minutes for tax drop
+
+  useEffect(() => {
+    // Market Simulation
+    const interval = setInterval(() => {
+      setMarketData(prev => {
+        const last = prev[prev.length - 1];
+        const newPrice = last.price * (1 + (Math.random() * 0.08 - 0.03)); // Volatile up trend
+        const newData = [...prev.slice(1), { time: last.time + 1, price: newPrice }];
+        return newData;
+      });
+      setMarketCap(prev => prev + Math.floor(Math.random() * 100));
+    }, 1000);
+
+    // Tax Timer Simulation (1s = 1m for demo speed? No, let's keep it steady for feel)
+    const taxTimer = setInterval(() => {
+        setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
+    }, 60000);
+
+    return () => {
+        clearInterval(interval);
+        clearInterval(taxTimer);
+    };
+  }, []);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+  };
+
+  return (
+    <motion.div 
+        className="min-h-screen bg-[#0c0c0c] p-4 md:p-8 flex flex-col font-sans overflow-x-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+    >
+      
+      {/* Navbar / Streak */}
+      <motion.header 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="flex flex-col md:flex-row justify-between md:items-center mb-8 border-b border-[#1f1f1f] pb-4 gap-4"
+      >
+        <div>
+          <h1 className="text-2xl font-bold uppercase tracking-wider text-white">Limetred <span className="text-[#39b54a] text-xs align-top">PRO</span></h1>
+          <div className="flex items-center gap-2 mt-1">
+             <span className="text-[#666666] text-xs font-mono">{appData.name} // {appData.rarity}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Module D: Streak with Tooltip */}
+          <div className="relative group cursor-help">
+            <div className="flex items-center gap-2 text-[#39b54a] bg-[#39b54a]/10 px-4 py-2 border border-[#39b54a] sharp-corners transition-all hover:bg-[#39b54a]/20">
+                <Flame size={18} className="fill-current animate-pulse" />
+                <span className="font-bold text-sm">5 DAY STREAK</span>
+            </div>
+            
+            {/* Tooltip */}
+            <div className="absolute top-full mt-2 right-0 w-64 bg-[#111111] border border-[#1f1f1f] p-3 text-xs text-[#666666] hidden group-hover:block z-50 shadow-xl">
+                <div className="flex items-start gap-2">
+                    <Wrench size={14} className="text-[#666666] mt-1" />
+                    <div>
+                        <div className="font-bold text-white mb-1">STREAK AT RISK?</div>
+                        If streak is broken, pay <span className="text-[#39b54a]">0.5 SOL</span> to repair and maintain multiplier.
+                    </div>
+                </div>
+            </div>
+          </div>
+          
+          <Button variant="outline" className="hidden md:block py-2">CONNECT WALLET</Button>
+        </div>
+      </motion.header>
+
+      {/* Bento Grid */}
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 flex-1"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        
+        {/* Module A: Bonding Curve (Span 2 cols) */}
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-2">
+            <Card className="flex flex-col h-full min-h-[350px] relative overflow-hidden group">
+                <div className="flex justify-between items-start mb-4 z-10 relative">
+                    <div>
+                        <h3 className="text-[#666666] text-xs uppercase tracking-widest mb-1">Internal Launchpad</h3>
+                        <div className="text-3xl font-bold text-white font-mono">
+                            ${marketCap.toLocaleString()} <span className="text-[#666666] text-sm">/ $60k</span>
+                        </div>
+                    </div>
+                    <Badge color="text-[#39b54a] animate-pulse">+12.4%</Badge>
+                </div>
+                
+                <div className="flex-1 w-full relative z-0">
+                    <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={marketData}>
+                        <defs>
+                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor={COLORS.green} stopOpacity={0}/>
+                        </linearGradient>
+                        </defs>
+                        <XAxis dataKey="time" hide />
+                        <YAxis domain={['auto', 'auto']} hide />
+                        <Tooltip 
+                            contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff', borderRadius: 0 }} 
+                            itemStyle={{ color: '#39b54a', fontFamily: 'monospace' }}
+                            labelStyle={{ display: 'none' }}
+                        />
+                        <Area 
+                            type="monotone" 
+                            dataKey="price" 
+                            stroke={COLORS.green} 
+                            strokeWidth={2} 
+                            fillOpacity={1} 
+                            fill="url(#colorPrice)" 
+                        />
+                    </AreaChart>
+                    </ResponsiveContainer>
+                </div>
+                
+                {/* King of Hill Progress */}
+                <div className="mt-4 z-10 relative bg-[#111111]/80 backdrop-blur-sm pt-2">
+                    <div className="flex justify-between text-[10px] text-[#666666] mb-1 font-mono uppercase">
+                        <span>Graduation Target ($60k)</span>
+                        <span>{(marketCap / 60000 * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="w-full bg-[#1f1f1f] h-2 mb-2">
+                        <div 
+                            className="bg-[#39b54a] h-full transition-all duration-1000" 
+                            style={{ width: `${(marketCap / 60000) * 100}%` }}
+                        ></div>
+                    </div>
+                    <div className="text-center text-[10px] text-[#39b54a]">
+                        ⚠️ Liquidity migrates to Raydium automatically at 100%
+                    </div>
+                </div>
+            </Card>
+        </motion.div>
+
+        {/* Module B: Bet on Builder */}
+        <motion.div variants={itemVariants} className="col-span-1">
+            <Card className="flex flex-col justify-between h-full min-h-[350px] border-t-4 border-t-[#8b5cf6]">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[#666666] text-xs uppercase tracking-widest">Prediction Market</h3>
+                    <Activity size={16} className="text-[#8b5cf6]" />
+                </div>
+                
+                <div className="mb-6 flex-1 flex flex-col justify-center">
+                    <p className="text-white text-lg font-bold leading-tight mb-6">
+                        "Will {appData.name} dev ship v1.0 within 48h?"
+                    </p>
+                    
+                    <div className="flex gap-2 mb-2">
+                        <button className="flex-1 bg-[#39b54a] text-black font-bold py-4 hover:bg-[#2ea03f] transition-colors border border-[#39b54a] sharp-corners group">
+                            YES <span className="block text-[10px] opacity-70 group-hover:opacity-100">82¢</span>
+                        </button>
+                        <button className="flex-1 bg-transparent text-[#666666] border border-[#333] font-bold py-4 hover:border-red-500 hover:text-red-500 transition-colors sharp-corners group">
+                            NO <span className="block text-[10px] opacity-70 group-hover:opacity-100">18¢</span>
+                        </button>
+                    </div>
+                    <p className="text-[#39b54a] text-xs text-right font-mono">Potential Payout: <span className="font-bold text-lg">1.22x</span></p>
+                </div>
+                
+                <div className="p-3 bg-[#0c0c0c] border border-[#1f1f1f] flex gap-3 items-center">
+                    <div className="w-8 h-8 rounded-none bg-[#333] flex items-center justify-center">
+                        <Globe size={14} className="text-gray-400"/>
+                    </div>
+                    <div className="text-xs">
+                        <div className="text-[#666666]">Volume</div>
+                        <div className="text-white font-mono">$4,203</div>
+                    </div>
+                </div>
+            </Card>
+        </motion.div>
+
+        {/* Module C: App IPO Keys */}
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-2">
+            <Card className="flex flex-col justify-center h-full">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h3 className="text-[#666666] text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <Lock size={12} /> Revenue Sharing Keys
+                        </h3>
+                        <h2 className="text-3xl font-bold text-white mb-2 uppercase">Own the Protocol</h2>
+                        <p className="text-[#666666] text-sm max-w-md">
+                            Buy keys to earn <span className="text-white">5% of all trading fees</span> generated by {appData.name}. 
+                            Yield is paid out in SOL every 24 hours.
+                        </p>
+                    </div>
+                    
+                    <div className="bg-[#0c0c0c] p-6 border border-[#1f1f1f] min-w-[250px] text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                        <div className="text-[#39b54a] text-4xl font-bold mb-1 font-mono">5.2%</div>
+                        <div className="text-[#666666] text-xs font-mono uppercase mb-4">Current APR</div>
+                        <Button variant="secondary" fullWidth className="text-xs">BUY KEYS</Button>
+                    </div>
+                </div>
+            </Card>
+        </motion.div>
+
+        {/* Module E: Paper Hands Tax */}
+        <motion.div variants={itemVariants} className="col-span-1">
+            <Card className="h-full border-red-900/20 bg-gradient-to-br from-[#111] to-red-900/10 flex flex-col">
+                <div className="flex items-center gap-2 mb-4 text-red-500">
+                    <AlertTriangle size={18} />
+                    <h3 className="text-xs uppercase tracking-widest font-bold">Paper Hands Tax</h3>
+                </div>
+                
+                <div className="flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div className="text-6xl font-black text-white mb-2 tracking-tighter">20%</div>
+                    <div className="text-red-500 text-xs font-mono uppercase animate-pulse">Sell Tax Active</div>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-red-900/30 text-center">
+                    <p className="text-[#666666] text-xs">
+                        Tax drops to 1% in:
+                        <br/>
+                        <span className="text-white font-mono text-xl">{timeLeft}m 00s</span>
+                    </p>
+                </div>
+            </Card>
+        </motion.div>
+
+      </motion.div>
+    </motion.div>
+  );
+};
+
+export default Dashboard;
