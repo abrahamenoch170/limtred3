@@ -8,6 +8,8 @@ import { COLORS } from '../constants';
 
 interface DashboardProps {
   appData: GeneratedApp;
+  isConnected: boolean;
+  onConnect: () => void;
 }
 
 const generateInitialData = (): MarketData[] => {
@@ -20,7 +22,7 @@ const generateInitialData = (): MarketData[] => {
   return data;
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ appData }) => {
+const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }) => {
   const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData());
   const [marketCap, setMarketCap] = useState(12450);
   const [timeLeft, setTimeLeft] = useState(48); // Minutes for tax drop
@@ -104,7 +106,13 @@ const Dashboard: React.FC<DashboardProps> = ({ appData }) => {
             </div>
           </div>
           
-          <Button variant="outline" className="hidden md:block py-2">CONNECT WALLET</Button>
+          <Button 
+            variant={isConnected ? "outline" : "primary"} 
+            className="hidden md:block py-2 text-xs"
+            onClick={onConnect}
+          >
+            {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
+          </Button>
         </div>
       </motion.header>
 

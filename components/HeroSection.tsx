@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Button, Input, Badge } from './ui/GlintComponents';
+import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Wallet, Rocket, BarChart3, Repeat } from 'lucide-react';
 
 interface HeroSectionProps {
   onGenerate: (prompt: string) => void;
+  onConnectWallet: () => void;
+  isConnected: boolean;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate }) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, isConnected }) => {
   const [prompt, setPrompt] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,8 +27,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate }) => {
       exit={{ opacity: 0 }}
       className="h-full relative overflow-y-auto no-scrollbar scroll-smooth bg-[#0c0c0c]"
     >
+      {/* -------------------- NAVBAR -------------------- */}
+      <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-md border-b border-[#1f1f1f]">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-[#39b54a] flex items-center justify-center font-black text-black">L</div>
+                <span className="font-bold uppercase tracking-wider text-white hidden md:block">Limetred</span>
+            </div>
+            
+            <div className="flex items-center gap-4">
+                <a href="#launchpad" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">Launchpad</a>
+                <a href="#dex" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">DEX</a>
+                <Button 
+                    variant={isConnected ? "outline" : "primary"} 
+                    className="py-2 px-4 text-xs"
+                    onClick={onConnectWallet}
+                >
+                    {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
+                </Button>
+            </div>
+        </div>
+      </nav>
+
       {/* -------------------- HERO (ABOVE THE FOLD) -------------------- */}
-      <div className="min-h-screen flex flex-col relative z-10">
+      <div className="min-h-[calc(100vh-64px)] flex flex-col relative z-10">
         
         {/* Marquee Ticker */}
         <div className="w-full bg-[#111111] border-b border-[#1f1f1f] h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
@@ -105,6 +129,123 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate }) => {
           }} 
         />
       </div>
+
+      {/* -------------------- LAUNCHPAD SECTION -------------------- */}
+      <section id="launchpad" className="bg-[#111111] border-t border-[#1f1f1f] py-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row gap-12 items-center">
+                <div className="flex-1">
+                    <Badge color="text-[#8b5cf6]">PHASE 1: INCUBATION</Badge>
+                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                        The Fair Launch <br/> <span className="text-[#39b54a]">Bonding Curve</span>
+                    </h2>
+                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                        Every app generated on Limetred starts on a mathematical bonding curve. 
+                        No pre-sale. No insiders. Just pure price discovery.
+                    </p>
+                    <ul className="space-y-4 mb-8">
+                        <ListItem text="Start Market Cap: $1k" />
+                        <ListItem text="Graduation Target: $60k" />
+                        <ListItem text="Trading Fee: 1%" />
+                    </ul>
+                    <Button variant="outline" className="flex items-center gap-2">
+                        VIEW LIVE CURVES <ArrowRight size={16} />
+                    </Button>
+                </div>
+                
+                <div className="flex-1 relative">
+                     {/* Visual Representation of Curve */}
+                     <Card className="h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a]">
+                        <div className="absolute inset-0 opacity-20" 
+                             style={{ backgroundImage: 'radial-gradient(#39b54a 1px, transparent 1px)', backgroundSize: '20px 20px' }} 
+                        />
+                        <div className="w-full h-full p-8 flex items-end">
+                            <div className="w-full h-full relative">
+                                <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                                    <path d="M0,100 C50,100 70,80 100,0" fill="none" stroke="#39b54a" strokeWidth="2" />
+                                    <circle cx="0" cy="100" r="2" fill="#39b54a" className="animate-ping" />
+                                    <circle cx="100" cy="0" r="2" fill="#fff" />
+                                </svg>
+                                <div className="absolute top-0 right-0 bg-[#39b54a] text-black text-xs font-bold px-2 py-1 transform translate-x-1/2 -translate-y-1/2">
+                                    RAYDIUM MIGRATION
+                                </div>
+                            </div>
+                        </div>
+                     </Card>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* -------------------- DEX SECTION -------------------- */}
+      <section id="dex" className="bg-[#0c0c0c] border-t border-[#1f1f1f] py-24 relative">
+        <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
+                <div className="flex-1">
+                    <Badge color="text-[#39b54a]">PHASE 2: TRADING</Badge>
+                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                        Instant Liquidity <br/> <span className="text-[#8b5cf6]">On Raydium</span>
+                    </h2>
+                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                        Once a curve completes, liquidity is automatically seeded into a Raydium AMM pool and burned.
+                        Limetred apps are composable with the entire Solana ecosystem instantly.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
+                            <Repeat size={24} className="text-[#8b5cf6] mb-2" />
+                            <h4 className="font-bold text-white uppercase">Auto-Swap</h4>
+                            <p className="text-[#666666] text-xs">Seamless routing through Jupiter.</p>
+                        </div>
+                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
+                            <Lock size={24} className="text-[#8b5cf6] mb-2" />
+                            <h4 className="font-bold text-white uppercase">LP Burned</h4>
+                            <p className="text-[#666666] text-xs">Liquidity tokens are sent to a burn address.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 w-full">
+                    {/* Mock DEX Interface */}
+                    <Card className="max-w-md mx-auto relative overflow-hidden group hover:border-[#8b5cf6] transition-colors">
+                        <div className="flex justify-between items-center mb-6">
+                            <span className="font-bold uppercase">Swap</span>
+                            <span className="text-xs text-[#666666] font-mono">SLIPPAGE: 0.5%</span>
+                        </div>
+                        
+                        <div className="bg-[#0c0c0c] p-4 mb-2 border border-[#1f1f1f]">
+                            <div className="flex justify-between mb-2">
+                                <span className="text-xs text-[#666666]">YOU PAY</span>
+                                <span className="text-xs text-[#666666]">BALANCE: 12.5 SOL</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-2xl font-bold font-mono text-white">1.0</span>
+                                <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">SOL</span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-center -my-3 relative z-10">
+                            <div className="bg-[#111111] p-2 border border-[#1f1f1f] rounded-full">
+                                <ChevronDown size={16} />
+                            </div>
+                        </div>
+
+                        <div className="bg-[#0c0c0c] p-4 mt-2 mb-6 border border-[#1f1f1f]">
+                            <div className="flex justify-between mb-2">
+                                <span className="text-xs text-[#666666]">YOU RECEIVE</span>
+                                <span className="text-xs text-[#666666]">EST: 14,020 LMT</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-2xl font-bold font-mono text-[#39b54a]">14,020.5</span>
+                                <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">LMT</span>
+                            </div>
+                        </div>
+
+                        <Button fullWidth variant="secondary">SWAP TOKENS</Button>
+                    </Card>
+                </div>
+            </div>
+        </div>
+      </section>
 
       {/* -------------------- DOCUMENTATION SECTION -------------------- */}
       <div className="bg-[#111111] border-t border-[#1f1f1f] relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
@@ -235,6 +376,13 @@ const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, description:
         <h3 className="text-xl font-bold uppercase mb-4 tracking-wide text-white">{title}</h3>
         <p className="text-[#666666] text-sm leading-relaxed">{description}</p>
     </div>
+);
+
+const ListItem: React.FC<{ text: string }> = ({ text }) => (
+    <li className="flex items-center gap-3 text-[#666666]">
+        <div className="w-1.5 h-1.5 bg-[#39b54a]"></div>
+        <span className="font-mono text-sm">{text}</span>
+    </li>
 );
 
 const ComparisonRow: React.FC<{ feature: string, bad: string, good: string }> = ({ feature, bad, good }) => (
