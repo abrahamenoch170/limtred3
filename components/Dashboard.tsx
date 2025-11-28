@@ -258,6 +258,24 @@ const Dashboard: React.FC<DashboardProps> = ({
                                      <Target size={12} className="text-[#39b54a]" />
                                      <span className="text-[#39b54a] font-bold text-xs font-mono">$60,000 (GRADUATION)</span>
                                 </div>
+                                {/* Bonding Curve Tooltip */}
+                                <div className="relative group/target cursor-help ml-1">
+                                    <Info size={14} className="text-[#666666] hover:text-[#39b54a] transition-colors" />
+                                    <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-72 bg-[#111111] border border-[#1f1f1f] p-4 text-xs text-[#666666] hidden group-hover/target:block z-50 shadow-[0_0_20px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+                                        <div className="font-bold text-white mb-2 uppercase tracking-wider border-b border-[#333] pb-2">Bonding Curve Mechanics</div>
+                                        <p className="leading-relaxed mb-3">
+                                            Price follows the formula <span className="text-[#39b54a] font-mono">y = x²</span>. As supply increases, price increases exponentially.
+                                        </p>
+                                        <div>
+                                            <span className="text-white font-bold">Benefits:</span>
+                                            <ul className="mt-1 space-y-1 list-disc list-inside">
+                                                <li>Instant liquidity (no seed needed)</li>
+                                                <li>Fair price discovery</li>
+                                                <li>Automatic market making</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
