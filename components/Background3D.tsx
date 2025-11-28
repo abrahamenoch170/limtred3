@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { COLORS } from '../constants';
 
 const Background3D: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -10,33 +11,35 @@ const Background3D: React.FC = () => {
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    // Performance configuration
-    // We limit max cubes on mobile to ensure it runs smooth on old Androids
+    // --- PERFORMANCE CONFIGURATION ---
+    // Detect mobile to reduce polygon count for "Old Android" compatibility
     const isMobile = window.innerWidth < 768;
-    const GRID_SIZE = isMobile ? 3 : 5; // 3x3 on mobile, 5x5 on desktop
-    const CUBE_SIZE = isMobile ? 30 : 40;
-    const SPACING = isMobile ? 60 : 80;
-    const ROTATION_SPEED = 0.005; // Slow, hypnotic movement
+    
+    const GRID_SIZE = isMobile ? 3 : 6; // Compact grid on mobile
+    const CUBE_SIZE = isMobile ? 25 : 35;
+    const SPACING = isMobile ? 55 : 85;
+    
+    // Slow, hypnotic speed to prevent lag and visual noise
+    const ROTATION_SPEED = 0.003; 
 
     let animationFrameId: number;
     let time = 0;
 
-    // Cube vertices relative to center (Size 1)
+    // Cube Geometry (Vertices relative to center 0,0,0)
     const vertices = [
-      [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], // Front face
-      [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]      // Back face
+      [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], // Front Z=-1
+      [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]      // Back Z=1
     ];
 
-    // Edges connecting vertices
     const edges = [
-      [0, 1], [1, 2], [2, 3], [3, 0], // Front face
-      [4, 5], [5, 6], [6, 7], [7, 4], // Back face
-      [0, 4], [1, 5], [2, 6], [3, 7]  // Connecting lines
+      [0, 1], [1, 2], [2, 3], [3, 0], // Front Face
+      [4, 5], [5, 6], [6, 7], [7, 4], // Back Face
+      [0, 4], [1, 5], [2, 6], [3, 7]  // Connectors
     ];
 
     const resize = () => {
-      // Handle High DPI displays but cap pixel ratio to 2 for performance
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Limit pixel ratio to save GPU
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       ctx.scale(dpr, dpr);
@@ -45,8 +48,9 @@ const Background3D: React.FC = () => {
     };
 
     const project = (x: number, y: number, z: number, width: number, height: number) => {
-      // Simple weak perspective projection
-      const scale = 300 / (300 + z);
+      // Perspective Projection
+      const fov = 400;
+      const scale = fov / (fov + z);
       const px = x * scale + width / 2;
       const py = y * scale + height / 2;
       return [px, py];
@@ -72,33 +76,39 @@ const Background3D: React.FC = () => {
       ];
     };
 
-    const drawCube = (cx: number, cy: number, offsetTime: number) => {
-      // Individual cube rotation
-      const angleX = time * ROTATION_SPEED + offsetTime * 0.5;
-      const angleY = time * ROTATION_SPEED * 0.5 + offsetTime * 0.5;
+    const drawCube = (cx: number, cy: number, gridX: number, gridY: number) => {
+      // Unique rotation offset based on grid position for "Alive" feel
+      const offsetIndex = gridX * GRID_SIZE + gridY;
+      const angleX = time * ROTATION_SPEED + offsetIndex * 0.2;
+      const angleY = time * ROTATION_SPEED * 0.8 + offsetIndex * 0.2;
 
-      // Calculate projected vertices
-      const projected = vertices.map(v => {
-        // Scale first
+      // Transform Vertices
+      const projectedVertices = vertices.map(v => {
+        // 1. Scale
         const scaled = [v[0] * CUBE_SIZE, v[1] * CUBE_SIZE, v[2] * CUBE_SIZE];
-        // Rotate
+        // 2. Rotate
         const r1 = rotateX(scaled, angleX);
         const r2 = rotateY(r1, angleY);
-        // Translate to grid position
-        // We add a slight Z-wave based on time for "breathing" effect
-        const z = r2[2] + Math.sin(time * 0.002 + offsetTime) * 20;
-        return project(r2[0] + cx, r2[1] + cy, z, window.innerWidth, window.innerHeight);
+        // 3. Translate (Breathing Z-axis movement)
+        const waveZ = Math.sin(time * 0.01 + offsetIndex) * 30;
+        return project(r2[0] + cx, r2[1] + cy, r2[2] + waveZ, window.innerWidth, window.innerHeight);
       });
 
-      // Draw edges
+      // Draw Edges
       ctx.beginPath();
-      // Style: "Glint" green/white mix, very low opacity
-      ctx.strokeStyle = `rgba(57, 181, 74, ${0.1 + Math.sin(time * 0.01 + offsetTime) * 0.05})`; 
-      ctx.lineWidth = 1;
+      
+      // --- COLOR LOGIC: Checkerboard Pattern ---
+      // Alternates between Glint Green and Hype Purple
+      const isAlt = (gridX + gridY) % 2 === 0;
+      ctx.strokeStyle = isAlt ? COLORS.green : COLORS.purple;
+      
+      // Dynamic Opacity: Pulses slightly
+      ctx.globalAlpha = isAlt ? 0.25 : 0.15; 
+      ctx.lineWidth = 1.2; // Keep lines sharp
 
       edges.forEach(edge => {
-        const p1 = projected[edge[0]];
-        const p2 = projected[edge[1]];
+        const p1 = projectedVertices[edge[0]];
+        const p2 = projectedVertices[edge[1]];
         ctx.moveTo(p1[0], p1[1]);
         ctx.lineTo(p2[0], p2[1]);
       });
@@ -109,21 +119,19 @@ const Background3D: React.FC = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
 
-      // Fade out effect for "trails" or just clear
       ctx.clearRect(0, 0, width, height);
 
-      // Grid offsets to center
-      const offsetX = (GRID_SIZE - 1) * SPACING / 2;
-      const offsetY = (GRID_SIZE - 1) * SPACING / 2;
+      const totalWidth = (GRID_SIZE - 1) * SPACING;
+      const totalHeight = (GRID_SIZE - 1) * SPACING;
+      const startX = -totalWidth / 2;
+      const startY = -totalHeight / 2;
 
       for (let i = 0; i < GRID_SIZE; i++) {
         for (let j = 0; j < GRID_SIZE; j++) {
-          // Center the grid 
-          const x = (i * SPACING) - offsetX;
-          const y = (j * SPACING) - offsetY;
-          
-          // Use indices for unique rotation offsets
-          drawCube(x, y, i * j + i);
+          const x = startX + i * SPACING;
+          const y = startY + j * SPACING;
+          // Draw with grid indices to determine color
+          drawCube(x, y, i, j);
         }
       }
 
@@ -144,8 +152,11 @@ const Background3D: React.FC = () => {
   return (
     <canvas 
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 opacity-40"
-      style={{ mixBlendMode: 'screen' }}
+      className="fixed top-0 left-0 w-full h-full pointer-events-none z-0"
+      style={{ 
+        // No mix-blend-mode to ensure colors pop against the void black
+        opacity: 1 
+      }}
     />
   );
 };
