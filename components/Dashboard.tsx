@@ -391,7 +391,20 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                 </div>
                 
                 <div className="flex-1 flex flex-col justify-center items-center text-center py-4">
-                    <div className="text-6xl font-black text-white mb-2 tracking-tighter">20%</div>
+                    <motion.div 
+                        animate={{ 
+                            scale: [1, 1.02, 1],
+                            opacity: [0.9, 1, 0.9]
+                        }}
+                        transition={{ 
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        className="text-6xl font-black text-white mb-2 tracking-tighter"
+                    >
+                        20%
+                    </motion.div>
                     <div className="text-red-500 text-xs font-mono uppercase animate-pulse">Sell Tax Active</div>
                 </div>
                 
