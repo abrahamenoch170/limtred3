@@ -52,6 +52,10 @@ export default function App() {
     }
   };
 
+  const handleBack = () => {
+    setPhase(AppPhase.HOME);
+  };
+
   return (
     <main className="h-screen w-screen overflow-hidden bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black">
       <AnimatePresence mode="wait">
@@ -79,6 +83,7 @@ export default function App() {
             appData={appData} 
             isConnected={walletConnected}
             onConnect={handleConnectWallet}
+            onBack={handleBack}
           />
         )}
 

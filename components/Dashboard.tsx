@@ -3,13 +3,14 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipPro
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
 import { GeneratedApp, MarketData } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target } from 'lucide-react';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
   appData: GeneratedApp;
   isConnected: boolean;
   onConnect: () => void;
+  onBack: () => void;
 }
 
 const Logo = () => (
@@ -45,7 +46,7 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
   return null;
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }) => {
+const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, onBack }) => {
   const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData());
   const [marketCap, setMarketCap] = useState(12450);
   const [timeLeft, setTimeLeft] = useState(48); // Minutes for tax drop
@@ -109,18 +110,25 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
         animate={{ y: 0, opacity: 1 }}
         className="flex flex-col md:flex-row justify-between md:items-center mb-8 border-b border-[#1f1f1f] pb-4 gap-4"
       >
-        <div className="flex items-start gap-3">
-          <div className="mt-1"><Logo /></div>
-          <div>
-            <h1 className="text-2xl font-bold uppercase tracking-wider text-white">Limetred <span className="text-[#39b54a] text-xs align-top">PRO</span></h1>
-            <div className="flex items-center gap-2 mt-1">
-                <span className="text-[#666666] text-xs font-mono">{appData.name} // {appData.rarity}</span>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" className="px-3 border border-[#1f1f1f] hover:bg-[#1a1a1a]" onClick={onBack}>
+             <ArrowLeft size={18} />
+          </Button>
+          
+          <div className="flex items-start gap-3">
+            <div className="mt-1 hidden sm:block"><Logo /></div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold uppercase tracking-wider text-white">Limetred <span className="text-[#39b54a] text-xs align-top">PRO</span></h1>
+              <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[#666666] text-xs font-mono">{appData.name} // {appData.rarity}</span>
+              </div>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-4 mt-4 md:mt-0">
           {/* Module D: Streak with Tooltip */}
-          <div className="relative group cursor-help">
+          <div className="relative group cursor-help hidden xs:block">
             <div className="flex items-center gap-2 text-[#39b54a] bg-[#39b54a]/10 px-4 py-2 border border-[#39b54a] sharp-corners transition-all hover:bg-[#39b54a]/20">
                 <Flame size={18} className="fill-current animate-pulse" />
                 <span className="font-bold text-sm">5 DAY STREAK</span>
@@ -140,7 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
           
           <Button 
             variant={isConnected ? "outline" : "primary"} 
-            className="hidden md:block py-2 text-xs"
+            className="py-2 text-xs"
             onClick={onConnect}
           >
             {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
@@ -150,15 +158,15 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
 
       {/* Bento Grid */}
       <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 flex-1"
+        className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         
         {/* Module A: Bonding Curve (Span 2 cols) */}
-        <motion.div variants={itemVariants} className="col-span-1 md:col-span-2">
-            <Card className="flex flex-col h-full min-h-[350px] relative overflow-hidden group">
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-2 min-w-0">
+            <Card className="flex flex-col h-full min-h-[400px] relative overflow-hidden group">
                 <div className="flex justify-between items-start mb-6 z-10 relative">
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -172,7 +180,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
                                 initial={{ color: "#39b54a", filter: "blur(4px)" }}
                                 animate={{ color: "#ffffff", filter: "blur(0px)" }}
                                 transition={{ duration: 0.3, ease: "circOut" }}
-                                className="text-5xl font-bold font-mono tracking-tighter"
+                                className="text-4xl md:text-5xl font-bold font-mono tracking-tighter"
                             >
                                 ${marketCap.toLocaleString()}
                             </motion.span>
@@ -189,28 +197,37 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
                     <Badge color="text-[#39b54a] bg-[#39b54a]/5 border-[#39b54a]">+12.4% (24H)</Badge>
                 </div>
                 
-                <div className="flex-1 w-full relative z-0 min-h-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={marketData}>
-                        <defs>
-                        <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.2}/>
-                            <stop offset="95%" stopColor={COLORS.green} stopOpacity={0}/>
-                        </linearGradient>
-                        </defs>
-                        <XAxis dataKey="time" hide />
-                        <YAxis domain={['auto', 'auto']} hide />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area 
-                            type="monotone" 
-                            dataKey="price" 
-                            stroke={COLORS.green} 
-                            strokeWidth={2} 
-                            fillOpacity={1} 
-                            fill="url(#colorPrice)" 
-                        />
-                    </AreaChart>
-                    </ResponsiveContainer>
+                {/* 
+                  Recharts Fix: 
+                  Instead of relying on flex-1 directly which can report 0 height during animations,
+                  we use a relative container with an absolute child that fills it.
+                  This ensures Recharts always has valid dimensions.
+                */}
+                <div className="flex-1 w-full relative min-h-[200px] z-0">
+                    <div className="absolute inset-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={marketData}>
+                            <defs>
+                            <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.2}/>
+                                <stop offset="95%" stopColor={COLORS.green} stopOpacity={0}/>
+                            </linearGradient>
+                            </defs>
+                            <XAxis dataKey="time" hide />
+                            <YAxis domain={['auto', 'auto']} hide />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Area 
+                                type="monotone" 
+                                dataKey="price" 
+                                stroke={COLORS.green} 
+                                strokeWidth={2} 
+                                fillOpacity={1} 
+                                fill="url(#colorPrice)" 
+                                isAnimationActive={false} // Disable initial animation to prevent resize flicker
+                            />
+                        </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
                 
                 {/* King of Hill Progress */}
@@ -257,7 +274,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
         </motion.div>
 
         {/* Module B: Bet on Builder */}
-        <motion.div variants={itemVariants} className="col-span-1">
+        <motion.div variants={itemVariants} className="col-span-1 min-w-0">
             <Card className="flex flex-col justify-between h-full min-h-[350px] border-t-4 border-t-[#8b5cf6]">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[#666666] text-xs uppercase tracking-widest">Prediction Market</h3>
@@ -293,7 +310,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
         </motion.div>
 
         {/* Module C: App IPO Keys */}
-        <motion.div variants={itemVariants} className="col-span-1 md:col-span-2">
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-2 min-w-0">
             <Card className="flex flex-col justify-center h-full">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex-1">
@@ -328,7 +345,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
         </motion.div>
 
         {/* Module E: Paper Hands Tax */}
-        <motion.div variants={itemVariants} className="col-span-1">
+        <motion.div variants={itemVariants} className="col-span-1 min-w-0">
             <Card className="h-full border-red-900/20 bg-gradient-to-br from-[#111] to-red-900/10 flex flex-col">
                 <div className="flex items-center gap-2 mb-4 text-red-500">
                     <AlertTriangle size={18} />
