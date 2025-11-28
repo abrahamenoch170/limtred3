@@ -43,7 +43,7 @@ export default function App() {
     await new Promise(resolve => setTimeout(resolve, 800));
     setWalletConnected(true);
     
-    // If on HOME, take them to the Dashboard (Launchpad view)
+    // If on HOME, take them to the Dashboard (Launchpad view) immediately
     if (phase === AppPhase.HOME) {
       if (!appData) {
         setAppData(DEMO_APP);

@@ -12,6 +12,13 @@ interface DashboardProps {
   onConnect: () => void;
 }
 
+const Logo = () => (
+  <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+    <path d="M0 0H14V6H6V26H26V18H32V32H0V0Z" fill="#39b54a"/>
+    <rect x="18" y="0" width="14" height="14" fill="white"/>
+  </svg>
+);
+
 const generateInitialData = (): MarketData[] => {
   const data = [];
   let price = 0.002;
@@ -80,10 +87,13 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
         animate={{ y: 0, opacity: 1 }}
         className="flex flex-col md:flex-row justify-between md:items-center mb-8 border-b border-[#1f1f1f] pb-4 gap-4"
       >
-        <div>
-          <h1 className="text-2xl font-bold uppercase tracking-wider text-white">Limetred <span className="text-[#39b54a] text-xs align-top">PRO</span></h1>
-          <div className="flex items-center gap-2 mt-1">
-             <span className="text-[#666666] text-xs font-mono">{appData.name} // {appData.rarity}</span>
+        <div className="flex items-start gap-3">
+          <div className="mt-1"><Logo /></div>
+          <div>
+            <h1 className="text-2xl font-bold uppercase tracking-wider text-white">Limetred <span className="text-[#39b54a] text-xs align-top">PRO</span></h1>
+            <div className="flex items-center gap-2 mt-1">
+                <span className="text-[#666666] text-xs font-mono">{appData.name} // {appData.rarity}</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -293,38 +303,4 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
                     <div className="bg-[#0c0c0c] p-6 border border-[#1f1f1f] min-w-[200px] text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                         <div className="text-[#39b54a] text-4xl font-bold mb-1 font-mono">5.2%</div>
                         <div className="text-[#666666] text-xs font-mono uppercase mb-4">Current APR</div>
-                        <Button variant="secondary" fullWidth className="text-xs">BUY KEYS</Button>
-                    </div>
-                </div>
-            </Card>
-        </motion.div>
-
-        {/* Module E: Paper Hands Tax */}
-        <motion.div variants={itemVariants} className="col-span-1">
-            <Card className="h-full border-red-900/20 bg-gradient-to-br from-[#111] to-red-900/10 flex flex-col">
-                <div className="flex items-center gap-2 mb-4 text-red-500">
-                    <AlertTriangle size={18} />
-                    <h3 className="text-xs uppercase tracking-widest font-bold">Paper Hands Tax</h3>
-                </div>
-                
-                <div className="flex-1 flex flex-col justify-center items-center text-center py-4">
-                    <div className="text-6xl font-black text-white mb-2 tracking-tighter">20%</div>
-                    <div className="text-red-500 text-xs font-mono uppercase animate-pulse">Sell Tax Active</div>
-                </div>
-                
-                <div className="mt-4 pt-4 border-t border-red-900/30 text-center">
-                    <p className="text-[#666666] text-xs">
-                        Tax drops to 1% in:
-                        <br/>
-                        <span className="text-white font-mono text-xl">{timeLeft}m 00s</span>
-                    </p>
-                </div>
-            </Card>
-        </motion.div>
-
-      </motion.div>
-    </motion.div>
-  );
-};
-
-export default Dashboard;
+                        <Button variant="secondary" fullWidth className="text-xs">BUY KEYS

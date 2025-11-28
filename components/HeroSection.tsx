@@ -2,13 +2,20 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Wallet, Rocket, BarChart3, Repeat } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat } from 'lucide-react';
 
 interface HeroSectionProps {
   onGenerate: (prompt: string) => void;
   onConnectWallet: () => void;
   isConnected: boolean;
 }
+
+const Logo = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+    <path d="M0 0H14V6H6V26H26V18H32V32H0V0Z" fill="#39b54a"/>
+    <rect x="18" y="0" width="14" height="14" fill="white"/>
+  </svg>
+);
 
 const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, isConnected }) => {
   const [prompt, setPrompt] = useState('');
@@ -30,17 +37,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
       {/* -------------------- NAVBAR -------------------- */}
       <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-md border-b border-[#1f1f1f]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-[#39b54a] flex items-center justify-center font-black text-black">L</div>
-                <span className="font-bold uppercase tracking-wider text-white hidden md:block">Limetred</span>
+            <div className="flex items-center gap-3">
+                <Logo />
+                <span className="font-bold uppercase tracking-wider text-white hidden md:block text-lg">Limetred</span>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
                 <a href="#launchpad" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">Launchpad</a>
                 <a href="#dex" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">DEX</a>
                 <Button 
                     variant={isConnected ? "outline" : "primary"} 
-                    className="py-2 px-4 text-xs"
+                    className="py-2 px-6 text-xs"
                     onClick={onConnectWallet}
                 >
                     {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
@@ -148,14 +155,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
                         <ListItem text="Graduation Target: $60k" />
                         <ListItem text="Trading Fee: 1%" />
                     </ul>
-                    <Button variant="outline" className="flex items-center gap-2">
+                    <Button variant="outline" className="flex items-center gap-2" onClick={onConnectWallet}>
                         VIEW LIVE CURVES <ArrowRight size={16} />
                     </Button>
                 </div>
                 
                 <div className="flex-1 relative">
                      {/* Visual Representation of Curve */}
-                     <Card className="h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a]">
+                     <Card className="h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a] bg-[#0c0c0c]">
                         <div className="absolute inset-0 opacity-20" 
                              style={{ backgroundImage: 'radial-gradient(#39b54a 1px, transparent 1px)', backgroundSize: '20px 20px' }} 
                         />
@@ -240,7 +247,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
                             </div>
                         </div>
 
-                        <Button fullWidth variant="secondary">SWAP TOKENS</Button>
+                        <Button fullWidth variant="secondary" onClick={onConnectWallet}>SWAP TOKENS</Button>
                     </Card>
                 </div>
             </div>
@@ -316,7 +323,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
       <footer className="bg-[#0c0c0c] border-t border-[#1f1f1f] py-16 relative z-20">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
             <div className="text-left">
-                <h4 className="text-2xl font-black uppercase tracking-tighter text-white mb-2">Limetred<span className="text-[#39b54a]">.</span></h4>
+                <div className="flex items-center gap-2 mb-2">
+                    <Logo />
+                    <h4 className="text-2xl font-black uppercase tracking-tighter text-white">Limetred<span className="text-[#39b54a]">.</span></h4>
+                </div>
                 <p className="text-[#666666] text-xs font-mono max-w-xs leading-relaxed mb-6">
                     The Venture-as-a-Service protocol for the high-frequency economy. <br/>
                     Built for speed. Secured by math.
