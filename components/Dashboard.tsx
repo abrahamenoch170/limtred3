@@ -50,6 +50,10 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
   const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData());
   const [marketCap, setMarketCap] = useState(12450);
   const [timeLeft, setTimeLeft] = useState(48); // Minutes for tax drop
+  
+  // App Keys Simulation State
+  const [keysSold, setKeysSold] = useState(482);
+  const [keyPrice, setKeyPrice] = useState(0.85);
 
   useEffect(() => {
     // Market Simulation
@@ -74,9 +78,18 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
         setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
     }, 60000);
 
+    // Keys Sales Simulation
+    const keysTimer = setInterval(() => {
+      if (Math.random() > 0.6) { // 40% chance to sell a key every 2s
+        setKeysSold(prev => prev + 1);
+        setKeyPrice(prev => prev + (0.0005 * (Math.random() + 0.5))); // Slight price increase (bonding curve)
+      }
+    }, 2000);
+
     return () => {
         clearInterval(interval);
         clearInterval(taxTimer);
+        clearInterval(keysTimer);
     };
   }, []);
 
@@ -326,11 +339,23 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                         <div className="flex gap-8 border-t border-[#1f1f1f] pt-4">
                            <div>
                                 <div className="text-[#666666] text-[10px] uppercase tracking-wider mb-1">Keys Sold</div>
-                                <div className="text-white font-mono text-xl">482</div>
+                                <motion.div 
+                                  key={keysSold}
+                                  initial={{ scale: 1.2, color: "#39b54a" }}
+                                  animate={{ scale: 1, color: "#ffffff" }}
+                                  className="text-white font-mono text-xl"
+                                >
+                                  {keysSold.toLocaleString()}
+                                </motion.div>
                            </div>
                            <div>
                                 <div className="text-[#666666] text-[10px] uppercase tracking-wider mb-1">Price / Key</div>
-                                <div className="text-white font-mono text-xl">0.85 SOL</div>
+                                <motion.div 
+                                   key={keyPrice}
+                                   className="text-white font-mono text-xl"
+                                >
+                                   {keyPrice.toFixed(4)} SOL
+                                </motion.div>
                            </div>
                         </div>
                     </div>
@@ -360,16 +385,4 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                 <div className="mt-4 pt-4 border-t border-red-900/30 text-center">
                     <p className="text-[#666666] text-xs">
                         Tax drops to 1% in:
-                        <br/>
-                        <span className="text-white font-mono text-xl">{timeLeft}m 00s</span>
-                    </p>
-                </div>
-            </Card>
-        </motion.div>
-
-      </motion.div>
-    </motion.div>
-  );
-};
-
-export default Dashboard;
+                        <br
