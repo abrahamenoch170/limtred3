@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipProps } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
-import { GeneratedApp, MarketData } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft } from 'lucide-react';
+import { GeneratedApp, MarketData, Transaction } from '../types';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2 } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
@@ -30,6 +30,14 @@ const generateInitialData = (): MarketData[] => {
   }
   return data;
 };
+
+// Mock Transactions
+const RECENT_TRANSACTIONS: Transaction[] = [
+    { id: 'tx-1', type: 'YIELD', amount: '+0.042 SOL', status: 'PENDING', timestamp: 'Just now' },
+    { id: 'tx-2', type: 'BUY_KEYS', amount: '-1.70 SOL', status: 'SUCCESS', timestamp: '2m ago' },
+    { id: 'tx-3', type: 'DEPLOY', amount: '-0.10 SOL', status: 'SUCCESS', timestamp: '15m ago' },
+    { id: 'tx-4', type: 'TRADE', amount: '+0.5 SOL', status: 'SUCCESS', timestamp: '1h ago' },
+];
 
 // Custom Tooltip Component
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
@@ -395,6 +403,67 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                     </p>
                 </div>
             </Card>
+        </motion.div>
+
+        {/* Module F: Transaction Ledger */}
+        <motion.div variants={itemVariants} className="col-span-1 md:col-span-3 min-w-0">
+             <Card className="h-full">
+                <div className="flex items-center justify-between mb-4 border-b border-[#1f1f1f] pb-2">
+                    <div className="flex items-center gap-2">
+                        <Activity size={16} className="text-[#666666]" />
+                        <h3 className="text-[#666666] text-xs uppercase tracking-widest">Recent Ledger</h3>
+                    </div>
+                    <div className="text-[10px] text-[#666666] font-mono">LIVE</div>
+                </div>
+                
+                <div className="space-y-1">
+                    {RECENT_TRANSACTIONS.map((tx) => (
+                        <div key={tx.id} className="grid grid-cols-4 md:grid-cols-5 items-center p-3 bg-[#0c0c0c] border border-[#1f1f1f] hover:border-[#333] transition-colors group">
+                            
+                            {/* Type */}
+                            <div className="col-span-2 md:col-span-1 flex items-center gap-3">
+                                <div className={`p-2 rounded-none border ${
+                                    tx.type === 'YIELD' ? 'border-[#39b54a] bg-[#39b54a]/10 text-[#39b54a]' : 
+                                    tx.type === 'DEPLOY' ? 'border-[#8b5cf6] bg-[#8b5cf6]/10 text-[#8b5cf6]' : 
+                                    'border-[#333] bg-[#111] text-white'
+                                }`}>
+                                    {tx.type === 'YIELD' && <ArrowDownLeft size={14} />}
+                                    {tx.type === 'DEPLOY' && <CheckCircle2 size={14} />}
+                                    {(tx.type === 'BUY_KEYS' || tx.type === 'TRADE') && <ArrowUpRight size={14} />}
+                                </div>
+                                <span className="text-xs font-bold font-mono text-white">{tx.type.replace('_', ' ')}</span>
+                            </div>
+
+                            {/* ID (Hidden Mobile) */}
+                            <div className="hidden md:block col-span-1 text-xs text-[#666666] font-mono">
+                                {tx.id.toUpperCase()}
+                            </div>
+
+                            {/* Amount */}
+                            <div className={`col-span-1 text-right md:text-left font-mono text-sm ${tx.amount.startsWith('+') ? 'text-[#39b54a]' : 'text-white'}`}>
+                                {tx.amount}
+                            </div>
+
+                            {/* Status */}
+                            <div className="hidden md:flex col-span-1 items-center gap-2">
+                                {tx.status === 'PENDING' ? (
+                                    <Clock size={12} className="text-yellow-500 animate-pulse" />
+                                ) : (
+                                    <CheckCircle2 size={12} className="text-[#39b54a]" />
+                                )}
+                                <span className={`text-[10px] font-bold uppercase ${tx.status === 'PENDING' ? 'text-yellow-500' : 'text-[#39b54a]'}`}>
+                                    {tx.status}
+                                </span>
+                            </div>
+
+                             {/* Time */}
+                             <div className="col-span-1 text-right text-[10px] text-[#666666] font-mono">
+                                {tx.timestamp}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+             </Card>
         </motion.div>
 
       </motion.div>

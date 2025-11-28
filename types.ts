@@ -24,3 +24,11 @@ export interface MarketData {
   time: number;
   price: number;
 }
+
+export interface Transaction {
+  id: string;
+  type: 'DEPLOY' | 'BUY_KEYS' | 'SELL_KEYS' | 'YIELD' | 'TRADE';
+  amount: string;
+  status: 'SUCCESS' | 'PENDING' | 'FAILED';
+  timestamp: string;
+}
