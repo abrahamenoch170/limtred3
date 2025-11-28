@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { AppPhase, GeneratedApp, WalletBalance, Transaction } from './types';
+import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId } from './types';
 import { generateAppConcept } from './services/geminiService';
 import HeroSection from './components/HeroSection';
 import GenerationTheater from './components/GenerationTheater';
 import BuilderPreview from './components/BuilderPreview';
 import Dashboard from './components/Dashboard';
 import WalletDrawer from './components/WalletDrawer';
+import { CHAINS } from './constants';
 
 // Default Demo App
 const DEMO_APP: GeneratedApp = {
@@ -20,24 +21,27 @@ const DEMO_APP: GeneratedApp = {
 
 // Mock Initial Transactions
 const INITIAL_TRANSACTIONS: Transaction[] = [
-    { id: 'tx-1', type: 'YIELD', amount: '+0.042 SOL', status: 'PENDING', timestamp: 'Just now' },
-    { id: 'tx-2', type: 'BUY_KEYS', amount: '-1.70 SOL', status: 'SUCCESS', timestamp: '2m ago' },
-    { id: 'tx-3', type: 'DEPLOY', amount: '-0.10 SOL', status: 'SUCCESS', timestamp: '15m ago' },
+    { id: 'tx-1', type: 'YIELD', amount: '+0.042', status: 'PENDING', timestamp: 'Just now' },
+    { id: 'tx-2', type: 'BUY_KEYS', amount: '-1.70', status: 'SUCCESS', timestamp: '2m ago' },
+    { id: 'tx-3', type: 'DEPLOY', amount: '-0.10', status: 'SUCCESS', timestamp: '15m ago' },
 ];
 
 export default function App() {
   const [phase, setPhase] = useState<AppPhase>(AppPhase.HOME);
   const [appData, setAppData] = useState<GeneratedApp | null>(null);
+  const [currentChain, setCurrentChain] = useState<ChainId>('SOL');
   
   // Wallet State
   const [walletConnected, setWalletConnected] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState<WalletBalance>({
-    sol: 12.5,
+    native: 12.5, // Generic 'native' token amount (SOL, ETH, etc)
     lmt: 0,
     usdValue: 1812.50
   });
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<Transaction[]>(
+    INITIAL_TRANSACTIONS.map(tx => ({...tx, amount: `${tx.amount} ${CHAINS['SOL'].symbol}`}))
+  );
 
   const handleGenerate = async (prompt: string) => {
     setPhase(AppPhase.LOADING);
@@ -51,16 +55,17 @@ export default function App() {
 
   const handleDeploy = () => {
     setPhase(AppPhase.DASHBOARD);
+    const chainConfig = CHAINS[currentChain];
     // Simulate cost
     setWalletBalance(prev => ({
         ...prev,
-        sol: prev.sol - 0.1,
-        usdValue: (prev.sol - 0.1) * 145 + (prev.lmt * 0.85)
+        native: prev.native - 0.1,
+        usdValue: (prev.native - 0.1) * 145 + (prev.lmt * 0.85) // Simplified USD calc
     }));
     addTransaction({
         id: `tx-${Date.now()}`,
         type: 'DEPLOY',
-        amount: '-0.1 SOL',
+        amount: `-0.1 ${chainConfig.symbol}`,
         status: 'SUCCESS',
         timestamp: 'Just now'
     });
@@ -85,12 +90,12 @@ export default function App() {
     setPhase(AppPhase.HOME);
   };
 
-  const handleSwap = (amountSOL: number, amountLMT: number) => {
-    if (walletBalance.sol >= amountSOL) {
+  const handleSwap = (amountNative: number, amountLMT: number) => {
+    if (walletBalance.native >= amountNative) {
         setWalletBalance(prev => ({
-            sol: prev.sol - amountSOL,
+            native: prev.native - amountNative,
             lmt: prev.lmt + amountLMT,
-            usdValue: (prev.sol - amountSOL) * 145 + (prev.lmt + amountLMT) * 0.85
+            usdValue: (prev.native - amountNative) * 145 + (prev.lmt + amountLMT) * 0.85
         }));
         addTransaction({
             id: `tx-${Date.now()}`,
@@ -102,6 +107,15 @@ export default function App() {
         return true;
     }
     return false;
+  };
+
+  const handleChainChange = (chainId: ChainId) => {
+    setCurrentChain(chainId);
+    // Simulate balance fetch for new chain
+    setWalletBalance(prev => ({
+        ...prev,
+        native: Math.random() * 10 // Random balance for demo
+    }));
   };
 
   const addTransaction = (tx: Transaction) => {
@@ -127,6 +141,7 @@ export default function App() {
             isConnected={walletConnected}
             walletBalance={walletBalance}
             onSwap={handleSwap}
+            currentChain={currentChain}
           />
         )}
 
@@ -135,7 +150,12 @@ export default function App() {
         )}
 
         {phase === AppPhase.PREVIEW && appData && (
-          <BuilderPreview key="preview" appData={appData} onDeploy={handleDeploy} />
+          <BuilderPreview 
+            key="preview" 
+            appData={appData} 
+            onDeploy={handleDeploy} 
+            currentChain={currentChain}
+          />
         )}
 
         {phase === AppPhase.DASHBOARD && appData && (
@@ -150,6 +170,7 @@ export default function App() {
             onBack={handleBack}
             walletBalance={walletBalance}
             transactions={transactions}
+            currentChain={currentChain}
           />
         )}
 
@@ -162,6 +183,8 @@ export default function App() {
         balance={walletBalance}
         address="0x8A2...4B2F"
         transactions={transactions}
+        currentChain={currentChain}
+        onChainChange={handleChainChange}
       />
     </main>
   );

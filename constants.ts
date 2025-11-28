@@ -1,4 +1,4 @@
-import { TickerItem } from './types';
+import { TickerItem, ChainId, ChainConfig } from './types';
 
 export const COLORS = {
   void: '#0c0c0c',
@@ -8,6 +8,14 @@ export const COLORS = {
   purple: '#8b5cf6',
   textMuted: '#666666',
   white: '#ffffff',
+};
+
+export const CHAINS: Record<ChainId, ChainConfig> = {
+  SOL: { id: 'SOL', name: 'Solana', symbol: 'SOL', dex: 'Raydium', color: '#14F195' },
+  ETH: { id: 'ETH', name: 'Ethereum', symbol: 'ETH', dex: 'Uniswap', color: '#627EEA' },
+  BASE: { id: 'BASE', name: 'Base', symbol: 'ETH', dex: 'Aerodrome', color: '#0052FF' },
+  TON: { id: 'TON', name: 'TON', symbol: 'TON', dex: 'Ston.fi', color: '#0098EA' },
+  ARB: { id: 'ARB', name: 'Arbitrum', symbol: 'ETH', dex: 'Camelot', color: '#12AAFF' }
 };
 
 export const MOCK_TICKER: TickerItem[] = [

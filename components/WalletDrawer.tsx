@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, ExternalLink, LogOut, Wallet, TrendingUp } from 'lucide-react';
+import { X, Copy, ExternalLink, LogOut, Wallet, TrendingUp, ChevronDown, Check } from 'lucide-react';
 import { Button, Card, Badge } from './ui/GlintComponents';
-import { WalletBalance, Transaction } from '../types';
+import { WalletBalance, Transaction, ChainId } from '../types';
+import { CHAINS } from '../constants';
 
 interface WalletDrawerProps {
   isOpen: boolean;
@@ -11,6 +12,8 @@ interface WalletDrawerProps {
   balance: WalletBalance;
   address: string;
   transactions: Transaction[];
+  currentChain: ChainId;
+  onChainChange: (chain: ChainId) => void;
 }
 
 const WalletDrawer: React.FC<WalletDrawerProps> = ({ 
@@ -19,8 +22,13 @@ const WalletDrawer: React.FC<WalletDrawerProps> = ({
   onDisconnect, 
   balance, 
   address,
-  transactions 
+  transactions,
+  currentChain,
+  onChainChange
 }) => {
+  const [showChainSelector, setShowChainSelector] = useState(false);
+  const activeChain = CHAINS[currentChain];
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -61,6 +69,51 @@ const WalletDrawer: React.FC<WalletDrawerProps> = ({
               </button>
             </div>
 
+            {/* Network Switcher */}
+            <div className="px-6 pt-6 relative z-50">
+                <div className="text-[#666666] text-xs font-bold uppercase tracking-widest mb-2">Network</div>
+                <button 
+                    onClick={() => setShowChainSelector(!showChainSelector)}
+                    className="w-full bg-[#0c0c0c] border border-[#1f1f1f] p-3 flex justify-between items-center hover:border-[#333] transition-colors"
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: activeChain.color }}></div>
+                        <span className="text-white font-bold font-mono">{activeChain.name}</span>
+                    </div>
+                    <ChevronDown size={14} className={`text-[#666666] transition-transform ${showChainSelector ? 'rotate-180' : ''}`} />
+                </button>
+                
+                <AnimatePresence>
+                    {showChainSelector && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute left-6 right-6 top-[calc(100%+8px)] bg-[#111111] border border-[#1f1f1f] shadow-2xl"
+                        >
+                            {Object.values(CHAINS).map((chain) => (
+                                <button
+                                    key={chain.id}
+                                    onClick={() => {
+                                        onChainChange(chain.id);
+                                        setShowChainSelector(false);
+                                    }}
+                                    className="w-full p-3 flex items-center justify-between hover:bg-[#1a1a1a] transition-colors text-left"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chain.color }}></div>
+                                        <span className={`font-mono text-sm ${currentChain === chain.id ? 'text-white font-bold' : 'text-[#666666]'}`}>
+                                            {chain.name}
+                                        </span>
+                                    </div>
+                                    {currentChain === chain.id && <Check size={14} className="text-[#39b54a]" />}
+                                </button>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               
@@ -88,18 +141,20 @@ const WalletDrawer: React.FC<WalletDrawerProps> = ({
               <div className="space-y-3">
                 <h3 className="text-[#666666] text-xs font-bold uppercase tracking-widest mb-2">Assets</h3>
                 
-                {/* SOL */}
+                {/* Native Token (Dynamic) */}
                 <div className="bg-[#0c0c0c] p-4 border border-[#1f1f1f] flex justify-between items-center hover:border-[#333] transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-black border border-[#333] flex items-center justify-center font-bold text-xs">SOL</div>
+                    <div className="w-8 h-8 rounded-full bg-black border border-[#333] flex items-center justify-center font-bold text-xs" style={{ color: activeChain.color }}>
+                        {activeChain.symbol.substring(0, 1)}
+                    </div>
                     <div>
-                      <div className="font-bold text-white">Solana</div>
+                      <div className="font-bold text-white">{activeChain.name}</div>
                       <div className="text-[10px] text-[#666666]">Native Token</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-mono font-bold text-white">{balance.sol.toFixed(4)} SOL</div>
-                    <div className="text-[10px] text-[#666666]">${(balance.sol * 145).toFixed(2)}</div>
+                    <div className="font-mono font-bold text-white">{balance.native.toFixed(4)} {activeChain.symbol}</div>
+                    <div className="text-[10px] text-[#666666]">${(balance.native * 145).toFixed(2)}</div>
                   </div>
                 </div>
 

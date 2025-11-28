@@ -1,21 +1,44 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Card, Badge } from './ui/GlintComponents';
-import { GeneratedApp } from '../types';
-import { Rocket, Code2, Smartphone } from 'lucide-react';
-import { COLORS } from '../constants';
+import { GeneratedApp, ChainId } from '../types';
+import { Rocket, Code2, Smartphone, CheckCircle, Loader2 } from 'lucide-react';
+import { COLORS, CHAINS } from '../constants';
 
 interface BuilderPreviewProps {
   appData: GeneratedApp;
   onDeploy: () => void;
+  currentChain: ChainId;
 }
 
-const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy }) => {
+const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, currentChain }) => {
   const [activeTab, setActiveTab] = useState<'CODE' | 'PREVIEW'>('PREVIEW');
   const [showDeployModal, setShowDeployModal] = useState(false);
+  
+  // Deployment States
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  
+  const activeChain = CHAINS[currentChain];
+
+  const handleConfirmDeploy = async () => {
+    setIsDeploying(true);
+    
+    // Simulate smart contract deployment and transaction confirmation
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setIsDeploying(false);
+    setShowDeployModal(false);
+    setShowSuccessToast(true);
+
+    // Wait for toast to be read before redirecting
+    setTimeout(() => {
+        onDeploy();
+    }, 2500);
+  };
 
   return (
-    <div className="h-full flex flex-col md:flex-row bg-[#0c0c0c] text-white overflow-hidden">
+    <div className="h-full flex flex-col md:flex-row bg-[#0c0c0c] text-white overflow-hidden relative">
       
       {/* Left Panel: Code/Details */}
       <div className="flex-1 flex flex-col border-r border-[#1f1f1f] p-6 overflow-y-auto no-scrollbar">
@@ -92,7 +115,7 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy }) =>
                 variant="primary" 
                 className="w-full max-w-md shadow-[0_0_20px_rgba(57,181,74,0.3)]"
             >
-                DEPLOY TO MAINNET (0.1 SOL)
+                DEPLOY TO {activeChain.name.toUpperCase()} (0.1 {activeChain.symbol})
             </Button>
         </div>
 
@@ -112,16 +135,54 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy }) =>
                     >
                         <h3 className="text-2xl font-bold text-white mb-2 uppercase">Ready to Launch?</h3>
                         <p className="text-[#666666] mb-6 text-sm">
-                            This will deploy contracts, create the liquidity pool, and list on the Limetred dash.
+                            This will deploy contracts on <span className="text-white font-bold">{activeChain.name}</span>, create the liquidity pool, and list on the Limetred dash.
                         </p>
                         <div className="flex flex-col gap-3">
-                            <Button onClick={onDeploy}>CONFIRM DEPLOYMENT</Button>
-                            <Button variant="ghost" onClick={() => setShowDeployModal(false)}>CANCEL</Button>
+                            <Button onClick={handleConfirmDeploy} disabled={isDeploying}>
+                                {isDeploying ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Loader2 className="animate-spin" size={16} /> DEPLOYING...
+                                    </span>
+                                ) : (
+                                    "CONFIRM DEPLOYMENT"
+                                )}
+                            </Button>
+                            <Button variant="ghost" onClick={() => setShowDeployModal(false)} disabled={isDeploying}>
+                                CANCEL
+                            </Button>
                         </div>
                     </motion.div>
                 </motion.div>
             )}
         </AnimatePresence>
+
+        {/* Success Toast Notification */}
+        <AnimatePresence>
+            {showSuccessToast && (
+                <motion.div
+                    initial={{ opacity: 0, y: 50, x: 50 }}
+                    animate={{ opacity: 1, y: 0, x: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="fixed bottom-8 right-8 z-[100] bg-[#111111] border border-[#39b54a] p-5 shadow-[0_0_50px_rgba(57,181,74,0.3)] flex items-center gap-4 min-w-[320px]"
+                >
+                    <div className="w-12 h-12 bg-[#39b54a]/10 border border-[#39b54a]/30 flex items-center justify-center rounded-none shrink-0">
+                        <CheckCircle className="text-[#39b54a]" size={24} />
+                    </div>
+                    <div>
+                        <h4 className="text-white font-bold uppercase tracking-wider text-sm">Deployment Successful</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[#666666] text-xs font-mono">Redirecting to Dashboard</span>
+                            <span className="flex gap-1">
+                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite]"></span>
+                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite_0.2s]"></span>
+                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite_0.4s]"></span>
+                            </span>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+
       </div>
     </div>
   );

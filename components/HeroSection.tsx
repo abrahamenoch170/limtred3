@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
-import { MOCK_TICKER, COLORS } from '../constants';
+import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
 import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet } from 'lucide-react';
-import { WalletBalance } from '../types';
+import { WalletBalance, ChainId } from '../types';
 
 interface HeroSectionProps {
   onGenerate: (prompt: string) => void;
@@ -11,6 +11,7 @@ interface HeroSectionProps {
   isConnected: boolean;
   walletBalance: WalletBalance;
   onSwap: (sol: number, lmt: number) => boolean;
+  currentChain: ChainId;
 }
 
 const Logo = () => (
@@ -161,7 +162,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onConnectWallet, 
   isConnected,
   walletBalance,
-  onSwap 
+  onSwap,
+  currentChain
 }) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -169,6 +171,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   // DEX State
   const [swapAmount, setSwapAmount] = useState('1.0');
   const [swapSuccess, setSwapSuccess] = useState(false);
+  
+  const activeChain = CHAINS[currentChain];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,7 +188,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
     const amount = parseFloat(swapAmount);
     if (!isNaN(amount) && amount > 0) {
-        // Exchange Rate Mock: 1 SOL = 14020 LMT
+        // Exchange Rate Mock: 1 Native = 14020 LMT
         const received = amount * 14020.5;
         const success = onSwap(amount, received);
         if (success) {
@@ -347,7 +351,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                     <circle cx="100" cy="0" r="2" fill="#fff" />
                                 </svg>
                                 <div className="absolute top-0 right-0 bg-[#39b54a] text-black text-xs font-bold px-2 py-1 transform translate-x-1/2 -translate-y-1/2">
-                                    RAYDIUM MIGRATION
+                                    {activeChain.dex.toUpperCase()} MIGRATION
                                 </div>
                             </div>
                         </div>
@@ -364,17 +368,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <div className="flex-1">
                     <Badge color="text-[#39b54a]">PHASE 2: TRADING</Badge>
                     <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
-                        Instant Liquidity <br/> <span className="text-[#8b5cf6]">On Raydium</span>
+                        Instant Liquidity <br/> <span className="text-[#8b5cf6]">On {activeChain.dex}</span>
                     </h2>
                     <p className="text-[#666666] text-lg leading-relaxed mb-8">
-                        Once a curve completes, liquidity is automatically seeded into a Raydium AMM pool and burned.
-                        Limetred apps are composable with the entire Solana ecosystem instantly.
+                        Once a curve completes, liquidity is automatically seeded into a {activeChain.dex} AMM pool and burned.
+                        Limetred apps are composable with the entire {activeChain.name} ecosystem instantly.
                     </p>
                     <div className="grid grid-cols-2 gap-4 mb-8">
                         <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
                             <Repeat size={24} className="text-[#8b5cf6] mb-2" />
                             <h4 className="font-bold text-white uppercase">Auto-Swap</h4>
-                            <p className="text-[#666666] text-xs">Seamless routing through Jupiter.</p>
+                            <p className="text-[#666666] text-xs">Seamless routing through aggregators.</p>
                         </div>
                         <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
                             <Lock size={24} className="text-[#8b5cf6] mb-2" />
@@ -395,7 +399,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         <div className="bg-[#0c0c0c] p-4 mb-2 border border-[#1f1f1f]">
                             <div className="flex justify-between mb-2">
                                 <span className="text-xs text-[#666666]">YOU PAY</span>
-                                <span className="text-xs text-[#666666]">BALANCE: {isConnected ? walletBalance.sol.toFixed(2) : '--'} SOL</span>
+                                <span className="text-xs text-[#666666]">BALANCE: {isConnected ? walletBalance.native.toFixed(2) : '--'} {activeChain.symbol}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <input 
@@ -404,7 +408,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                     onChange={(e) => setSwapAmount(e.target.value)}
                                     className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none"
                                 />
-                                <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">SOL</span>
+                                <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">{activeChain.symbol}</span>
                             </div>
                         </div>
 
@@ -442,11 +446,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Features Grid */}
         <div className="max-w-7xl mx-auto px-6 py-24">
             <div className="mb-16">
-                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">The Operating System <br/> <span className="text-[#666666]">For High-Frequency Builders</span></h2>
+                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">The Operating System <br/> <span className="text-[#666666]">For Multi-Chain Builders</span></h2>
                 <div className="w-24 h-1 bg-[#39b54a]"></div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
                 <FeatureCard 
                     icon={<Cpu size={32} className="text-[#8b5cf6]" />}
                     title="Generative Architecture"
@@ -465,6 +469,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     description="All generated contracts include hard-coded safety: Liquidity Locking, Renounced Ownership, and max-wallet caps to prevent sniper dominance."
                     step="03"
                 />
+            </div>
+            
+            {/* Multi-Chain Support Bar */}
+            <div className="border-t border-[#1f1f1f] pt-12">
+                 <h4 className="text-[#666666] text-xs font-bold uppercase tracking-widest mb-8 text-center">Supported Networks</h4>
+                 <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-70 grayscale hover:grayscale-0 transition-all duration-500">
+                    {Object.values(CHAINS).map(chain => (
+                        <div key={chain.id} className="flex items-center gap-2">
+                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: chain.color }}></div>
+                             <span className="font-bold text-white text-lg">{chain.name}</span>
+                        </div>
+                    ))}
+                 </div>
             </div>
         </div>
 

@@ -5,6 +5,17 @@ export enum AppPhase {
   DASHBOARD = 'DASHBOARD'
 }
 
+export type ChainId = 'SOL' | 'ETH' | 'BASE' | 'TON' | 'ARB';
+
+export interface ChainConfig {
+  id: ChainId;
+  name: string;
+  symbol: string;
+  dex: string;
+  color: string;
+  icon?: string;
+}
+
 export interface GeneratedApp {
   name: string;
   description: string;
@@ -35,7 +46,7 @@ export interface Transaction {
 }
 
 export interface WalletBalance {
-  sol: number;
+  native: number; // Replaces 'sol' for multi-chain support
   lmt: number;
   usdValue: number;
 }
