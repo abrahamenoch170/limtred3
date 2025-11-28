@@ -89,7 +89,7 @@ contract NeoMarketToken is ERC20, Ownable {
 
   try {
     const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-preview', // Upgraded to Gemini 3 Pro for superior code generation
       contents: `
         You are a legendary Web3 Solutions Architect.
         User Prompt: "${prompt}"

@@ -285,7 +285,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 <div>
                                     <div className="font-bold text-white mb-1 uppercase tracking-wider">Liquidity Graduation</div>
                                     <p className="leading-relaxed">
-                                        When market cap hits <span className="text-[#39b54a]">$60k</span>, all liquidity is deposited into a {activeChain.dex} AMM pool and burned.
+                                        Reaching <span className="text-[#39b54a]">$60k Market Cap</span> triggers 'Graduation'. The bonding curve stops, and 100% of liquidity is seeded into {activeChain.dex} and burned.
                                     </p>
                                     <div className="mt-2 text-[#39b54a] font-bold">
                                         ✅ Rug-proof.
