@@ -109,6 +109,25 @@ export default function App() {
     return false;
   };
 
+  const handleTradeKeys = (action: 'BUY' | 'SELL', quantity: number, totalValue: number) => {
+    setWalletBalance(prev => {
+        const newNative = action === 'BUY' ? prev.native - totalValue : prev.native + totalValue;
+        return {
+            ...prev,
+            native: newNative,
+            usdValue: newNative * 145 + prev.lmt * 0.85 // Approx calc
+        };
+    });
+    
+    addTransaction({
+        id: `tx-${Date.now()}`,
+        type: action === 'BUY' ? 'BUY_KEYS' : 'SELL_KEYS',
+        amount: `${action === 'BUY' ? '-' : '+'}${totalValue.toFixed(4)} ${CHAINS[currentChain].symbol}`,
+        status: 'SUCCESS',
+        timestamp: 'Just now'
+    });
+  };
+
   const handleChainChange = (chainId: ChainId) => {
     setCurrentChain(chainId);
     // Simulate balance fetch for new chain
@@ -171,6 +190,7 @@ export default function App() {
             walletBalance={walletBalance}
             transactions={transactions}
             currentChain={currentChain}
+            onTradeKeys={handleTradeKeys}
           />
         )}
 

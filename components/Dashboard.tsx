@@ -3,7 +3,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipPro
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
 import { GeneratedApp, MarketData, Transaction, WalletBalance, ChainId } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat } from 'lucide-react';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat, DollarSign } from 'lucide-react';
 import { COLORS, CHAINS } from '../constants';
 
 interface DashboardProps {
@@ -14,6 +14,7 @@ interface DashboardProps {
   walletBalance: WalletBalance;
   transactions: Transaction[];
   currentChain: ChainId;
+  onTradeKeys: (action: 'BUY' | 'SELL', quantity: number, totalValue: number) => void;
 }
 
 const Logo = () => (
@@ -56,7 +57,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     onBack,
     walletBalance,
     transactions,
-    currentChain 
+    currentChain,
+    onTradeKeys
 }) => {
   const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData());
   const [marketCap, setMarketCap] = useState(12450);
@@ -67,6 +69,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // App Simulation State
   const [keysSold, setKeysSold] = useState(482);
   const [keyPrice, setKeyPrice] = useState(0.85);
+  const [userKeys, setUserKeys] = useState(0); // Track user's keys
 
   useEffect(() => {
     // Market Simulation
@@ -111,6 +114,36 @@ const Dashboard: React.FC<DashboardProps> = ({
         clearInterval(keysTimer);
     };
   }, []);
+
+  const handleBuyKey = () => {
+    if (!isConnected) {
+        onConnect();
+        return;
+    }
+    if (walletBalance.native >= keyPrice) {
+        onTradeKeys('BUY', 1, keyPrice);
+        setUserKeys(prev => prev + 1);
+        setKeysSold(prev => prev + 1);
+        setKeyPrice(prev => prev + 0.0015);
+    }
+  };
+
+  const handleSellKey = () => {
+    if (!isConnected) {
+        onConnect();
+        return;
+    }
+    if (userKeys > 0) {
+        // Tax logic: 20% if time > 0, else 1%
+        const taxRate = timeLeft > 0 ? 0.20 : 0.01;
+        const revenue = keyPrice * (1 - taxRate);
+        
+        onTradeKeys('SELL', 1, revenue);
+        setUserKeys(prev => prev - 1);
+        // Selling decreases price slightly in bonding curve
+        setKeyPrice(prev => Math.max(0.001, prev - 0.0015));
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -377,7 +410,31 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div className="bg-[#0c0c0c] p-6 border border-[#1f1f1f] min-w-[200px] text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                         <div className="text-[#39b54a] text-4xl font-bold mb-1 font-mono">5.2%</div>
                         <div className="text-[#666666] text-xs font-mono uppercase mb-4">Current APR</div>
-                        <Button variant="secondary" fullWidth className="text-xs">BUY KEYS</Button>
+                        
+                        <div className="mb-2 text-xs text-[#666666] flex justify-between px-1">
+                            <span>Owned:</span>
+                            <span className="text-white font-bold">{userKeys}</span>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="secondary" 
+                                fullWidth 
+                                className="text-xs py-2"
+                                onClick={handleBuyKey}
+                            >
+                                BUY
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                fullWidth 
+                                className={`text-xs py-2 ${userKeys > 0 ? 'border-red-500/50 text-red-500 hover:bg-red-500/10' : 'opacity-50 cursor-not-allowed'}`}
+                                onClick={handleSellKey}
+                                disabled={userKeys === 0}
+                            >
+                                SELL
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </Card>
@@ -440,11 +497,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                                     tx.type === 'YIELD' ? 'border-[#39b54a] bg-[#39b54a]/10 text-[#39b54a]' : 
                                     tx.type === 'DEPLOY' ? 'border-[#8b5cf6] bg-[#8b5cf6]/10 text-[#8b5cf6]' : 
                                     tx.type === 'SWAP' ? 'border-blue-500 bg-blue-500/10 text-blue-500' :
+                                    tx.type === 'SELL_KEYS' ? 'border-red-500 bg-red-500/10 text-red-500' :
                                     'border-[#333] bg-[#111] text-white'
                                 }`}>
                                     {tx.type === 'YIELD' && <ArrowDownLeft size={14} />}
                                     {tx.type === 'DEPLOY' && <CheckCircle2 size={14} />}
                                     {tx.type === 'SWAP' && <Repeat size={14} />}
+                                    {tx.type === 'SELL_KEYS' && <DollarSign size={14} />}
                                     {(tx.type === 'BUY_KEYS' || tx.type === 'TRADE') && <ArrowUpRight size={14} />}
                                 </div>
                                 <span className="text-xs font-bold font-mono text-white">{tx.type.replace('_', ' ')}</span>
