@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 
 interface HeroSectionProps {
@@ -22,7 +22,7 @@ const Logo = () => (
 );
 
 // --- MODAL CONTENT DATA ---
-type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | null;
+type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | 'WHITEPAPER' | null;
 
 const PROTOCOL_CONTENT = {
   DOCS: {
@@ -151,6 +151,88 @@ const PROTOCOL_CONTENT = {
              <h4 className="text-[#39b54a] text-xs font-bold uppercase mb-2">Automated Safety</h4>
              <p className="text-xs">Every deployment runs through Slither and Mythril static analysis before hitting the mainnet.</p>
         </div>
+      </div>
+    )
+  },
+  WHITEPAPER: {
+    title: "LIMETRED PROTOCOL WHITE PAPER v1.0",
+    icon: <BookOpen size={24} className="text-white" />,
+    content: (
+      <div className="space-y-8 text-sm text-[#cccccc] font-mono leading-relaxed">
+        
+        {/* Abstract */}
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+             <Layers className="text-[#39b54a]" size={16} />
+             <h4 className="text-white font-bold uppercase tracking-wider">1. Abstract</h4>
+          </div>
+          <p className="pl-6 border-l border-[#333]">
+            Limetred is a generative "Venture-as-a-Service" protocol designed to reduce the time-to-market for decentralized applications (dApps) from weeks to seconds. By combining Large Language Model (LLM) reasoning with formally verified smart contract templates, Limetred automates the entire venture lifecycle: code generation, token deployment, and liquidity provisioning.
+          </p>
+        </section>
+
+        {/* The Problem */}
+        <section>
+          <h4 className="text-white font-bold uppercase tracking-wider mb-3">2. The Fragmentation Problem</h4>
+          <div className="bg-[#111] p-4 border border-[#1f1f1f] grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+               <div className="text-xs text-red-500 font-bold mb-1">CURRENT STATE</div>
+               <p className="text-xs text-[#666666]">Manual Solidity development is error-prone. Audits cost $5k+. Liquidity bootstrapping requires significant capital.</p>
+             </div>
+             <div>
+               <div className="text-xs text-[#39b54a] font-bold mb-1">LIMETRED STATE</div>
+               <p className="text-xs text-[#666666]">Zero-capital launch. Automated security checks. Instant liquidity via internal bonding curves.</p>
+             </div>
+          </div>
+        </section>
+
+        {/* Technical Architecture */}
+        <section>
+           <div className="flex items-center gap-2 mb-3">
+             <Cpu className="text-[#8b5cf6]" size={16} />
+             <h4 className="text-white font-bold uppercase tracking-wider">3. Technical Architecture</h4>
+          </div>
+          <div className="space-y-3 pl-6 border-l border-[#8b5cf6]">
+             <div className="relative">
+                <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
+                <strong className="text-white">Generative Engine:</strong> Uses Google Gemini 1.5 Flash Reasoning for intent parsing and AST generation.
+             </div>
+             <div className="relative">
+                <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
+                <strong className="text-white">Factory Contract:</strong> A singleton factory `LimetredFactory.sol` that deploys deterministic proxies for gas efficiency.
+             </div>
+             <div className="relative">
+                <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
+                <strong className="text-white">Bonding Curve:</strong> A linear-quadratic curve `P = m * S^2` ensuring continuous liquidity and preventing rugs.
+             </div>
+          </div>
+        </section>
+
+        {/* Roadmap */}
+        <section>
+           <div className="flex items-center gap-2 mb-3">
+             <Network className="text-white" size={16} />
+             <h4 className="text-white font-bold uppercase tracking-wider">4. Roadmap</h4>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+             <div className="bg-[#111] p-3 border border-[#39b54a]">
+                <div className="text-[10px] text-[#39b54a] font-bold">Q3 2024</div>
+                <div className="text-white text-xs font-bold mt-1">MAINNET</div>
+                <div className="text-[10px] text-[#666666] mt-1">Solana Launch</div>
+             </div>
+             <div className="bg-[#111] p-3 border border-[#1f1f1f] opacity-75">
+                <div className="text-[10px] text-[#666666] font-bold">Q4 2024</div>
+                <div className="text-white text-xs font-bold mt-1">MULTI-CHAIN</div>
+                <div className="text-[10px] text-[#666666] mt-1">Base & TON</div>
+             </div>
+             <div className="bg-[#111] p-3 border border-[#1f1f1f] opacity-50">
+                <div className="text-[10px] text-[#666666] font-bold">Q1 2025</div>
+                <div className="text-white text-xs font-bold mt-1">AI AGENTS</div>
+                <div className="text-[10px] text-[#666666] mt-1">Auto-Trading</div>
+             </div>
+          </div>
+        </section>
+
       </div>
     )
   }
@@ -496,7 +578,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             Traditional web3 development is slow, expensive, and fragmented. 
                             Limetred consolidates the entire venture lifecycle—from IDE to DEX—into a single 30-second workflow.
                         </p>
-                        <Button variant="outline" className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            className="flex items-center gap-2"
+                            onClick={(e) => openModal(e, 'WHITEPAPER')}
+                        >
                             READ THE WHITEPAPER <ArrowRight size={16} />
                         </Button>
                     </div>
