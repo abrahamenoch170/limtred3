@@ -3,7 +3,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'rec
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
 import { GeneratedApp, MarketData } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench } from 'lucide-react';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
@@ -169,8 +169,30 @@ const Dashboard: React.FC<DashboardProps> = ({ appData }) => {
                             style={{ width: `${(marketCap / 60000) * 100}%` }}
                         ></div>
                     </div>
-                    <div className="text-center text-[10px] text-[#39b54a]">
-                        ⚠️ Liquidity migrates to Raydium automatically at 100%
+                    <div className="relative group/tooltip cursor-help w-fit mx-auto">
+                        <div className="text-center text-[10px] text-[#39b54a]">
+                            ⚠️ Liquidity migrates to Raydium automatically at 100%
+                        </div>
+                        
+                        {/* Raydium Migration Tooltip */}
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-72 bg-[#111111] border border-[#1f1f1f] p-4 text-xs text-[#666666] hidden group-hover/tooltip:block z-50 shadow-[0_0_20px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+                            <div className="flex items-start gap-3">
+                                <div className="p-1 bg-[#39b54a]/10 border border-[#39b54a] rounded-none">
+                                    <Info size={14} className="text-[#39b54a]" />
+                                </div>
+                                <div>
+                                    <div className="font-bold text-white mb-1 uppercase tracking-wider">Liquidity Graduation</div>
+                                    <p className="leading-relaxed">
+                                        When market cap hits <span className="text-[#39b54a]">$60k</span>, all liquidity is deposited into a Raydium AMM pool and burned.
+                                    </p>
+                                    <div className="mt-2 text-[#39b54a] font-bold">
+                                        ✅ Rug-proof.
+                                        <br/>
+                                        ✅ Forever tradable.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </Card>
