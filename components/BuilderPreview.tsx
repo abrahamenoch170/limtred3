@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/GlintComponents';
 import { GeneratedApp, ChainId } from '../types';
+import { generateProjectAsset } from '../services/geminiService';
 import { 
   Rocket, Smartphone, CheckCircle, Loader2, Monitor, Tablet, 
-  RefreshCw, Maximize2, X, ChevronDown, FileCode 
+  RefreshCw, Maximize2, X, ChevronDown, FileCode, Image as ImageIcon, Download 
 } from 'lucide-react';
 import { CHAINS } from '../constants';
 
@@ -59,6 +60,12 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  // Asset Studio State
+  const [assetPrompt, setAssetPrompt] = useState("");
+  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [isGeneratingAsset, setIsGeneratingAsset] = useState(false);
+  const [generatedAsset, setGeneratedAsset] = useState<string | null>(null);
+  
   const activeChain = CHAINS[currentChain];
 
   const handleRefresh = () => {
@@ -73,6 +80,14 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
     setShowDeployModal(false); 
     setShowSuccessToast(true);
     setTimeout(() => onDeploy(), 2500);
+  };
+
+  const handleGenerateAsset = async () => {
+    if (!assetPrompt) return;
+    setIsGeneratingAsset(true);
+    const result = await generateProjectAsset(assetPrompt, aspectRatio);
+    setGeneratedAsset(result);
+    setIsGeneratingAsset(false);
   };
 
   const getActiveCode = () => {
@@ -126,6 +141,9 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                           <button onClick={() => setActiveFile('Config.json')} className={`w-full text-left text-xs font-mono py-1 px-2 flex items-center gap-2 ${activeFile === 'Config.json' ? 'bg-[#39b54a]/10 text-[#39b54a]' : 'text-[#888] hover:text-white'}`}>
                               <FileCode size={12} /> Config.json
                           </button>
+                          <button onClick={() => setActiveFile('Assets')} className={`w-full text-left text-xs font-mono py-1 px-2 flex items-center gap-2 ${activeFile === 'Assets' ? 'bg-[#8b5cf6]/10 text-[#8b5cf6]' : 'text-[#888] hover:text-white'}`}>
+                              <ImageIcon size={12} /> Asset Studio
+                          </button>
                       </div>
                   </div>
               </div>
@@ -135,11 +153,11 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
               </div>
           </div>
 
-          {/* Editor Area */}
+          {/* Editor Area / Asset Studio */}
           <div className="flex-1 flex flex-col border-r border-[#1f1f1f] min-w-[300px]">
               {/* Tabs */}
               <div className="flex bg-[#111] border-b border-[#1f1f1f] shrink-0">
-                  {['Contract.sol', 'App.tsx', 'Config.json'].map(file => (
+                  {['Contract.sol', 'App.tsx', 'Config.json', 'Assets'].map(file => (
                       <button 
                         key={file}
                         onClick={() => setActiveFile(file)}
@@ -151,10 +169,64 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                   ))}
               </div>
               
-              {/* Code View */}
-              <div className="flex-1 bg-[#0c0c0c] p-4 overflow-auto">
-                  <SyntaxHighlight code={getActiveCode()} />
-              </div>
+              {/* Content View */}
+              {activeFile === 'Assets' ? (
+                <div className="flex-1 bg-[#0c0c0c] p-6 overflow-auto">
+                    <div className="max-w-md mx-auto">
+                        <h3 className="text-white font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <ImageIcon size={16} className="text-[#8b5cf6]" /> Asset Generator
+                        </h3>
+                        
+                        <div className="bg-[#111] border border-[#1f1f1f] p-4 mb-4">
+                            <label className="text-xs text-[#666] uppercase font-bold mb-2 block">Prompt</label>
+                            <textarea 
+                                value={assetPrompt}
+                                onChange={(e) => setAssetPrompt(e.target.value)}
+                                placeholder="Cyberpunk logo for DeFi protocol, glowing neon green..."
+                                className="w-full bg-[#0c0c0c] border border-[#333] p-2 text-sm text-white focus:border-[#8b5cf6] outline-none h-24 mb-4 font-mono resize-none"
+                            />
+                            
+                            <label className="text-xs text-[#666] uppercase font-bold mb-2 block">Aspect Ratio</label>
+                            <div className="grid grid-cols-4 gap-2 mb-4">
+                                {["1:1", "16:9", "9:16", "4:3"].map(ratio => (
+                                    <button 
+                                        key={ratio}
+                                        onClick={() => setAspectRatio(ratio)}
+                                        className={`py-1 text-xs border ${aspectRatio === ratio ? 'border-[#8b5cf6] text-[#8b5cf6] bg-[#8b5cf6]/10' : 'border-[#333] text-[#666] hover:border-[#666]'}`}
+                                    >
+                                        {ratio}
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            <button 
+                                onClick={handleGenerateAsset}
+                                disabled={isGeneratingAsset || !assetPrompt}
+                                className="w-full bg-[#8b5cf6] text-white py-2 font-bold uppercase text-xs hover:bg-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {isGeneratingAsset ? <Loader2 className="animate-spin" size={14}/> : 'GENERATE ASSET'}
+                            </button>
+                        </div>
+
+                        {generatedAsset && (
+                            <div className="bg-[#111] border border-[#1f1f1f] p-2">
+                                <img src={generatedAsset} alt="Generated Asset" className="w-full h-auto border border-[#333]" />
+                                <a 
+                                    href={generatedAsset} 
+                                    download={`asset-${Date.now()}.png`}
+                                    className="block text-center text-xs text-[#8b5cf6] mt-2 hover:underline"
+                                >
+                                    Download Image
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </div>
+              ) : (
+                <div className="flex-1 bg-[#0c0c0c] p-4 overflow-auto">
+                    <SyntaxHighlight code={getActiveCode()} />
+                </div>
+              )}
 
               {/* Terminal */}
               <div className="h-32 border-t border-[#1f1f1f] bg-[#111] flex flex-col shrink-0">

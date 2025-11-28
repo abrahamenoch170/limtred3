@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
 
 interface HeroSectionProps {
-  onGenerate: (prompt: string) => void;
+  onGenerate: (prompt: string, imageBase64?: string) => void;
   onConnectWallet: () => void;
   isConnected: boolean;
   walletBalance: WalletBalance;
@@ -23,7 +23,7 @@ const Logo = () => (
   </svg>
 );
 
-// --- MODAL CONTENT DATA ---
+// ... (Modal Content Types & Data remain unchanged) ...
 type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | 'WHITEPAPER' | null;
 
 const PROTOCOL_CONTENT = {
@@ -36,7 +36,7 @@ const PROTOCOL_CONTENT = {
           <h4 className="text-white font-bold mb-2 uppercase">1. Architecture Overview</h4>
           <p>Limetred utilizes a proprietary generative pipeline:
             <br/>- <span className="text-[#39b54a]">Input:</span> Natural Language Intent
-            <br/>- <span className="text-[#39b54a]">Processing:</span> Google Gemini 1.5 Flash (Reasoning)
+            <br/>- <span className="text-[#39b54a]">Processing:</span> Google Gemini 3 Pro (Reasoning)
             <br/>- <span className="text-[#39b54a]">Output:</span> AST-verified Solidity 0.8.20 + React 18 Frontend
           </p>
         </div>
@@ -161,7 +161,6 @@ const PROTOCOL_CONTENT = {
     icon: <BookOpen size={24} className="text-white" />,
     content: (
       <div className="space-y-8 text-sm text-[#cccccc] font-mono leading-relaxed">
-        
         {/* Abstract */}
         <section>
           <div className="flex items-center gap-2 mb-3">
@@ -197,7 +196,7 @@ const PROTOCOL_CONTENT = {
           <div className="space-y-3 pl-6 border-l border-[#8b5cf6]">
              <div className="relative">
                 <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
-                <strong className="text-white">Generative Engine:</strong> Uses Google Gemini 1.5 Flash Reasoning for intent parsing and AST generation.
+                <strong className="text-white">Generative Engine:</strong> Uses Google Gemini 3 Pro Reasoning for intent parsing and AST generation.
              </div>
              <div className="relative">
                 <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
@@ -252,6 +251,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // DEX State
   const [swapAmount, setSwapAmount] = useState('1.0');
@@ -261,8 +262,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (prompt.trim()) {
-      onGenerate(prompt);
+    if (prompt.trim() || selectedImage) {
+      onGenerate(prompt, selectedImage || undefined);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -378,10 +390,48 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     placeholder="Describe your billion-dollar idea..." 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="text-2xl md:text-4xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-32"
+                    className="text-2xl md:text-4xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-32 pr-12"
                   />
+                  
+                  {/* Image Upload Trigger */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
+                    <button 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`p-2 rounded-full transition-colors ${selectedImage ? 'text-[#39b54a] bg-[#39b54a]/10' : 'text-[#666] hover:text-white'}`}
+                        title="Analyze Screenshot"
+                    >
+                        <ImageIcon size={20} />
+                    </button>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                    />
+                  </div>
+
                   <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#39b54a] to-transparent opacity-50" />
                 </div>
+                
+                {/* Image Preview Tag */}
+                <AnimatePresence>
+                    {selectedImage && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 10 }}
+                            className="mt-2 flex justify-center"
+                        >
+                            <div className="flex items-center gap-2 bg-[#111] border border-[#39b54a] px-3 py-1 rounded-full text-xs text-[#39b54a]">
+                                <Paperclip size={12} />
+                                <span>Image attached for analysis</span>
+                                <button onClick={() => setSelectedImage(null)} className="ml-2 hover:text-white"><X size={12}/></button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
                 
                 <div className="mt-12 flex justify-center">
                   <Button type="submit" variant="primary" className="min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-lg">
@@ -533,9 +583,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
+      {/* ... (Documentation, Footer, Modals code remains the same) ... */}
       {/* -------------------- DOCUMENTATION SECTION -------------------- */}
       <div className="bg-[#111111]/95 backdrop-blur-md border-t border-[#1f1f1f] relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
-        
         {/* Features Grid */}
         <div className="max-w-7xl mx-auto px-6 py-24">
             <ScrollFade>

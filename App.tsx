@@ -10,6 +10,7 @@ import WalletDrawer from './components/WalletDrawer';
 import LaunchpadFeed from './components/LaunchpadFeed';
 import WalletConnectModal from './components/WalletConnectModal';
 import Background3D from './components/Background3D';
+import AIAssistant from './components/AIAssistant';
 import { CHAINS } from './constants';
 
 // Default Demo App
@@ -48,9 +49,9 @@ export default function App() {
     INITIAL_TRANSACTIONS.map(tx => ({...tx, amount: `${tx.amount} ${CHAINS['SOL'].symbol}`}))
   );
 
-  const handleGenerate = async (prompt: string) => {
+  const handleGenerate = async (prompt: string, imageBase64?: string) => {
     setPhase(AppPhase.LOADING);
-    const data = await generateAppConcept(prompt);
+    const data = await generateAppConcept(prompt, imageBase64);
     setAppData(data);
   };
 
@@ -237,6 +238,8 @@ export default function App() {
 
         </AnimatePresence>
       </div>
+
+      <AIAssistant />
 
       <WalletDrawer 
         isOpen={isWalletOpen}
