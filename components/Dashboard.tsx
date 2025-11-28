@@ -3,7 +3,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipPro
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
 import { GeneratedApp, MarketData, Transaction, WalletBalance, ChainId } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat, DollarSign, User, FileCheck, ExternalLink, Shield } from 'lucide-react';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat, DollarSign, User, Shield, ExternalLink } from 'lucide-react';
 import { COLORS, CHAINS } from '../constants';
 
 interface DashboardProps {

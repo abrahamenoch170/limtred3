@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Shield, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
-import { Button } from './ui/GlintComponents';
 import { ChainId } from '../types';
 import { CHAINS } from '../constants';
 
