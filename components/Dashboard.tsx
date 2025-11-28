@@ -199,13 +199,12 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                 
                 {/* 
                   Recharts Fix: 
-                  Instead of relying on flex-1 directly which can report 0 height during animations,
-                  we use a relative container with an absolute child that fills it.
-                  This ensures Recharts always has valid dimensions.
+                  Use absolute positioning within a relative container to ensure valid dimensions.
+                  Added debounce to prevent layout thrashing on mount.
                 */}
                 <div className="flex-1 w-full relative min-h-[200px] z-0">
-                    <div className="absolute inset-0">
-                        <ResponsiveContainer width="100%" height="100%">
+                    <div className="absolute inset-0 w-full h-full">
+                        <ResponsiveContainer width="100%" height="100%" debounce={50}>
                         <AreaChart data={marketData}>
                             <defs>
                             <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
@@ -223,7 +222,8 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                                 strokeWidth={2} 
                                 fillOpacity={1} 
                                 fill="url(#colorPrice)" 
-                                isAnimationActive={false} // Disable initial animation to prevent resize flicker
+                                isAnimationActive={true}
+                                animationDuration={500}
                             />
                         </AreaChart>
                         </ResponsiveContainer>
