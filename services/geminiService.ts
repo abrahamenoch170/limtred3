@@ -84,23 +84,27 @@ contract NeoMarketToken is ERC20, Ownable {
 }`,
       rarity: "LEGENDARY",
       attributes: ["ATTENTION STAKING", "DYNAMIC YIELD", "ANTI-WHALE"],
+      marketCap: 12500
     };
   }
 
   try {
     const response = await client.models.generateContent({
-      model: 'gemini-3-pro-preview', // Upgraded to Gemini 3 Pro for superior code generation
+      model: 'gemini-3-pro-preview',
       contents: `
         You are a legendary Web3 Solutions Architect.
         User Prompt: "${prompt}"
 
         Generate a complete dApp specification in JSON format.
-        1. Name: A short, viral, crypto-native name (e.g. "LiquiDrain", "BasedPunks", "YieldChad").
-        2. Description: A compelling 2-sentence pitch emphasizing utility and "alpha".
-        3. Rarity: "COMMON", "RARE", or "LEGENDARY" based on how unique the idea is.
-        4. Attributes: 3 short, technical tags (e.g. "Reentrancy Guard", "Gas Optimized", "Auto-Compound").
-        5. Contract Snippet: Write a relevant Solidity snippet (v0.8.20). Do NOT write a generic ERC20 constructor. If it's a game, write the game logic functions (e.g. 'attack', 'loot'). If it's DeFi, write the swap/staking logic. Include specific functions and state variables relevant to the "${prompt}". Keep it under 40 lines.
-        6. Code Snippet: Write a React Functional Component (using Tailwind CSS) that represents the main UI for this specific app. It should look like a functional dashboard or interface for the requested idea. Use <div> structures, standard Tailwind colors (slate, zinc, cyan, emerald), and make it look "ready to deploy". Do NOT use external imports besides React.
+        1. Name: A short, viral, crypto-native name.
+        2. Description: A compelling 2-sentence pitch.
+        3. Rarity: "COMMON", "RARE", or "LEGENDARY".
+        4. Attributes: 3 short, technical tags.
+        5. Contract Snippet: Solidity (v0.8.20) Logic. Under 40 lines.
+        6. Code Snippet: React (Tailwind) Dashboard UI.
+        7. Market Cap: A realistic starting market cap number (integer) between 1000 and 50000.
+
+        Strictly output valid JSON.
       `,
       config: {
         responseMimeType: "application/json",
@@ -115,27 +119,37 @@ contract NeoMarketToken is ERC20, Ownable {
             attributes: { 
               type: Type.ARRAY, 
               items: { type: Type.STRING } 
-            }
+            },
+            marketCap: { type: Type.INTEGER }
           },
-          required: ["name", "description", "codeSnippet", "contractSnippet", "rarity", "attributes"]
+          required: ["name", "description", "codeSnippet", "contractSnippet", "rarity", "attributes", "marketCap"]
         }
       }
     });
 
     if (response.text) {
       try {
-        // Robust cleanup: remove any markdown blocks if the model hallucinates them
-        const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        // Robust cleanup: remove any markdown blocks or backticks
+        let cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        // Sometimes the model might output text before the JSON, try to find the first {
+        const firstBrace = cleanedText.indexOf('{');
+        const lastBrace = cleanedText.lastIndexOf('}');
+        
+        if (firstBrace !== -1 && lastBrace !== -1) {
+            cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+        }
+
         return JSON.parse(cleanedText) as GeneratedApp;
       } catch (jsonError) {
         console.error("JSON Parse Error:", jsonError);
+        console.log("Raw Text:", response.text);
         throw new Error("Failed to parse generation result");
       }
     }
     throw new Error("Empty response");
   } catch (error) {
     console.error("Gemini generation failed:", error);
-    // Fallback on error
      return {
       name: "ErrorFallback App",
       description: "Could not generate app. Please check API Key.",
@@ -143,6 +157,7 @@ contract NeoMarketToken is ERC20, Ownable {
       contractSnippet: PREBUILT_CODE,
       rarity: "COMMON",
       attributes: ["ERROR HANDLER", "FALLBACK MODE"],
+      marketCap: 5000
     };
   }
 };

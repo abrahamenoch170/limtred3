@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, ExternalLink, LogOut, Wallet, TrendingUp, ChevronDown, Check } from 'lucide-react';
+import { X, Copy, ExternalLink, LogOut, Wallet, TrendingUp, ChevronDown, Check, ArrowLeftRight } from 'lucide-react';
 import { Button, Card, Badge } from './ui/GlintComponents';
 import { WalletBalance, Transaction, ChainId } from '../types';
 import { CHAINS } from '../constants';
@@ -139,9 +139,11 @@ const WalletDrawer: React.FC<WalletDrawerProps> = ({
 
               {/* Assets List */}
               <div className="space-y-3">
-                <h3 className="text-[#666666] text-xs font-bold uppercase tracking-widest mb-2">Assets</h3>
+                <div className="flex justify-between items-end mb-2">
+                    <h3 className="text-[#666666] text-xs font-bold uppercase tracking-widest">Assets</h3>
+                </div>
                 
-                {/* Native Token (Dynamic) */}
+                {/* Native Token */}
                 <div className="bg-[#0c0c0c] p-4 border border-[#1f1f1f] flex justify-between items-center hover:border-[#333] transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-black border border-[#333] flex items-center justify-center font-bold text-xs" style={{ color: activeChain.color }}>
@@ -173,6 +175,16 @@ const WalletDrawer: React.FC<WalletDrawerProps> = ({
                     <div className="text-[10px] text-[#666666]">${(balance.lmt * 0.85).toFixed(2)}</div>
                   </div>
                 </div>
+              </div>
+
+              {/* DEX Quick Action */}
+              <div className="bg-[#111] p-4 border border-[#1f1f1f] mt-4 flex items-center justify-between">
+                   <div className="text-xs text-[#666666]">
+                       Need more {activeChain.symbol}? 
+                   </div>
+                   <Button variant="outline" className="text-[10px] py-2 px-3 flex items-center gap-1">
+                       <ArrowLeftRight size={12} /> SWAP ASSETS
+                   </Button>
               </div>
 
               {/* Recent Transactions Mini */}

@@ -8,6 +8,7 @@ import BuilderPreview from './components/BuilderPreview';
 import Dashboard from './components/Dashboard';
 import WalletDrawer from './components/WalletDrawer';
 import LaunchpadFeed from './components/LaunchpadFeed';
+import WalletConnectModal from './components/WalletConnectModal';
 import { CHAINS } from './constants';
 
 // Default Demo App
@@ -35,6 +36,8 @@ export default function App() {
   // Wallet State
   const [walletConnected, setWalletConnected] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  
   const [walletBalance, setWalletBalance] = useState<WalletBalance>({
     native: 12.5, // Generic 'native' token amount (SOL, ETH, etc)
     lmt: 0,
@@ -72,21 +75,27 @@ export default function App() {
     });
   };
 
-  const handleConnectWallet = async () => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setWalletConnected(true);
-    setIsWalletOpen(true); // Open drawer on connect
-    
-    if (phase === AppPhase.HOME) {
-      // If connecting on home without a generated app, keep them on home or send to dashboard/launchpad
-      // Default to Launchpad view if just connecting
-      // But keeping existing logic:
-      if (!appData) {
-         // Optionally set demo app, or let them browse
-         // setAppData(DEMO_APP);
-      }
-      // setPhase(AppPhase.DASHBOARD); 
+  const initiateWalletConnection = () => {
+    if (walletConnected) {
+      setIsWalletOpen(true);
+    } else {
+      setShowConnectModal(true);
     }
+  };
+
+  const handleConnectWallet = (provider: string) => {
+    setWalletConnected(true);
+    setShowConnectModal(false);
+    setIsWalletOpen(true); // Open drawer on connect to show success
+    
+    // Add a mock transaction to show interaction
+    addTransaction({
+        id: `tx-conn-${Date.now()}`,
+        type: 'TRADE', // Using Trade type for general interaction
+        amount: `Connected ${provider}`,
+        status: 'SUCCESS',
+        timestamp: 'Just now'
+    });
   };
 
   const handleDisconnect = () => {
@@ -135,6 +144,7 @@ export default function App() {
 
   const handleChainChange = (chainId: ChainId) => {
     setCurrentChain(chainId);
+    // Simulate different balance on different chain
     setWalletBalance(prev => ({
         ...prev,
         native: Math.random() * 10 
@@ -148,8 +158,6 @@ export default function App() {
   const handleBack = () => {
     if (phase === AppPhase.DASHBOARD) {
         // If coming from Launchpad viewing a random project, go back to Launchpad
-        // If coming from Deployment flow, maybe Home
-        // For simplicity, if we have a Launchpad ID, go back to launchpad
         if (appData?.id?.startsWith('proj-')) {
             setPhase(AppPhase.LAUNCHPAD);
         } else {
@@ -177,10 +185,7 @@ export default function App() {
           <HeroSection 
             key="home" 
             onGenerate={handleGenerate} 
-            onConnectWallet={() => {
-                if(walletConnected) setIsWalletOpen(true);
-                else handleConnectWallet();
-            }}
+            onConnectWallet={initiateWalletConnection}
             isConnected={walletConnected}
             walletBalance={walletBalance}
             onSwap={handleSwap}
@@ -215,10 +220,7 @@ export default function App() {
             key="dashboard" 
             appData={appData} 
             isConnected={walletConnected}
-            onConnect={() => {
-                if(walletConnected) setIsWalletOpen(true);
-                else handleConnectWallet();
-            }}
+            onConnect={initiateWalletConnection}
             onBack={handleBack}
             walletBalance={walletBalance}
             transactions={transactions}
@@ -238,6 +240,13 @@ export default function App() {
         transactions={transactions}
         currentChain={currentChain}
         onChainChange={handleChainChange}
+      />
+
+      <WalletConnectModal 
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        onConnect={handleConnectWallet}
+        currentChain={currentChain}
       />
     </main>
   );
