@@ -241,7 +241,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         
         {/* Module A: Bonding Curve (Span 2 cols) */}
         <motion.div variants={itemVariants} className="col-span-1 md:col-span-2 min-w-0">
-            <Card className="flex flex-col h-full min-h-[400px] relative overflow-hidden group">
+            <Card className="flex flex-col h-full min-h-[400px] relative overflow-visible group">
                 <div className="flex justify-between items-start mb-6 z-10 relative">
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -250,36 +250,48 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                         
                         <div className="flex flex-col">
+                            {/* Animated Market Cap */}
                             <motion.span
                                 key={marketCap}
-                                initial={{ color: "#39b54a", filter: "blur(4px)" }}
-                                animate={{ color: "#ffffff", filter: "blur(0px)" }}
-                                transition={{ duration: 0.3, ease: "circOut" }}
+                                initial={{ color: "#39b54a", opacity: 0.8 }}
+                                animate={{ color: "#ffffff", opacity: 1 }}
+                                transition={{ duration: 0.4 }}
                                 className="text-4xl md:text-5xl font-bold font-mono tracking-tighter"
                             >
                                 ${marketCap.toLocaleString()}
                             </motion.span>
                             
-                            <div className="flex items-center gap-3 mt-2">
+                            <div className="flex items-center gap-3 mt-3">
                                 <span className="text-[#666666] text-xs font-mono uppercase tracking-wider">Target:</span>
-                                <div className="flex items-center gap-2 px-2 py-1 bg-[#39b54a]/10 border border-[#39b54a] animate-pulse">
-                                     <Target size={12} className="text-[#39b54a]" />
-                                     <span className="text-[#39b54a] font-bold text-xs font-mono">$60,000 (GRADUATION)</span>
+                                {/* Highlighted Target Badge */}
+                                <div className="flex items-center gap-2 px-3 py-1 bg-[#39b54a]/10 border border-[#39b54a] shadow-[0_0_10px_rgba(57,181,74,0.2)]">
+                                     <Target size={14} className="text-[#39b54a] animate-pulse" />
+                                     <span className="text-[#39b54a] font-bold text-xs font-mono tracking-wide">$60,000 (GRADUATION)</span>
                                 </div>
-                                {/* Bonding Curve Tooltip */}
+                                
+                                {/* Bonding Curve Info & Tooltip */}
                                 <div className="relative group/target cursor-help ml-1">
-                                    <Info size={14} className="text-[#666666] hover:text-[#39b54a] transition-colors" />
-                                    <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-72 bg-[#111111] border border-[#1f1f1f] p-4 text-xs text-[#666666] hidden group-hover/target:block z-50 shadow-[0_0_20px_rgba(0,0,0,0.8)] backdrop-blur-xl">
-                                        <div className="font-bold text-white mb-2 uppercase tracking-wider border-b border-[#333] pb-2">Bonding Curve Mechanics</div>
+                                    <div className="p-1 hover:bg-[#333] transition-colors rounded-full">
+                                        <Info size={14} className="text-[#666666] hover:text-[#39b54a] transition-colors" />
+                                    </div>
+                                    
+                                    {/* Tooltip - Positioned BELOW the icon since it's at top of card */}
+                                    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-72 bg-[#111111] border border-[#1f1f1f] p-4 text-xs text-[#666666] hidden group-hover/target:block z-50 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[6px] border-b-[#1f1f1f]"></div>
+                                        
+                                        <div className="font-bold text-white mb-2 uppercase tracking-wider border-b border-[#333] pb-2 flex items-center gap-2">
+                                            <TrendingUp size={12} className="text-[#39b54a]" />
+                                            Bonding Curve
+                                        </div>
                                         <p className="leading-relaxed mb-3">
-                                            Price follows the formula <span className="text-[#39b54a] font-mono">y = x²</span>. As supply increases, price increases exponentially.
+                                            Price is governed by <span className="text-[#39b54a] font-mono">y = x²</span>. As tokens are bought, the price increases exponentially, rewarding early believers.
                                         </p>
                                         <div>
-                                            <span className="text-white font-bold">Benefits:</span>
-                                            <ul className="mt-1 space-y-1 list-disc list-inside">
-                                                <li>Instant liquidity (no seed needed)</li>
-                                                <li>Fair price discovery</li>
-                                                <li>Automatic market making</li>
+                                            <span className="text-white font-bold text-[10px] uppercase">Key Benefits:</span>
+                                            <ul className="mt-1 space-y-1">
+                                                <li className="flex items-center gap-2"><div className="w-1 h-1 bg-[#39b54a]"/> Instant Liquidity (No Seed)</li>
+                                                <li className="flex items-center gap-2"><div className="w-1 h-1 bg-[#39b54a]"/> Fair Price Discovery</li>
+                                                <li className="flex items-center gap-2"><div className="w-1 h-1 bg-[#39b54a]"/> Anti-Rug Math</li>
                                             </ul>
                                         </div>
                                     </div>
