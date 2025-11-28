@@ -450,7 +450,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 onClick={handleSellKey}
                                 disabled={userKeys === 0}
                             >
-                                SELL
+                                SELL {userKeys > 0 && `(${timeLeft > 0 ? '20%' : '1%'} TAX)`}
                             </Button>
                         </div>
                     </div>
