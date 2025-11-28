@@ -93,15 +93,17 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     // Keys Sales Simulation (Bonding Curve Logic)
     const keysTimer = setInterval(() => {
-      // Simulate market demand
-      if (Math.random() > 0.4) { 
+      // Simulate market demand - Less frequent updates, bigger jumps
+      if (Math.random() > 0.3) { 
         setKeysSold(prev => {
-            const nextCount = prev + 1;
-            setKeyPrice(currentPrice => currentPrice + 0.0015);
+            // Sell a random batch (2-5 keys) to make update feel significant
+            const batch = Math.floor(Math.random() * 4) + 2;
+            const nextCount = prev + batch;
+            setKeyPrice(currentPrice => currentPrice + (0.0015 * batch));
             return nextCount;
         });
       }
-    }, 1500);
+    }, 4000);
 
     return () => {
         clearInterval(interval);
