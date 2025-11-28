@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipProps } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -77,6 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   // App Simulation State
   const [keysSold, setKeysSold] = useState(482);
   const [userKeys, setUserKeys] = useState(0); // Track user's keys
+  const [showVerifier, setShowVerifier] = useState(false);
   
   // Calculate price based on keys sold (Linear Curve: P = Base + Slope * Supply)
   const keyPrice = BASE_KEY_PRICE + (keysSold * BONDING_SLOPE);
@@ -197,19 +199,55 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <Badge color="text-[#8b5cf6]">{activeChain.name} Network</Badge>
                   {appData.ticker && <Badge color="text-[#39b54a]">{appData.ticker}</Badge>}
                   
-                  {/* Contract Verification Tooltip */}
-                  <div className="relative group cursor-help ml-1">
-                      <Shield size={14} className="text-[#666666] hover:text-[#39b54a] transition-colors" />
-                      <div className="absolute top-full mt-2 left-0 w-max bg-[#111111] border border-[#1f1f1f] p-3 text-xs z-50 shadow-xl hidden group-hover:block">
-                          <div className="flex items-center gap-2 mb-1">
-                              <span className="text-white font-bold">Contract Verified</span>
-                              <CheckCircle2 size={12} className="text-[#39b54a]" />
-                          </div>
-                          <div className="font-mono text-[#666666] mb-2">0x7F...9A21</div>
-                          <a href="#" className="flex items-center gap-1 text-[#39b54a] hover:underline">
-                              View on {explorerName} <ExternalLink size={10} />
-                          </a>
-                      </div>
+                  {/* Contract Verification Tooltip - Click Activated */}
+                  <div className="relative ml-1">
+                      <button 
+                        onClick={() => setShowVerifier(!showVerifier)}
+                        className={`p-1 rounded transition-colors ${showVerifier ? 'bg-[#39b54a]/20' : 'hover:bg-[#1a1a1a]'}`}
+                        title="Verify Contract"
+                      >
+                          <Shield size={14} className={`transition-colors ${showVerifier ? 'text-[#39b54a]' : 'text-[#666666] hover:text-[#39b54a]'}`} />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {showVerifier && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute top-full mt-2 left-0 w-56 bg-[#111111] border border-[#1f1f1f] p-4 text-xs z-50 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl"
+                          >
+                              <div className="flex justify-between items-center mb-3 border-b border-[#333] pb-2">
+                                  <span className="font-bold text-white uppercase text-[10px] tracking-wider">Security Scan</span>
+                                  <CheckCircle2 size={12} className="text-[#39b54a]" />
+                              </div>
+                              
+                              <div className="space-y-2 mb-4">
+                                  <div className="flex justify-between text-[#666666] font-mono">
+                                      <span>Ownership</span>
+                                      <span className="text-[#39b54a]">RENOUNCED</span>
+                                  </div>
+                                  <div className="flex justify-between text-[#666666] font-mono">
+                                      <span>Liquidity</span>
+                                      <span className="text-[#39b54a]">LOCKED</span>
+                                  </div>
+                                  <div className="flex justify-between text-[#666666] font-mono">
+                                      <span>Mint Auth</span>
+                                      <span className="text-[#39b54a]">REVOKED</span>
+                                  </div>
+                              </div>
+                              
+                              <a 
+                                href="#" 
+                                className="flex items-center justify-center gap-2 w-full bg-[#39b54a]/10 border border-[#39b54a] text-[#39b54a] py-2 font-bold hover:bg-[#39b54a]/20 transition-colors uppercase text-[10px]"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                  View on {explorerName} <ExternalLink size={10} />
+                              </a>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                   </div>
               </div>
             </div>
