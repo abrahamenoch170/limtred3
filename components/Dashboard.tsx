@@ -3,7 +3,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'rec
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
 import { GeneratedApp, MarketData } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info } from 'lucide-react';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
@@ -39,7 +39,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
       setMarketCap(prev => prev + Math.floor(Math.random() * 100));
     }, 1000);
 
-    // Tax Timer Simulation (1s = 1m for demo speed? No, let's keep it steady for feel)
+    // Tax Timer Simulation
     const taxTimer = setInterval(() => {
         setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
     }, 60000);
@@ -127,22 +127,42 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
         {/* Module A: Bonding Curve (Span 2 cols) */}
         <motion.div variants={itemVariants} className="col-span-1 md:col-span-2">
             <Card className="flex flex-col h-full min-h-[350px] relative overflow-hidden group">
-                <div className="flex justify-between items-start mb-4 z-10 relative">
-                    <div>
-                        <h3 className="text-[#666666] text-xs uppercase tracking-widest mb-1">Internal Launchpad</h3>
-                        <div className="text-3xl font-bold text-white font-mono">
-                            ${marketCap.toLocaleString()} <span className="text-[#666666] text-sm">/ $60k</span>
+                <div className="flex justify-between items-start mb-6 z-10 relative">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                             <TrendingUp size={14} className="text-[#666666]" />
+                             <h3 className="text-[#666666] text-xs uppercase tracking-widest">Internal Launchpad</h3>
+                        </div>
+                        
+                        <div className="flex flex-col">
+                            <motion.span
+                                key={marketCap}
+                                initial={{ color: "#39b54a", filter: "blur(4px)" }}
+                                animate={{ color: "#ffffff", filter: "blur(0px)" }}
+                                transition={{ duration: 0.3, ease: "circOut" }}
+                                className="text-5xl font-bold font-mono tracking-tighter"
+                            >
+                                ${marketCap.toLocaleString()}
+                            </motion.span>
+                            
+                            <div className="flex items-center gap-3 mt-2">
+                                <span className="text-[#666666] text-xs font-mono uppercase tracking-wider">Target:</span>
+                                <div className="flex items-center gap-2 px-2 py-1 bg-[#39b54a]/10 border border-[#39b54a] animate-pulse">
+                                     <Target size={12} className="text-[#39b54a]" />
+                                     <span className="text-[#39b54a] font-bold text-xs font-mono">$60,000 (GRADUATION)</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <Badge color="text-[#39b54a] animate-pulse">+12.4%</Badge>
+                    <Badge color="text-[#39b54a] bg-[#39b54a]/5 border-[#39b54a]">+12.4% (24H)</Badge>
                 </div>
                 
-                <div className="flex-1 w-full relative z-0">
+                <div className="flex-1 w-full relative z-0 min-h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={marketData}>
                         <defs>
                         <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.3}/>
+                            <stop offset="5%" stopColor={COLORS.green} stopOpacity={0.2}/>
                             <stop offset="95%" stopColor={COLORS.green} stopOpacity={0}/>
                         </linearGradient>
                         </defs>
@@ -166,20 +186,22 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
                 </div>
                 
                 {/* King of Hill Progress */}
-                <div className="mt-4 z-10 relative bg-[#111111]/80 backdrop-blur-sm pt-2">
+                <div className="mt-4 z-10 relative bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] pt-4">
                     <div className="flex justify-between text-[10px] text-[#666666] mb-1 font-mono uppercase">
-                        <span>Graduation Target ($60k)</span>
-                        <span>{(marketCap / 60000 * 100).toFixed(1)}%</span>
+                        <span>Bonding Curve Progress</span>
+                        <span className="text-white">{(marketCap / 60000 * 100).toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-[#1f1f1f] h-2 mb-2">
-                        <div 
-                            className="bg-[#39b54a] h-full transition-all duration-1000" 
-                            style={{ width: `${(marketCap / 60000) * 100}%` }}
-                        ></div>
+                        <motion.div 
+                            className="bg-[#39b54a] h-full" 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(marketCap / 60000) * 100}%` }}
+                            transition={{ type: "spring", stiffness: 50 }}
+                        />
                     </div>
                     <div className="relative group/tooltip cursor-help w-fit mx-auto">
-                        <div className="text-center text-[10px] text-[#39b54a]">
-                            ⚠️ Liquidity migrates to Raydium automatically at 100%
+                        <div className="text-center text-[10px] text-[#39b54a] flex items-center gap-1 opacity-80 hover:opacity-100 transition-opacity">
+                            <Info size={10} /> Liquidity migrates to Raydium automatically at 100%
                         </div>
                         
                         {/* Raydium Migration Tooltip */}
