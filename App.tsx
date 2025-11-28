@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { AppPhase, GeneratedApp } from './types';
+import { AppPhase, GeneratedApp, WalletBalance, Transaction } from './types';
 import { generateAppConcept } from './services/geminiService';
 import HeroSection from './components/HeroSection';
 import GenerationTheater from './components/GenerationTheater';
 import BuilderPreview from './components/BuilderPreview';
 import Dashboard from './components/Dashboard';
+import WalletDrawer from './components/WalletDrawer';
 
-// Default Demo App for "Enter Launchpad" flow
+// Default Demo App
 const DEMO_APP: GeneratedApp = {
   name: "Limetred Protocol",
   description: "The native governance and utility protocol for the Limetred ecosystem.",
@@ -17,16 +18,31 @@ const DEMO_APP: GeneratedApp = {
   attributes: ["GOVERNANCE", "YIELD FARMING", "DAO"]
 };
 
+// Mock Initial Transactions
+const INITIAL_TRANSACTIONS: Transaction[] = [
+    { id: 'tx-1', type: 'YIELD', amount: '+0.042 SOL', status: 'PENDING', timestamp: 'Just now' },
+    { id: 'tx-2', type: 'BUY_KEYS', amount: '-1.70 SOL', status: 'SUCCESS', timestamp: '2m ago' },
+    { id: 'tx-3', type: 'DEPLOY', amount: '-0.10 SOL', status: 'SUCCESS', timestamp: '15m ago' },
+];
+
 export default function App() {
   const [phase, setPhase] = useState<AppPhase>(AppPhase.HOME);
   const [appData, setAppData] = useState<GeneratedApp | null>(null);
+  
+  // Wallet State
   const [walletConnected, setWalletConnected] = useState(false);
+  const [isWalletOpen, setIsWalletOpen] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<WalletBalance>({
+    sol: 12.5,
+    lmt: 0,
+    usdValue: 1812.50
+  });
+  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
 
   const handleGenerate = async (prompt: string) => {
     setPhase(AppPhase.LOADING);
     const data = await generateAppConcept(prompt);
     setAppData(data);
-    // The GenerationTheater component handles the delay logic visually.
   };
 
   const handleTheaterComplete = () => {
@@ -34,16 +50,27 @@ export default function App() {
   };
 
   const handleDeploy = () => {
-    // In a real app, this would trigger web3 wallet signature
     setPhase(AppPhase.DASHBOARD);
+    // Simulate cost
+    setWalletBalance(prev => ({
+        ...prev,
+        sol: prev.sol - 0.1,
+        usdValue: (prev.sol - 0.1) * 145 + (prev.lmt * 0.85)
+    }));
+    addTransaction({
+        id: `tx-${Date.now()}`,
+        type: 'DEPLOY',
+        amount: '-0.1 SOL',
+        status: 'SUCCESS',
+        timestamp: 'Just now'
+    });
   };
 
   const handleConnectWallet = async () => {
-    // Simulate connection delay
     await new Promise(resolve => setTimeout(resolve, 800));
     setWalletConnected(true);
+    setIsWalletOpen(true); // Open drawer on connect
     
-    // If on HOME, take them to the Dashboard (Launchpad view) immediately
     if (phase === AppPhase.HOME) {
       if (!appData) {
         setAppData(DEMO_APP);
@@ -52,20 +79,54 @@ export default function App() {
     }
   };
 
+  const handleDisconnect = () => {
+    setWalletConnected(false);
+    setIsWalletOpen(false);
+    setPhase(AppPhase.HOME);
+  };
+
+  const handleSwap = (amountSOL: number, amountLMT: number) => {
+    if (walletBalance.sol >= amountSOL) {
+        setWalletBalance(prev => ({
+            sol: prev.sol - amountSOL,
+            lmt: prev.lmt + amountLMT,
+            usdValue: (prev.sol - amountSOL) * 145 + (prev.lmt + amountLMT) * 0.85
+        }));
+        addTransaction({
+            id: `tx-${Date.now()}`,
+            type: 'SWAP',
+            amount: `+${amountLMT.toLocaleString()} LMT`,
+            status: 'SUCCESS',
+            timestamp: 'Just now'
+        });
+        return true;
+    }
+    return false;
+  };
+
+  const addTransaction = (tx: Transaction) => {
+    setTransactions(prev => [tx, ...prev]);
+  };
+
   const handleBack = () => {
     setPhase(AppPhase.HOME);
   };
 
   return (
-    <main className="h-screen w-screen overflow-hidden bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black">
+    <main className="h-screen w-screen overflow-hidden bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans">
       <AnimatePresence mode="wait">
         
         {phase === AppPhase.HOME && (
           <HeroSection 
             key="home" 
             onGenerate={handleGenerate} 
-            onConnectWallet={handleConnectWallet}
+            onConnectWallet={() => {
+                if(walletConnected) setIsWalletOpen(true);
+                else handleConnectWallet();
+            }}
             isConnected={walletConnected}
+            walletBalance={walletBalance}
+            onSwap={handleSwap}
           />
         )}
 
@@ -82,12 +143,26 @@ export default function App() {
             key="dashboard" 
             appData={appData} 
             isConnected={walletConnected}
-            onConnect={handleConnectWallet}
+            onConnect={() => {
+                if(walletConnected) setIsWalletOpen(true);
+                else handleConnectWallet();
+            }}
             onBack={handleBack}
+            walletBalance={walletBalance}
+            transactions={transactions}
           />
         )}
 
       </AnimatePresence>
+
+      <WalletDrawer 
+        isOpen={isWalletOpen}
+        onClose={() => setIsWalletOpen(false)}
+        onDisconnect={handleDisconnect}
+        balance={walletBalance}
+        address="0x8A2...4B2F"
+        transactions={transactions}
+      />
     </main>
   );
 }

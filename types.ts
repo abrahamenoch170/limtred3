@@ -27,8 +27,15 @@ export interface MarketData {
 
 export interface Transaction {
   id: string;
-  type: 'DEPLOY' | 'BUY_KEYS' | 'SELL_KEYS' | 'YIELD' | 'TRADE';
+  type: 'DEPLOY' | 'BUY_KEYS' | 'SELL_KEYS' | 'YIELD' | 'TRADE' | 'SWAP';
   amount: string;
+  token?: string;
   status: 'SUCCESS' | 'PENDING' | 'FAILED';
   timestamp: string;
+}
+
+export interface WalletBalance {
+  sol: number;
+  lmt: number;
+  usdValue: number;
 }

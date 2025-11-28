@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet } from 'lucide-react';
+import { WalletBalance } from '../types';
 
 interface HeroSectionProps {
   onGenerate: (prompt: string) => void;
   onConnectWallet: () => void;
   isConnected: boolean;
+  walletBalance: WalletBalance;
+  onSwap: (sol: number, lmt: number) => boolean;
 }
 
 const Logo = () => (
@@ -153,14 +156,41 @@ const PROTOCOL_CONTENT = {
 };
 
 
-const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, isConnected }) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ 
+  onGenerate, 
+  onConnectWallet, 
+  isConnected,
+  walletBalance,
+  onSwap 
+}) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  
+  // DEX State
+  const [swapAmount, setSwapAmount] = useState('1.0');
+  const [swapSuccess, setSwapSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim()) {
       onGenerate(prompt);
+    }
+  };
+
+  const handleSwapClick = () => {
+    if (!isConnected) {
+        onConnectWallet();
+        return;
+    }
+    const amount = parseFloat(swapAmount);
+    if (!isNaN(amount) && amount > 0) {
+        // Exchange Rate Mock: 1 SOL = 14020 LMT
+        const received = amount * 14020.5;
+        const success = onSwap(amount, received);
+        if (success) {
+            setSwapSuccess(true);
+            setTimeout(() => setSwapSuccess(false), 2000);
+        }
     }
   };
 
@@ -189,9 +219,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
                 <a href="#dex" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">DEX</a>
                 <Button 
                     variant={isConnected ? "outline" : "primary"} 
-                    className="py-2 px-6 text-xs"
+                    className="py-2 px-6 text-xs flex items-center gap-2"
                     onClick={onConnectWallet}
                 >
+                    {isConnected && <Wallet size={14} />}
                     {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
                 </Button>
             </div>
@@ -364,10 +395,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
                         <div className="bg-[#0c0c0c] p-4 mb-2 border border-[#1f1f1f]">
                             <div className="flex justify-between mb-2">
                                 <span className="text-xs text-[#666666]">YOU PAY</span>
-                                <span className="text-xs text-[#666666]">BALANCE: 12.5 SOL</span>
+                                <span className="text-xs text-[#666666]">BALANCE: {isConnected ? walletBalance.sol.toFixed(2) : '--'} SOL</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-2xl font-bold font-mono text-white">1.0</span>
+                                <input 
+                                    type="number"
+                                    value={swapAmount}
+                                    onChange={(e) => setSwapAmount(e.target.value)}
+                                    className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none"
+                                />
                                 <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">SOL</span>
                             </div>
                         </div>
@@ -381,15 +417,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
                         <div className="bg-[#0c0c0c] p-4 mt-2 mb-6 border border-[#1f1f1f]">
                             <div className="flex justify-between mb-2">
                                 <span className="text-xs text-[#666666]">YOU RECEIVE</span>
-                                <span className="text-xs text-[#666666]">EST: 14,020 LMT</span>
+                                <span className="text-xs text-[#666666]">EST: {(parseFloat(swapAmount || '0') * 14020).toLocaleString()} LMT</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-2xl font-bold font-mono text-[#39b54a]">14,020.5</span>
+                                <span className="text-2xl font-bold font-mono text-[#39b54a]">
+                                    {(parseFloat(swapAmount || '0') * 14020.5).toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                                </span>
                                 <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">LMT</span>
                             </div>
                         </div>
 
-                        <Button fullWidth variant="secondary" onClick={onConnectWallet}>SWAP TOKENS</Button>
+                        <Button fullWidth variant={swapSuccess ? 'primary' : 'secondary'} onClick={handleSwapClick}>
+                            {swapSuccess ? 'SWAP SUCCESSFUL' : isConnected ? 'SWAP TOKENS' : 'CONNECT WALLET TO SWAP'}
+                        </Button>
                     </Card>
                 </div>
             </div>

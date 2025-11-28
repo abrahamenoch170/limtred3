@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipProps } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
-import { GeneratedApp, MarketData, Transaction } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2 } from 'lucide-react';
+import { GeneratedApp, MarketData, Transaction, WalletBalance } from '../types';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat } from 'lucide-react';
 import { COLORS } from '../constants';
 
 interface DashboardProps {
@@ -11,6 +11,8 @@ interface DashboardProps {
   isConnected: boolean;
   onConnect: () => void;
   onBack: () => void;
+  walletBalance: WalletBalance;
+  transactions: Transaction[];
 }
 
 const Logo = () => (
@@ -31,14 +33,6 @@ const generateInitialData = (): MarketData[] => {
   return data;
 };
 
-// Mock Transactions
-const RECENT_TRANSACTIONS: Transaction[] = [
-    { id: 'tx-1', type: 'YIELD', amount: '+0.042 SOL', status: 'PENDING', timestamp: 'Just now' },
-    { id: 'tx-2', type: 'BUY_KEYS', amount: '-1.70 SOL', status: 'SUCCESS', timestamp: '2m ago' },
-    { id: 'tx-3', type: 'DEPLOY', amount: '-0.10 SOL', status: 'SUCCESS', timestamp: '15m ago' },
-    { id: 'tx-4', type: 'TRADE', amount: '+0.5 SOL', status: 'SUCCESS', timestamp: '1h ago' },
-];
-
 // Custom Tooltip Component
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
@@ -54,12 +48,19 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
   return null;
 };
 
-const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, onBack }) => {
+const Dashboard: React.FC<DashboardProps> = ({ 
+    appData, 
+    isConnected, 
+    onConnect, 
+    onBack,
+    walletBalance,
+    transactions 
+}) => {
   const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData());
   const [marketCap, setMarketCap] = useState(12450);
   const [timeLeft, setTimeLeft] = useState(48); // Minutes for tax drop
   
-  // App Keys Simulation State
+  // App Simulation State
   const [keysSold, setKeysSold] = useState(482);
   const [keyPrice, setKeyPrice] = useState(0.85);
 
@@ -88,11 +89,10 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
 
     // Keys Sales Simulation (Bonding Curve Logic)
     const keysTimer = setInterval(() => {
-      // Simulate market demand: 60% chance to sell a key every 1.5s
+      // Simulate market demand
       if (Math.random() > 0.4) { 
         setKeysSold(prev => {
             const nextCount = prev + 1;
-            // Linear Bonding Curve: Price increases by 0.0015 SOL for every key sold
             setKeyPrice(currentPrice => currentPrice + 0.0015);
             return nextCount;
         });
@@ -174,9 +174,10 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
           
           <Button 
             variant={isConnected ? "outline" : "primary"} 
-            className="py-2 text-xs"
+            className="py-2 text-xs flex items-center gap-2"
             onClick={onConnect}
           >
+            {isConnected && <Wallet size={14} />}
             {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
           </Button>
         </div>
@@ -223,11 +224,6 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                     <Badge color="text-[#39b54a] bg-[#39b54a]/5 border-[#39b54a]">+12.4% (24H)</Badge>
                 </div>
                 
-                {/* 
-                  Recharts Fix: 
-                  Use absolute positioning within a relative container to ensure valid dimensions.
-                  Added debounce to prevent layout thrashing on mount.
-                */}
                 <div className="flex-1 w-full relative min-h-[200px] z-0">
                     <div className="absolute inset-0 w-full h-full">
                         <ResponsiveContainer width="100%" height="100%" debounce={50}>
@@ -256,7 +252,6 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                     </div>
                 </div>
                 
-                {/* King of Hill Progress */}
                 <div className="mt-4 z-10 relative bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] pt-4">
                     <div className="flex justify-between text-[10px] text-[#666666] mb-1 font-mono uppercase">
                         <span>Bonding Curve Progress</span>
@@ -275,7 +270,6 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                             <Info size={10} /> Liquidity migrates to Raydium automatically at 100%
                         </div>
                         
-                        {/* Raydium Migration Tooltip */}
                         <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-72 bg-[#111111] border border-[#1f1f1f] p-4 text-xs text-[#666666] hidden group-hover/tooltip:block z-50 shadow-[0_0_20px_rgba(0,0,0,0.8)] backdrop-blur-xl">
                             <div className="flex items-start gap-3">
                                 <div className="p-1 bg-[#39b54a]/10 border border-[#39b54a] rounded-none">
@@ -430,7 +424,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                 </div>
                 
                 <div className="space-y-1">
-                    {RECENT_TRANSACTIONS.map((tx) => (
+                    {transactions.map((tx) => (
                         <div key={tx.id} className="grid grid-cols-4 md:grid-cols-5 items-center p-3 bg-[#0c0c0c] border border-[#1f1f1f] hover:border-[#333] transition-colors group">
                             
                             {/* Type */}
@@ -438,10 +432,12 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                                 <div className={`p-2 rounded-none border ${
                                     tx.type === 'YIELD' ? 'border-[#39b54a] bg-[#39b54a]/10 text-[#39b54a]' : 
                                     tx.type === 'DEPLOY' ? 'border-[#8b5cf6] bg-[#8b5cf6]/10 text-[#8b5cf6]' : 
+                                    tx.type === 'SWAP' ? 'border-blue-500 bg-blue-500/10 text-blue-500' :
                                     'border-[#333] bg-[#111] text-white'
                                 }`}>
                                     {tx.type === 'YIELD' && <ArrowDownLeft size={14} />}
                                     {tx.type === 'DEPLOY' && <CheckCircle2 size={14} />}
+                                    {tx.type === 'SWAP' && <Repeat size={14} />}
                                     {(tx.type === 'BUY_KEYS' || tx.type === 'TRADE') && <ArrowUpRight size={14} />}
                                 </div>
                                 <span className="text-xs font-bold font-mono text-white">{tx.type.replace('_', ' ')}</span>

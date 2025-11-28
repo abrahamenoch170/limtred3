@@ -123,7 +123,14 @@ contract NeoMarketToken is ERC20, Ownable {
     });
 
     if (response.text) {
-      return JSON.parse(response.text) as GeneratedApp;
+      try {
+        // Robust cleanup: remove any markdown blocks if the model hallucinates them
+        const cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleanedText) as GeneratedApp;
+      } catch (jsonError) {
+        console.error("JSON Parse Error:", jsonError);
+        throw new Error("Failed to parse generation result");
+      }
     }
     throw new Error("Empty response");
   } catch (error) {
