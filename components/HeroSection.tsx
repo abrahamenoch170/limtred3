@@ -352,10 +352,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               Lime<span className="text-[#39b54a]">tred</span>
             </h1>
             
-            <p className="text-[#666666] text-center mb-16 font-mono text-sm tracking-widest uppercase max-w-xl mx-auto">
-              The first "Text-to-Venture" engine. <br/>
-              We automate Code, Liquidity, and Tokenomics in one prompt.
-            </p>
+            {/* ENHANCED INTRO TEXT */}
+            <div className="max-w-2xl mx-auto text-center mb-12">
+                <p className="text-[#39b54a] font-bold tracking-[0.2em] text-xs uppercase mb-4">
+                    Venture-as-a-Service Protocol
+                </p>
+                <p className="text-[#cccccc] text-lg md:text-xl font-light leading-relaxed mb-6">
+                    Launch a fully functional dApp, token, and liquidity market from a single text prompt.
+                </p>
+                <p className="text-[#666666] text-sm font-mono leading-relaxed max-w-lg mx-auto">
+                    Limetred replaces weeks of full-stack engineering with 30 seconds of AI generation. 
+                    Architected for Solana, Base, and Ethereum.
+                </p>
+            </div>
 
             <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto">
               <div className="relative">
@@ -535,7 +544,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         {/* Features Grid */}
         <div className="max-w-7xl mx-auto px-6 py-24">
             <div className="mb-16">
-                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">The Operating System <br/> <span className="text-[#666666]">For Multi-Chain Builders</span></h2>
+                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">Core Protocol <br/> <span className="text-[#666666]">Features</span></h2>
                 <div className="w-24 h-1 bg-[#39b54a]"></div>
             </div>
 
