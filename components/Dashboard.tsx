@@ -385,4 +385,16 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect, 
                 <div className="mt-4 pt-4 border-t border-red-900/30 text-center">
                     <p className="text-[#666666] text-xs">
                         Tax drops to 1% in:
-                        <br
+                        <br/>
+                        <span className="text-white font-mono text-xl">{timeLeft}m 00s</span>
+                    </p>
+                </div>
+            </Card>
+        </motion.div>
+
+      </motion.div>
+    </motion.div>
+  );
+};
+
+export default Dashboard;

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search } from 'lucide-react';
 
 interface HeroSectionProps {
   onGenerate: (prompt: string) => void;
@@ -17,14 +17,156 @@ const Logo = () => (
   </svg>
 );
 
+// --- MODAL CONTENT DATA ---
+type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | null;
+
+const PROTOCOL_CONTENT = {
+  DOCS: {
+    title: "PROTOCOL DOCUMENTATION",
+    icon: <FileText size={24} className="text-[#39b54a]" />,
+    content: (
+      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
+        <div className="bg-[#111] p-4 border border-[#1f1f1f]">
+          <h4 className="text-white font-bold mb-2 uppercase">1. Architecture Overview</h4>
+          <p>Limetred utilizes a proprietary generative pipeline:
+            <br/>- <span className="text-[#39b54a]">Input:</span> Natural Language Intent
+            <br/>- <span className="text-[#39b54a]">Processing:</span> Google Gemini 1.5 Flash (Reasoning)
+            <br/>- <span className="text-[#39b54a]">Output:</span> AST-verified Solidity 0.8.20 + React 18 Frontend
+          </p>
+        </div>
+        <div>
+          <h4 className="text-white font-bold mb-2 uppercase">2. The Bonding Curve</h4>
+          <p>Every token launches on a strictly defined mathematical curve <span className="text-[#39b54a]">(y = x^2)</span>. Price increases exponentially as supply is bought. There are no seed rounds, pre-mines, or insider allocations.</p>
+        </div>
+        <div>
+          <h4 className="text-white font-bold mb-2 uppercase">3. Graduation Mechanism</h4>
+          <p>When the market cap reaches <span className="text-[#39b54a]">$60,000 USD</span>, the bonding curve is halted. 100% of the liquidity is migrated to a Raydium AMM pool and the LP tokens are burned, creating a permanently solvent market.</p>
+        </div>
+      </div>
+    )
+  },
+  TOKENOMICS: {
+    title: "TOKEN ECONOMICS",
+    icon: <Activity size={24} className="text-[#8b5cf6]" />,
+    content: (
+      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
+        <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#111] p-4 border border-[#1f1f1f]">
+                <div className="text-xs text-[#666666]">MAX SUPPLY</div>
+                <div className="text-xl font-bold text-white">1,000,000,000</div>
+            </div>
+            <div className="bg-[#111] p-4 border border-[#1f1f1f]">
+                <div className="text-xs text-[#666666]">TICKER</div>
+                <div className="text-xl font-bold text-[#39b54a]">$LMT</div>
+            </div>
+        </div>
+        
+        <div className="bg-[#111] p-4 border border-[#1f1f1f]">
+          <h4 className="text-white font-bold mb-4 uppercase">Fair Launch Distribution</h4>
+          <ul className="space-y-3">
+            <li className="flex justify-between border-b border-[#333] pb-2">
+                <span>Bonding Curve Allocation</span>
+                <span className="text-white font-bold">80%</span>
+            </li>
+            <li className="flex justify-between border-b border-[#333] pb-2">
+                <span>Liquidity Pool (Raydium)</span>
+                <span className="text-white font-bold">15%</span>
+            </li>
+            <li className="flex justify-between border-b border-[#333] pb-2">
+                <span>Ecosystem / CEX</span>
+                <span className="text-white font-bold">5%</span>
+            </li>
+            <li className="flex justify-between pt-2">
+                <span>Team / Insiders</span>
+                <span className="text-[#39b54a] font-bold">0%</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    )
+  },
+  BOUNTY: {
+    title: "BUG BOUNTY PROGRAM",
+    icon: <Bug size={24} className="text-red-500" />,
+    content: (
+      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
+        <p>Limetred prioritizes security. Our whitehat program rewards researchers for identifying vulnerabilities in the core protocol contracts.</p>
+        
+        <div className="space-y-2">
+            <div className="flex items-center justify-between bg-[#111] p-3 border-l-4 border-red-500">
+                <span className="font-bold text-white">CRITICAL</span>
+                <span className="font-mono text-[#39b54a]">Up to $50,000 USDC</span>
+            </div>
+            <div className="flex items-center justify-between bg-[#111] p-3 border-l-4 border-orange-500">
+                <span className="font-bold text-white">HIGH</span>
+                <span className="font-mono text-[#39b54a]">Up to $10,000 USDC</span>
+            </div>
+            <div className="flex items-center justify-between bg-[#111] p-3 border-l-4 border-yellow-500">
+                <span className="font-bold text-white">MEDIUM</span>
+                <span className="font-mono text-[#39b54a]">Up to $2,000 USDC</span>
+            </div>
+        </div>
+
+        <div className="bg-[#111] p-4 border border-[#1f1f1f] text-xs">
+            <p className="mb-2 uppercase font-bold text-[#666666]">Scope</p>
+            <ul className="list-disc list-inside space-y-1">
+                <li>LimetredFactory.sol</li>
+                <li>LimetredRouter.sol</li>
+                <li>BondingCurve.sol</li>
+            </ul>
+        </div>
+        
+        <Button variant="outline" fullWidth className="text-xs mt-4">SUBMIT REPORT (PGP REQUIRED)</Button>
+      </div>
+    )
+  },
+  AUDITS: {
+    title: "SECURITY AUDITS",
+    icon: <Search size={24} className="text-[#39b54a]" />,
+    content: (
+      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
+        <p>Our smart contract templates are formally verified and undergo continuous automated auditing.</p>
+        
+        <div className="grid grid-cols-1 gap-4">
+             <div className="bg-[#111] p-4 border border-[#39b54a] relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-[#39b54a] text-black text-[10px] font-bold px-2 py-1">PASSED</div>
+                <h4 className="font-bold text-white">CertiK</h4>
+                <p className="text-xs text-[#666666] mt-1">Comprehensive Protocol Audit</p>
+                <div className="mt-4 text-xs font-mono">Score: 94/100</div>
+             </div>
+             
+             <div className="bg-[#111] p-4 border border-[#1f1f1f] relative opacity-75">
+                <div className="absolute top-0 right-0 bg-[#333] text-[#666666] text-[10px] font-bold px-2 py-1">IN PROGRESS</div>
+                <h4 className="font-bold text-white">Halborn</h4>
+                <p className="text-xs text-[#666666] mt-1">Penetration Testing</p>
+                <div className="mt-4 text-xs font-mono">Est. Completion: Q4 2024</div>
+             </div>
+        </div>
+        
+        <div className="bg-[#0c0c0c] p-4 border border-[#1f1f1f] mt-4">
+             <h4 className="text-[#39b54a] text-xs font-bold uppercase mb-2">Automated Safety</h4>
+             <p className="text-xs">Every deployment runs through Slither and Mythril static analysis before hitting the mainnet.</p>
+        </div>
+      </div>
+    )
+  }
+};
+
+
 const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, isConnected }) => {
   const [prompt, setPrompt] = useState('');
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim()) {
       onGenerate(prompt);
     }
+  };
+
+  const openModal = (e: React.MouseEvent, type: ModalType) => {
+    e.preventDefault();
+    setActiveModal(type);
   };
 
   return (
@@ -35,7 +177,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
       className="h-full relative overflow-y-auto no-scrollbar scroll-smooth bg-[#0c0c0c]"
     >
       {/* -------------------- NAVBAR -------------------- */}
-      <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-md border-b border-[#1f1f1f]">
+      <nav className="sticky top-0 z-40 bg-[#0c0c0c]/80 backdrop-blur-md border-b border-[#1f1f1f]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
             <div className="flex items-center gap-3">
                 <Logo />
@@ -341,10 +483,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
                  <div>
                     <h5 className="font-bold uppercase text-white mb-4 text-sm tracking-wider">Protocol</h5>
                     <div className="flex flex-col gap-3">
-                        <FooterLink label="Documentation" />
-                        <FooterLink label="Tokenomics" />
-                        <FooterLink label="Bug Bounty" />
-                        <FooterLink label="Audits" />
+                        <FooterLink label="Documentation" onClick={(e) => openModal(e, 'DOCS')} />
+                        <FooterLink label="Tokenomics" onClick={(e) => openModal(e, 'TOKENOMICS')} />
+                        <FooterLink label="Bug Bounty" onClick={(e) => openModal(e, 'BOUNTY')} />
+                        <FooterLink label="Audits" onClick={(e) => openModal(e, 'AUDITS')} />
                     </div>
                  </div>
                  <div>
@@ -362,6 +504,55 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onGenerate, onConnectWallet, 
             <span>v1.0.4-beta</span>
         </div>
       </footer>
+
+      {/* -------------------- INFO MODALS -------------------- */}
+      <AnimatePresence>
+        {activeModal && PROTOCOL_CONTENT[activeModal] && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            onClick={() => setActiveModal(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#111111] border border-[#39b54a] w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-[0_0_50px_rgba(57,181,74,0.2)] flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-[#1f1f1f] bg-[#0c0c0c] sticky top-0 z-10">
+                <div className="flex items-center gap-3">
+                  {PROTOCOL_CONTENT[activeModal].icon}
+                  <h3 className="text-xl font-black uppercase tracking-wider text-white">
+                    {PROTOCOL_CONTENT[activeModal].title}
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setActiveModal(null)}
+                  className="text-[#666666] hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-8">
+                {PROTOCOL_CONTENT[activeModal].content}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-[#1f1f1f] bg-[#0c0c0c] text-center">
+                 <span className="text-[#39b54a] text-xs font-mono uppercase animate-pulse">
+                    Encrypting Connection... Verified.
+                 </span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         .animate-marquee {
@@ -403,8 +594,12 @@ const ComparisonRow: React.FC<{ feature: string, bad: string, good: string }> = 
     </div>
 );
 
-const FooterLink: React.FC<{ icon?: React.ReactNode, label: string }> = ({ icon, label }) => (
-    <a href="#" className="flex items-center gap-2 text-[#666666] hover:text-white transition-colors text-xs font-bold uppercase tracking-wide group">
+const FooterLink: React.FC<{ icon?: React.ReactNode, label: string, onClick?: (e: React.MouseEvent) => void }> = ({ icon, label, onClick }) => (
+    <a 
+        href="#" 
+        onClick={onClick}
+        className="flex items-center gap-2 text-[#666666] hover:text-white transition-colors text-xs font-bold uppercase tracking-wide group"
+    >
         {icon} <span className="group-hover:translate-x-1 transition-transform">{label}</span>
     </a>
 );
