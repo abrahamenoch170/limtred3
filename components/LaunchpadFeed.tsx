@@ -1,14 +1,43 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LaunchpadProject } from '../types';
+import { LaunchpadProject, ProjectCategory } from '../types';
 import { MOCK_PROJECTS, COLORS } from '../constants';
-import { Search, TrendingUp, MessageSquare, Clock, User, Crown, ArrowRight } from 'lucide-react';
+import { Search, TrendingUp, MessageSquare, Clock, User, Crown, ArrowRight, ShieldCheck, FileCode, Cpu, Brain, Banknote, Globe, Gamepad2, Server, Lock } from 'lucide-react';
 import { Input, Badge, Button, Card } from './ui/GlintComponents';
 
 interface LaunchpadFeedProps {
   onSelectProject: (project: LaunchpadProject) => void;
   onBack: () => void;
 }
+
+const CategoryIcon: React.FC<{ category: ProjectCategory; size?: number }> = ({ category, size = 16 }) => {
+  switch (category) {
+    case 'AI': return <Brain size={size} />;
+    case 'DEFI': return <Banknote size={size} />;
+    case 'DEPIN': return <Globe size={size} />;
+    case 'INFRA': return <Server size={size} />;
+    case 'GAMING': return <Gamepad2 size={size} />;
+    case 'SECURITY': return <Lock size={size} />;
+    default: return <Cpu size={size} />;
+  }
+};
+
+const CategoryBadge: React.FC<{ category: ProjectCategory }> = ({ category }) => {
+  let colorClass = "text-white border-white";
+  switch (category) {
+    case 'AI': colorClass = "text-purple-400 border-purple-400"; break;
+    case 'DEFI': colorClass = "text-green-400 border-green-400"; break;
+    case 'DEPIN': colorClass = "text-blue-400 border-blue-400"; break;
+    case 'SECURITY': colorClass = "text-red-400 border-red-400"; break;
+  }
+  
+  return (
+    <div className={`flex items-center gap-1 px-2 py-0.5 border text-[10px] font-bold uppercase ${colorClass}`}>
+      <CategoryIcon category={category} size={10} />
+      {category}
+    </div>
+  );
+};
 
 const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +52,7 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
     return 0; // Default is mock generated order (roughly random/latest)
   });
 
-  const kingOfTheHill = MOCK_PROJECTS[0]; // Assuming first is King for demo
+  const kingOfTheHill = MOCK_PROJECTS[0]; 
 
   return (
     <div className="min-h-screen bg-[#0c0c0c] text-white flex flex-col">
@@ -38,7 +67,7 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
          </div>
          <div className="flex items-center gap-2">
              <div className="w-2 h-2 bg-[#39b54a] rounded-full animate-pulse"></div>
-             <span className="text-xs font-mono text-[#39b54a]">{MOCK_PROJECTS.length} TOKENS LIVE</span>
+             <span className="text-xs font-mono text-[#39b54a]">{MOCK_PROJECTS.length} PROTOCOLS LIVE</span>
          </div>
       </header>
 
@@ -60,18 +89,25 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
                 <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors" />
                 <div className="flex flex-col md:flex-row gap-6 relative z-10">
                     <div className="w-32 h-32 shrink-0 bg-[#000] border border-[#333] flex items-center justify-center font-bold text-4xl" style={{ color: kingOfTheHill.imageColor }}>
-                        {kingOfTheHill.ticker?.[0]}
+                         <CategoryIcon category={kingOfTheHill.category} size={48} />
                     </div>
                     <div className="flex-1">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="text-3xl font-black uppercase text-white mb-1 group-hover:text-yellow-500 transition-colors">
-                                    {kingOfTheHill.name} <span className="text-[#666666] text-lg">[{kingOfTheHill.ticker}]</span>
-                                </h3>
-                                <div className="flex items-center gap-2 text-xs font-mono text-[#666666] mb-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <h3 className="text-3xl font-black uppercase text-white group-hover:text-yellow-500 transition-colors">
+                                        {kingOfTheHill.name}
+                                    </h3>
+                                    <CategoryBadge category={kingOfTheHill.category} />
+                                </div>
+                                <div className="flex items-center gap-4 text-xs font-mono text-[#666666] mb-4">
                                     <span className="flex items-center gap-1"><User size={12}/> {kingOfTheHill.creator}</span>
-                                    <span>•</span>
-                                    <span className="flex items-center gap-1"><Clock size={12}/> {kingOfTheHill.timestamp}</span>
+                                    {kingOfTheHill.isDoxxed && (
+                                        <span className="flex items-center gap-1 text-[#39b54a] font-bold"><ShieldCheck size={12}/> DOXXED DEV</span>
+                                    )}
+                                    {kingOfTheHill.auditStatus === 'PASSED' && (
+                                        <span className="flex items-center gap-1 text-blue-400 font-bold"><FileCode size={12}/> AUDITED</span>
+                                    )}
                                 </div>
                             </div>
                             <Badge color="text-yellow-500 border-yellow-500">#1 RANKED</Badge>
@@ -103,7 +139,7 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666] group-focus-within:text-[#39b54a]" size={18} />
                 <input 
                     type="text" 
-                    placeholder="Search for token, ticker, or desc..." 
+                    placeholder="Search protocols..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-[#111111] border border-[#1f1f1f] pl-10 pr-4 py-3 text-sm text-white focus:border-[#39b54a] outline-none font-mono placeholder-[#444]"
@@ -120,7 +156,7 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
                     onClick={() => setFilter('HOT')}
                     className={`px-4 py-2 text-xs font-bold uppercase border ${filter === 'HOT' ? 'bg-[#39b54a] text-black border-[#39b54a]' : 'bg-transparent text-[#666666] border-[#333] hover:border-white'}`}
                 >
-                    Top Market Cap
+                    Top Utility
                 </button>
             </div>
         </div>
@@ -140,17 +176,28 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
                     {/* Card Header */}
                     <div className="flex gap-3 mb-3">
                         <div className="w-12 h-12 shrink-0 bg-black border border-[#333] flex items-center justify-center font-bold text-lg" style={{ color: project.imageColor }}>
-                            {project.ticker?.[0]}
+                             <CategoryIcon category={project.category} size={24} />
                         </div>
-                        <div className="overflow-hidden">
-                            <h4 className="font-bold text-sm text-white uppercase truncate group-hover:text-[#39b54a] transition-colors">
-                                {project.name}
-                            </h4>
-                            <span className="text-xs font-mono text-[#666666]">Ticker: {project.ticker}</span>
-                            <div className="text-[10px] text-[#666666] mt-1 flex items-center gap-1">
-                                <User size={10} /> {project.creator}
+                        <div className="overflow-hidden flex-1">
+                            <div className="flex justify-between items-start">
+                                <h4 className="font-bold text-sm text-white uppercase truncate group-hover:text-[#39b54a] transition-colors">
+                                    {project.name}
+                                </h4>
+                            </div>
+                            <span className="text-xs font-mono text-[#666666] block">${project.ticker}</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                                {project.isDoxxed && (
+                                     <span className="text-[9px] font-bold text-[#39b54a] border border-[#39b54a]/30 px-1">DOXXED</span>
+                                )}
+                                {project.auditStatus === 'PASSED' && (
+                                     <span className="text-[9px] font-bold text-blue-400 border border-blue-400/30 px-1">AUDIT</span>
+                                )}
                             </div>
                         </div>
+                    </div>
+                    
+                    <div className="mb-2">
+                        <CategoryBadge category={project.category} />
                     </div>
 
                     {/* Desc */}
@@ -168,9 +215,9 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
                                 </div>
                             </div>
                             <div className="text-right">
-                                <div className="text-[10px] text-[#666666] uppercase font-bold">Replies</div>
+                                <div className="text-[10px] text-[#666666] uppercase font-bold">Age</div>
                                 <div className="text-white font-mono text-xs flex items-center justify-end gap-1">
-                                    <MessageSquare size={10} /> {project.replies}
+                                    <Clock size={10} /> {project.timestamp}
                                 </div>
                             </div>
                         </div>

@@ -34,6 +34,8 @@ export interface GeneratedApp {
   timestamp?: string;
 }
 
+export type ProjectCategory = 'AI' | 'DEFI' | 'DEPIN' | 'INFRA' | 'GAMING' | 'SECURITY';
+
 export interface LaunchpadProject extends GeneratedApp {
   id: string;
   ticker: string;
@@ -42,6 +44,9 @@ export interface LaunchpadProject extends GeneratedApp {
   replies: number;
   imageColor: string;
   timestamp: string;
+  isDoxxed: boolean;
+  category: ProjectCategory;
+  auditStatus: 'NONE' | 'IN_PROGRESS' | 'PASSED';
 }
 
 export interface TickerItem {
