@@ -487,19 +487,21 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="flex-1 flex flex-col justify-center items-center text-center py-4">
                     <motion.div 
                         animate={{ 
-                            scale: [1, 1.02, 1],
-                            opacity: [0.9, 1, 0.9]
+                            scale: timeLeft > 0 ? [1, 1.05, 1] : 1,
+                            textShadow: timeLeft > 0 ? ["0 0 0px rgba(239,68,68,0)", "0 0 15px rgba(239,68,68,0.5)", "0 0 0px rgba(239,68,68,0)"] : "none"
                         }}
                         transition={{ 
                             duration: 2,
                             repeat: Infinity,
                             ease: "easeInOut"
                         }}
-                        className="text-6xl font-black text-white mb-2 tracking-tighter"
+                        className={`text-6xl font-black mb-2 tracking-tighter ${timeLeft > 0 ? 'text-white' : 'text-[#39b54a]'}`}
                     >
-                        20%
+                        {timeLeft > 0 ? '20%' : '1%'}
                     </motion.div>
-                    <div className="text-red-500 text-xs font-mono uppercase animate-pulse">Sell Tax Active</div>
+                    <div className={`${timeLeft > 0 ? 'text-red-500' : 'text-[#39b54a]'} text-xs font-mono uppercase animate-pulse`}>
+                        {timeLeft > 0 ? 'Sell Tax Active' : 'Tax Relaxed'}
+                    </div>
                 </div>
                 
                 <div className="mt-4 pt-4 border-t border-red-900/30 text-center">
