@@ -3,7 +3,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipPro
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
 import { GeneratedApp, MarketData, Transaction, WalletBalance, ChainId } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat, DollarSign } from 'lucide-react';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat, DollarSign, User } from 'lucide-react';
 import { COLORS, CHAINS } from '../constants';
 
 interface DashboardProps {
@@ -25,9 +25,9 @@ const Logo = () => (
 );
 
 // Initialize with Market Cap scale values (approx 12k start)
-const generateInitialData = (): MarketData[] => {
+const generateInitialData = (startMC: number = 12000): MarketData[] => {
   const data = [];
-  let val = 12000;
+  let val = startMC;
   for (let i = 0; i < 20; i++) {
     val = val + (Math.random() * 200 - 50); // Random walk
     data.push({ time: i, price: Math.max(0, val) });
@@ -60,8 +60,11 @@ const Dashboard: React.FC<DashboardProps> = ({
     currentChain,
     onTradeKeys
 }) => {
-  const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData());
-  const [marketCap, setMarketCap] = useState(12450);
+  // If launching from launchpad, use its mcap, otherwise random 12k
+  const initialMcap = appData.marketCap || 12450;
+  
+  const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData(initialMcap));
+  const [marketCap, setMarketCap] = useState(initialMcap);
   const [timeLeft, setTimeLeft] = useState(48); // Minutes for tax drop
   
   const activeChain = CHAINS[currentChain];
@@ -187,6 +190,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center gap-2 mt-1">
                   <span className="text-[#666666] text-xs font-mono">{appData.name} // {appData.rarity}</span>
                   <Badge color="text-[#8b5cf6]">{activeChain.name} Network</Badge>
+                  {appData.ticker && <Badge color="text-[#39b54a]">{appData.ticker}</Badge>}
               </div>
             </div>
           </div>
@@ -375,14 +379,28 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <p className="text-[#39b54a] text-xs text-right font-mono">Potential Payout: <span className="font-bold text-lg">1.22x</span></p>
                 </div>
                 
-                <div className="p-3 bg-[#0c0c0c] border border-[#1f1f1f] flex gap-3 items-center">
-                    <div className="w-8 h-8 rounded-none bg-[#333] flex items-center justify-center">
-                        <Globe size={14} className="text-gray-400"/>
+                <div className="p-3 bg-[#0c0c0c] border border-[#1f1f1f] flex flex-col gap-2">
+                    <div className="flex gap-3 items-center">
+                        <div className="w-8 h-8 rounded-none bg-[#333] flex items-center justify-center">
+                            <Globe size={14} className="text-gray-400"/>
+                        </div>
+                        <div className="text-xs">
+                            <div className="text-[#666666]">Volume</div>
+                            <div className="text-white font-mono">$4,203</div>
+                        </div>
                     </div>
-                    <div className="text-xs">
-                        <div className="text-[#666666]">Volume</div>
-                        <div className="text-white font-mono">$4,203</div>
-                    </div>
+                    
+                    {appData.creator && (
+                        <div className="flex gap-3 items-center border-t border-[#333] pt-2 mt-2">
+                             <div className="w-8 h-8 rounded-none bg-[#333] flex items-center justify-center">
+                                <User size={14} className="text-[#39b54a]"/>
+                            </div>
+                            <div className="text-xs">
+                                <div className="text-[#666666]">Creator</div>
+                                <div className="text-white font-mono">{appData.creator}</div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </Card>
         </motion.div>

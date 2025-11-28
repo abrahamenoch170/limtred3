@@ -2,7 +2,8 @@ export enum AppPhase {
   HOME = 'HOME',
   LOADING = 'LOADING',
   PREVIEW = 'PREVIEW',
-  DASHBOARD = 'DASHBOARD'
+  DASHBOARD = 'DASHBOARD',
+  LAUNCHPAD = 'LAUNCHPAD'
 }
 
 export type ChainId = 'SOL' | 'ETH' | 'BASE' | 'TON' | 'ARB';
@@ -23,6 +24,24 @@ export interface GeneratedApp {
   contractSnippet: string;
   rarity: 'COMMON' | 'RARE' | 'LEGENDARY';
   attributes: string[];
+  // Optional fields for Launchpad compatibility
+  id?: string;
+  ticker?: string;
+  marketCap?: number;
+  creator?: string;
+  replies?: number;
+  imageColor?: string;
+  timestamp?: string;
+}
+
+export interface LaunchpadProject extends GeneratedApp {
+  id: string;
+  ticker: string;
+  marketCap: number;
+  creator: string;
+  replies: number;
+  imageColor: string;
+  timestamp: string;
 }
 
 export interface TickerItem {
@@ -46,7 +65,7 @@ export interface Transaction {
 }
 
 export interface WalletBalance {
-  native: number; // Replaces 'sol' for multi-chain support
+  native: number; 
   lmt: number;
   usdValue: number;
 }

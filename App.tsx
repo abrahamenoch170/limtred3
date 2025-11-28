@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId } from './types';
+import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId, LaunchpadProject } from './types';
 import { generateAppConcept } from './services/geminiService';
 import HeroSection from './components/HeroSection';
 import GenerationTheater from './components/GenerationTheater';
 import BuilderPreview from './components/BuilderPreview';
 import Dashboard from './components/Dashboard';
 import WalletDrawer from './components/WalletDrawer';
+import LaunchpadFeed from './components/LaunchpadFeed';
 import { CHAINS } from './constants';
 
 // Default Demo App
@@ -77,10 +78,14 @@ export default function App() {
     setIsWalletOpen(true); // Open drawer on connect
     
     if (phase === AppPhase.HOME) {
+      // If connecting on home without a generated app, keep them on home or send to dashboard/launchpad
+      // Default to Launchpad view if just connecting
+      // But keeping existing logic:
       if (!appData) {
-        setAppData(DEMO_APP);
+         // Optionally set demo app, or let them browse
+         // setAppData(DEMO_APP);
       }
-      setPhase(AppPhase.DASHBOARD);
+      // setPhase(AppPhase.DASHBOARD); 
     }
   };
 
@@ -130,10 +135,9 @@ export default function App() {
 
   const handleChainChange = (chainId: ChainId) => {
     setCurrentChain(chainId);
-    // Simulate balance fetch for new chain
     setWalletBalance(prev => ({
         ...prev,
-        native: Math.random() * 10 // Random balance for demo
+        native: Math.random() * 10 
     }));
   };
 
@@ -142,7 +146,27 @@ export default function App() {
   };
 
   const handleBack = () => {
-    setPhase(AppPhase.HOME);
+    if (phase === AppPhase.DASHBOARD) {
+        // If coming from Launchpad viewing a random project, go back to Launchpad
+        // If coming from Deployment flow, maybe Home
+        // For simplicity, if we have a Launchpad ID, go back to launchpad
+        if (appData?.id?.startsWith('proj-')) {
+            setPhase(AppPhase.LAUNCHPAD);
+        } else {
+            setPhase(AppPhase.HOME);
+        }
+    } else {
+        setPhase(AppPhase.HOME);
+    }
+  };
+
+  const handleOpenLaunchpad = () => {
+      setPhase(AppPhase.LAUNCHPAD);
+  };
+
+  const handleSelectProject = (project: LaunchpadProject) => {
+      setAppData(project);
+      setPhase(AppPhase.DASHBOARD);
   };
 
   return (
@@ -161,6 +185,7 @@ export default function App() {
             walletBalance={walletBalance}
             onSwap={handleSwap}
             currentChain={currentChain}
+            onOpenLaunchpad={handleOpenLaunchpad}
           />
         )}
 
@@ -175,6 +200,14 @@ export default function App() {
             onDeploy={handleDeploy} 
             currentChain={currentChain}
           />
+        )}
+        
+        {phase === AppPhase.LAUNCHPAD && (
+            <LaunchpadFeed 
+                key="launchpad"
+                onSelectProject={handleSelectProject}
+                onBack={() => setPhase(AppPhase.HOME)}
+            />
         )}
 
         {phase === AppPhase.DASHBOARD && appData && (

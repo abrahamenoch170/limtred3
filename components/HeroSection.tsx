@@ -12,6 +12,7 @@ interface HeroSectionProps {
   walletBalance: WalletBalance;
   onSwap: (sol: number, lmt: number) => boolean;
   currentChain: ChainId;
+  onOpenLaunchpad?: () => void;
 }
 
 const Logo = () => (
@@ -245,7 +246,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   isConnected,
   walletBalance,
   onSwap,
-  currentChain
+  currentChain,
+  onOpenLaunchpad
 }) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -301,7 +303,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
             
             <div className="flex items-center gap-6">
-                <a href="#launchpad" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">Launchpad</a>
+                <button 
+                    onClick={onOpenLaunchpad}
+                    className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block"
+                >
+                    Launchpad
+                </button>
                 <a href="#dex" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">DEX</a>
                 <Button 
                     variant={isConnected ? "outline" : "primary"} 
@@ -414,7 +421,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         <ListItem text="Graduation Target: $60k" />
                         <ListItem text="Trading Fee: 1%" />
                     </ul>
-                    <Button variant="outline" className="flex items-center gap-2" onClick={onConnectWallet}>
+                    <Button variant="outline" className="flex items-center gap-2" onClick={onOpenLaunchpad}>
                         VIEW LIVE CURVES <ArrowRight size={16} />
                     </Button>
                 </div>

@@ -1,4 +1,4 @@
-import { TickerItem, ChainId, ChainConfig } from './types';
+import { TickerItem, ChainId, ChainConfig, LaunchpadProject } from './types';
 
 export const COLORS = {
   void: '#0c0c0c',
@@ -61,3 +61,47 @@ export const PREBUILT_REACT = `export default function App() {
     </div>
   );
 }`;
+
+// --- LAUNCHPAD MOCK DATA ---
+const ADJECTIVES = ["Based", "Cyber", "Degen", "Quantum", "Hyper", "Void", "Neural", "Rusty", "Golden", "Pixel"];
+const NOUNS = ["Pepe", "Doge", "Inu", "Chad", "WifHat", "GPT", "Punk", "Ape", "Gem", "Moon"];
+const COLORS_LIST = ["#39b54a", "#8b5cf6", "#ef4444", "#3b82f6", "#f59e0b", "#ec4899", "#6366f1"];
+
+export const generateMockProjects = (): LaunchpadProject[] => {
+  const projects: LaunchpadProject[] = [];
+  
+  for (let i = 0; i < 40; i++) {
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    const name = `${adj}${noun}`;
+    const ticker = `${adj[0]}${noun}`.toUpperCase();
+    const mcap = Math.floor(Math.random() * 55000) + 1000; // 1k to 56k
+    
+    projects.push({
+      id: `proj-${i}`,
+      name: name,
+      ticker: ticker,
+      description: `The ultimate ${name} protocol. AI generated, community owned. Launching on Limetred bonding curve.`,
+      rarity: Math.random() > 0.9 ? 'LEGENDARY' : Math.random() > 0.7 ? 'RARE' : 'COMMON',
+      attributes: ["FAIR LAUNCH", "AI AGENT", "MEME"],
+      codeSnippet: PREBUILT_REACT,
+      contractSnippet: PREBUILT_CODE,
+      marketCap: mcap,
+      creator: `@user${Math.floor(Math.random() * 9999)}`,
+      replies: Math.floor(Math.random() * 150),
+      imageColor: COLORS_LIST[Math.floor(Math.random() * COLORS_LIST.length)],
+      timestamp: `${Math.floor(Math.random() * 59)}m ago`
+    });
+  }
+  
+  // Force a "King of the Hill"
+  projects[0].marketCap = 58420;
+  projects[0].name = "KingDoge AI";
+  projects[0].ticker = "KDAI";
+  projects[0].rarity = "LEGENDARY";
+  projects[0].description = "The first AI-agent that trades meme coins based on Elon's tweets. 98% to Raydium.";
+
+  return projects;
+};
+
+export const MOCK_PROJECTS = generateMockProjects();
