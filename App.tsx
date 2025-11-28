@@ -9,6 +9,7 @@ import Dashboard from './components/Dashboard';
 import WalletDrawer from './components/WalletDrawer';
 import LaunchpadFeed from './components/LaunchpadFeed';
 import WalletConnectModal from './components/WalletConnectModal';
+import Background3D from './components/Background3D';
 import { CHAINS } from './constants';
 
 // Default Demo App
@@ -178,58 +179,64 @@ export default function App() {
   };
 
   return (
-    <main className="h-screen w-screen overflow-hidden bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans">
-      <AnimatePresence mode="wait">
-        
-        {phase === AppPhase.HOME && (
-          <HeroSection 
-            key="home" 
-            onGenerate={handleGenerate} 
-            onConnectWallet={initiateWalletConnection}
-            isConnected={walletConnected}
-            walletBalance={walletBalance}
-            onSwap={handleSwap}
-            currentChain={currentChain}
-            onOpenLaunchpad={handleOpenLaunchpad}
-          />
-        )}
+    <main className="h-screen w-screen overflow-hidden bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans relative">
+      
+      {/* 3D Background - Always rendered, optimized */}
+      <Background3D />
 
-        {phase === AppPhase.LOADING && (
-          <GenerationTheater key="loading" onComplete={handleTheaterComplete} />
-        )}
-
-        {phase === AppPhase.PREVIEW && appData && (
-          <BuilderPreview 
-            key="preview" 
-            appData={appData} 
-            onDeploy={handleDeploy} 
-            currentChain={currentChain}
-          />
-        )}
-        
-        {phase === AppPhase.LAUNCHPAD && (
-            <LaunchpadFeed 
-                key="launchpad"
-                onSelectProject={handleSelectProject}
-                onBack={() => setPhase(AppPhase.HOME)}
+      <div className="relative z-10 h-full w-full overflow-y-auto no-scrollbar">
+        <AnimatePresence mode="wait">
+          
+          {phase === AppPhase.HOME && (
+            <HeroSection 
+              key="home" 
+              onGenerate={handleGenerate} 
+              onConnectWallet={initiateWalletConnection}
+              isConnected={walletConnected}
+              walletBalance={walletBalance}
+              onSwap={handleSwap}
+              currentChain={currentChain}
+              onOpenLaunchpad={handleOpenLaunchpad}
             />
-        )}
+          )}
 
-        {phase === AppPhase.DASHBOARD && appData && (
-          <Dashboard 
-            key="dashboard" 
-            appData={appData} 
-            isConnected={walletConnected}
-            onConnect={initiateWalletConnection}
-            onBack={handleBack}
-            walletBalance={walletBalance}
-            transactions={transactions}
-            currentChain={currentChain}
-            onTradeKeys={handleTradeKeys}
-          />
-        )}
+          {phase === AppPhase.LOADING && (
+            <GenerationTheater key="loading" onComplete={handleTheaterComplete} />
+          )}
 
-      </AnimatePresence>
+          {phase === AppPhase.PREVIEW && appData && (
+            <BuilderPreview 
+              key="preview" 
+              appData={appData} 
+              onDeploy={handleDeploy} 
+              currentChain={currentChain}
+            />
+          )}
+          
+          {phase === AppPhase.LAUNCHPAD && (
+              <LaunchpadFeed 
+                  key="launchpad"
+                  onSelectProject={handleSelectProject}
+                  onBack={() => setPhase(AppPhase.HOME)}
+              />
+          )}
+
+          {phase === AppPhase.DASHBOARD && appData && (
+            <Dashboard 
+              key="dashboard" 
+              appData={appData} 
+              isConnected={walletConnected}
+              onConnect={initiateWalletConnection}
+              onBack={handleBack}
+              walletBalance={walletBalance}
+              transactions={transactions}
+              currentChain={currentChain}
+              onTradeKeys={handleTradeKeys}
+            />
+          )}
+
+        </AnimatePresence>
+      </div>
 
       <WalletDrawer 
         isOpen={isWalletOpen}

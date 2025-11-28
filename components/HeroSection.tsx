@@ -4,6 +4,7 @@ import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
 import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
+import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
 
 interface HeroSectionProps {
   onGenerate: (prompt: string) => void;
@@ -292,7 +293,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="h-full relative overflow-y-auto no-scrollbar scroll-smooth bg-[#0c0c0c]"
+      className="h-full relative overflow-y-auto no-scrollbar scroll-smooth bg-transparent" // Transparent to show 3D BG
     >
       {/* -------------------- NAVBAR -------------------- */}
       <nav className="sticky top-0 z-40 bg-[#0c0c0c]/80 backdrop-blur-md border-b border-[#1f1f1f]">
@@ -326,7 +327,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       <div className="min-h-[calc(100vh-64px)] flex flex-col relative z-10">
         
         {/* Marquee Ticker */}
-        <div className="w-full bg-[#111111] border-b border-[#1f1f1f] h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
+        <div className="w-full bg-[#111111]/90 border-b border-[#1f1f1f] h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
           <div className="animate-marquee flex space-x-8 px-4">
             {[...MOCK_TICKER, ...MOCK_TICKER, ...MOCK_TICKER].map((item, i) => (
               <span key={i} className="font-mono text-xs text-[#666666]">
@@ -348,12 +349,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <Badge color="text-[#8b5cf6]">AI VENTURE PROTOCOL V1.0</Badge>
              </div>
              
-             <h1 className="text-6xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85]">
-              Lime<span className="text-[#39b54a]">tred</span>
-            </h1>
-            
-            {/* ENHANCED INTRO TEXT */}
-            <div className="max-w-2xl mx-auto text-center mb-12">
+             <div className="flex justify-center">
+               <TextReveal 
+                  text="LIMETRED" 
+                  className="text-6xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85]" 
+               />
+             </div>
+             
+             {/* ENHANCED INTRO TEXT */}
+             <ScrollFade delay={0.4} className="max-w-2xl mx-auto text-center mb-12">
                 <p className="text-[#39b54a] font-bold tracking-[0.2em] text-xs uppercase mb-4">
                     Venture-as-a-Service Protocol
                 </p>
@@ -364,30 +368,28 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     Limetred replaces weeks of full-stack engineering with 30 seconds of AI generation. 
                     Architected for Solana, Base, and Ethereum.
                 </p>
-            </div>
+            </ScrollFade>
 
-            <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto">
-              <div className="relative">
-                <Input 
-                  autoFocus
-                  placeholder="Describe your billion-dollar idea..." 
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="text-2xl md:text-4xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/50 backdrop-blur-sm focus:bg-black/80 h-32"
-                />
-                <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#39b54a] to-transparent opacity-50" />
-              </div>
-              
-              <motion.div 
-                className="mt-12 flex justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: prompt ? 1 : 0 }}
-              >
-                <Button type="submit" variant="primary" className="min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-lg">
-                  <Zap size={20} /> INITIALIZE PROTOCOL
-                </Button>
-              </motion.div>
-            </form>
+            <ScrollFade delay={0.6}>
+              <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto">
+                <div className="relative">
+                  <Input 
+                    autoFocus
+                    placeholder="Describe your billion-dollar idea..." 
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="text-2xl md:text-4xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-32"
+                  />
+                  <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#39b54a] to-transparent opacity-50" />
+                </div>
+                
+                <div className="mt-12 flex justify-center">
+                  <Button type="submit" variant="primary" className="min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-lg">
+                    <Zap size={20} /> INITIALIZE PROTOCOL
+                  </Button>
+                </div>
+              </form>
+            </ScrollFade>
           </motion.div>
         </div>
 
@@ -395,26 +397,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <motion.div 
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
-          transition={{ delay: 1, duration: 1 }}
+          transition={{ delay: 2, duration: 1 }}
           className="absolute bottom-8 left-0 right-0 flex flex-col items-center justify-center text-[#666666] gap-2 pointer-events-none"
         >
           <span className="font-mono text-[10px] uppercase tracking-widest">Protocol Specs</span>
           <ChevronDown className="animate-bounce" size={16} />
         </motion.div>
 
-        {/* Background Grid */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-20" 
-          style={{ 
-            backgroundImage: `linear-gradient(${COLORS.border} 1px, transparent 1px), linear-gradient(90deg, ${COLORS.border} 1px, transparent 1px)`,
-            backgroundSize: '40px 40px',
-            maskImage: 'radial-gradient(circle at center, black 40%, transparent 100%)'
-          }} 
-        />
+        {/* Removed static background grid to let Canvas shine */}
       </div>
 
       {/* -------------------- LAUNCHPAD SECTION -------------------- */}
-      <section id="launchpad" className="bg-[#111111] border-t border-[#1f1f1f] py-24 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="launchpad" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative overflow-hidden">
+        <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#8b5cf6]">PHASE 1: INCUBATION</Badge>
@@ -456,12 +451,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                      </Card>
                 </div>
             </div>
-        </div>
+        </ScrollFade>
       </section>
 
       {/* -------------------- DEX SECTION -------------------- */}
-      <section id="dex" className="bg-[#0c0c0c] border-t border-[#1f1f1f] py-24 relative">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative">
+        <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#39b54a]">PHASE 2: TRADING</Badge>
@@ -535,42 +530,50 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     </Card>
                 </div>
             </div>
-        </div>
+        </ScrollFade>
       </section>
 
       {/* -------------------- DOCUMENTATION SECTION -------------------- */}
-      <div className="bg-[#111111] border-t border-[#1f1f1f] relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
+      <div className="bg-[#111111]/95 backdrop-blur-md border-t border-[#1f1f1f] relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
         
         {/* Features Grid */}
         <div className="max-w-7xl mx-auto px-6 py-24">
-            <div className="mb-16">
-                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">Core Protocol <br/> <span className="text-[#666666]">Features</span></h2>
-                <div className="w-24 h-1 bg-[#39b54a]"></div>
-            </div>
+            <ScrollFade>
+                <div className="mb-16">
+                    <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">Core Protocol <br/> <span className="text-[#666666]">Features</span></h2>
+                    <div className="w-24 h-1 bg-[#39b54a]"></div>
+                </div>
+            </ScrollFade>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                <FeatureCard 
-                    icon={<Cpu size={32} className="text-[#8b5cf6]" />}
-                    title="Generative Architecture"
-                    description="Limetred doesn't just write code. It architects full-stack dApps with React frontends and Solidity backends tailored to your exact prompt requirements."
-                    step="01"
-                />
-                <FeatureCard 
-                    icon={<Activity size={32} className="text-[#39b54a]" />}
-                    title="Liquidity Bonding"
-                    description="No initial capital required. We launch your token on an internal bonding curve. At $60k market cap, liquidity migrates to Raydium automatically."
-                    step="02"
-                />
-                <FeatureCard 
-                    icon={<Shield size={32} className="text-white" />}
-                    title="Anti-Rug Standards"
-                    description="All generated contracts include hard-coded safety: Liquidity Locking, Renounced Ownership, and max-wallet caps to prevent sniper dominance."
-                    step="03"
-                />
-            </div>
+            <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <StaggerItem>
+                    <FeatureCard 
+                        icon={<Cpu size={32} className="text-[#8b5cf6]" />}
+                        title="Generative Architecture"
+                        description="Limetred doesn't just write code. It architects full-stack dApps with React frontends and Solidity backends tailored to your exact prompt requirements."
+                        step="01"
+                    />
+                </StaggerItem>
+                <StaggerItem>
+                    <FeatureCard 
+                        icon={<Activity size={32} className="text-[#39b54a]" />}
+                        title="Liquidity Bonding"
+                        description="No initial capital required. We launch your token on an internal bonding curve. At $60k market cap, liquidity migrates to Raydium automatically."
+                        step="02"
+                    />
+                </StaggerItem>
+                <StaggerItem>
+                    <FeatureCard 
+                        icon={<Shield size={32} className="text-white" />}
+                        title="Anti-Rug Standards"
+                        description="All generated contracts include hard-coded safety: Liquidity Locking, Renounced Ownership, and max-wallet caps to prevent sniper dominance."
+                        step="03"
+                    />
+                </StaggerItem>
+            </StaggerContainer>
             
             {/* Multi-Chain Support Bar */}
-            <div className="border-t border-[#1f1f1f] pt-12">
+            <ScrollFade className="border-t border-[#1f1f1f] pt-12">
                  <h4 className="text-[#666666] text-xs font-bold uppercase tracking-widest mb-8 text-center">Supported Networks</h4>
                  <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-70 grayscale hover:grayscale-0 transition-all duration-500">
                     {Object.values(CHAINS).map(chain => (
@@ -580,12 +583,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         </div>
                     ))}
                  </div>
-            </div>
+            </ScrollFade>
         </div>
 
         {/* Comparison Section */}
         <div className="border-t border-[#1f1f1f] bg-[#0c0c0c] py-24">
-            <div className="max-w-7xl mx-auto px-6">
+            <ScrollFade className="max-w-7xl mx-auto px-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                     <div>
                         <h3 className="font-mono text-[#39b54a] text-sm mb-2">WHY LIMETRED?</h3>
@@ -616,7 +619,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         <ComparisonRow feature="Revenue Model" bad="0%" good="5% Perpetual Royalties" />
                     </div>
                 </div>
-            </div>
+            </ScrollFade>
         </div>
       </div>
 
