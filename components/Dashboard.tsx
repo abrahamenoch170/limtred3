@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipProps } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
 import { GeneratedApp, MarketData } from '../types';
@@ -19,14 +19,30 @@ const Logo = () => (
   </svg>
 );
 
+// Initialize with Market Cap scale values (approx 12k start)
 const generateInitialData = (): MarketData[] => {
   const data = [];
-  let price = 0.002;
+  let val = 12000;
   for (let i = 0; i < 20; i++) {
-    price = price * (1 + (Math.random() * 0.05 - 0.01));
-    data.push({ time: i, price });
+    val = val + (Math.random() * 200 - 50); // Random walk
+    data.push({ time: i, price: Math.max(0, val) });
   }
   return data;
+};
+
+// Custom Tooltip Component
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#111111] border border-[#39b54a] p-3 shadow-[0_0_20px_rgba(0,0,0,0.8)] backdrop-blur-md">
+        <p className="text-[#666666] text-[10px] font-mono mb-1 uppercase tracking-wider">Time: T+{label}s</p>
+        <p className="text-[#39b54a] font-bold font-mono text-sm">
+          MC: ${payload[0].value?.toLocaleString()}
+        </p>
+      </div>
+    );
+  }
+  return null;
 };
 
 const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }) => {
@@ -37,13 +53,19 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
   useEffect(() => {
     // Market Simulation
     const interval = setInterval(() => {
-      setMarketData(prev => {
-        const last = prev[prev.length - 1];
-        const newPrice = last.price * (1 + (Math.random() * 0.08 - 0.03)); // Volatile up trend
-        const newData = [...prev.slice(1), { time: last.time + 1, price: newPrice }];
-        return newData;
+      setMarketCap(prevMC => {
+        // Increment Market Cap
+        const nextMC = prevMC + Math.floor(Math.random() * 150);
+        
+        // Update Chart Data to match new MC
+        setMarketData(prevData => {
+            const lastTime = prevData[prevData.length - 1].time;
+            const newData = [...prevData.slice(1), { time: lastTime + 1, price: nextMC }];
+            return newData;
+        });
+        
+        return nextMC;
       });
-      setMarketCap(prev => prev + Math.floor(Math.random() * 100));
     }, 1000);
 
     // Tax Timer Simulation
@@ -178,11 +200,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
                         </defs>
                         <XAxis dataKey="time" hide />
                         <YAxis domain={['auto', 'auto']} hide />
-                        <Tooltip 
-                            contentStyle={{ backgroundColor: '#111', borderColor: '#333', color: '#fff', borderRadius: 0 }} 
-                            itemStyle={{ color: '#39b54a', fontFamily: 'monospace' }}
-                            labelStyle={{ display: 'none' }}
-                        />
+                        <Tooltip content={<CustomTooltip />} />
                         <Area 
                             type="monotone" 
                             dataKey="price" 
@@ -223,7 +241,7 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
                                 <div>
                                     <div className="font-bold text-white mb-1 uppercase tracking-wider">Liquidity Graduation</div>
                                     <p className="leading-relaxed">
-                                        When market cap hits <span className="text-[#39b54a]">$60k</span>, all liquidity is deposited into a Raydium AMM pool and burned.
+                                        Once the bonding curve hits <span className="text-[#39b54a]">$60k</span>, liquidity is automatically seeded into Raydium and burned.
                                     </p>
                                     <div className="mt-2 text-[#39b54a] font-bold">
                                         ✅ Rug-proof.
@@ -303,4 +321,38 @@ const Dashboard: React.FC<DashboardProps> = ({ appData, isConnected, onConnect }
                     <div className="bg-[#0c0c0c] p-6 border border-[#1f1f1f] min-w-[200px] text-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                         <div className="text-[#39b54a] text-4xl font-bold mb-1 font-mono">5.2%</div>
                         <div className="text-[#666666] text-xs font-mono uppercase mb-4">Current APR</div>
-                        <Button variant="secondary" fullWidth className="text-xs">BUY KEYS
+                        <Button variant="secondary" fullWidth className="text-xs">BUY KEYS</Button>
+                    </div>
+                </div>
+            </Card>
+        </motion.div>
+
+        {/* Module E: Paper Hands Tax */}
+        <motion.div variants={itemVariants} className="col-span-1">
+            <Card className="h-full border-red-900/20 bg-gradient-to-br from-[#111] to-red-900/10 flex flex-col">
+                <div className="flex items-center gap-2 mb-4 text-red-500">
+                    <AlertTriangle size={18} />
+                    <h3 className="text-xs uppercase tracking-widest font-bold">Paper Hands Tax</h3>
+                </div>
+                
+                <div className="flex-1 flex flex-col justify-center items-center text-center py-4">
+                    <div className="text-6xl font-black text-white mb-2 tracking-tighter">20%</div>
+                    <div className="text-red-500 text-xs font-mono uppercase animate-pulse">Sell Tax Active</div>
+                </div>
+                
+                <div className="mt-4 pt-4 border-t border-red-900/30 text-center">
+                    <p className="text-[#666666] text-xs">
+                        Tax drops to 1% in:
+                        <br/>
+                        <span className="text-white font-mono text-xl">{timeLeft}m 00s</span>
+                    </p>
+                </div>
+            </Card>
+        </motion.div>
+
+      </motion.div>
+    </motion.div>
+  );
+};
+
+export default Dashboard;
