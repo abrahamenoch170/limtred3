@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedApp } from "../types";
 import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
@@ -78,18 +79,24 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20, Ownable, ReentrancyGuard, and Pausable.
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard, Pausable { ... }\`
            - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
-           - **CRITICAL REQUIREMENT:** Implement \`pause()\` and \`unpause()\` functions, restricted to \`onlyOwner\`.
-           - **CRITICAL REQUIREMENT:** Implement a function \`enableTrading()\` that sets \`tradingActive = true\`. It MUST be callable only by the owner and MUST use the \`whenNotPaused\` modifier.
-           - **CRITICAL REQUIREMENT:** Apply the \`nonReentrant\` modifier to all external/public functions that change state or transfer assets.
-           - **CRITICAL REQUIREMENT:** Apply the \`whenNotPaused\` modifier to critical functions (like deposits, withdrawals, or trading).
-           - **CRITICAL REQUIREMENT:** You MUST implement an explicit \`transferOwnership(address newOwner)\` function that overrides Ownable logic to explicitly check \`require(newOwner != address(0), "New owner cannot be zero address");\`.
-           - **CRITICAL REQUIREMENT:** You MUST implement a public view function \`calculatedTotalSupply() returns (uint256)\` that returns the current total supply (reflecting initial mint and subsequent burns). This is essential for the dashboard.
-           - **CRITICAL REQUIREMENT:** If your logic uses structs (like Task, Item, Bet, etc.), you MUST implement a helper view function to return its details. 
-             Example: \`function getTaskDetails(uint256 taskId) public view returns (string memory, uint256, bool) { ... }\`.
-           - Implement specific logic requested by the user (e.g., Staking, DAO, Lending, Marketplace).
-           - If generic, implement a Bonding Curve token with Anti-Rug mechanics.
-           - Include detailed comments explaining the logic.
            
+           **SECURITY & LOGIC REQUIREMENTS (BETA STANDARD):**
+           - **Custom Errors:** Use \`error\` definitions instead of string require statements for gas optimization. (e.g. \`error TradingNotActive();\`)
+           - **Anti-Whale:** Implement \`maxTxAmount\` and \`maxWalletSize\` variables (e.g. 2% of supply).
+           - **Fees:** Implement \`buyTax\` and \`sellTax\` variables (e.g. 5%) and a \`marketingWallet\`.
+           - **_update Override:** You MUST override the \`_update\` function to handle:
+             1. Trading Active check (using \`whenNotPaused\`).
+             2. Max Tx / Max Wallet limits.
+             3. Fee deduction (send tax to marketing wallet, remainder to recipient).
+           - **Emergency:** Implement \`withdrawStuckEth()\` to recover funds.
+           
+           **STANDARD FUNCTIONS:**
+           - \`pause()\` and \`unpause()\` (onlyOwner).
+           - \`enableTrading()\` (onlyOwner, whenNotPaused).
+           - \`transferOwnership(address newOwner)\` (override with zero-address check).
+           - \`calculatedTotalSupply()\` (public view, returns totalSupply).
+           - **Struct Accessors:** If you use structs, provide a \`getDetails\` view function.
+
         2. **Frontend (React Component)**:
            - Generate a functional React dashboard component.
            - Use 'lucide-react' for icons.

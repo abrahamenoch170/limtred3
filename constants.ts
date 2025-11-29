@@ -1,3 +1,4 @@
+
 import { TickerItem, ChainId, ChainConfig, LaunchpadProject, ProjectCategory } from './types';
 
 export const COLORS = {
@@ -35,13 +36,28 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
+    // --- Custom Errors (Gas Optimization) ---
+    error TradingNotActive();
+    error MaxTxAmountExceeded();
+    error MaxWalletExceeded();
+    error InvalidTax();
+    error CannotRemoveLimits();
+
+    // --- Tokenomics ---
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
     
-    // Anti-Rug Mechanics
-    uint256 public constant MAX_WALLET = 2; // 2%
+    // --- Anti-Whale & Limits ---
+    uint256 public maxTxAmount = 20_000_000 * 10**18; // 2%
+    uint256 public maxWalletSize = 20_000_000 * 10**18; // 2%
+    bool public limitsInEffect = true;
     bool public tradingActive = false;
 
-    // Task / Bounty Logic
+    // --- Fee System ---
+    uint256 public buyTax = 5; // 5%
+    uint256 public sellTax = 5; // 5%
+    address public marketingWallet;
+
+    // --- Task / Bounty Logic ---
     struct Task {
         string description;
         uint256 dueDate;
@@ -55,8 +71,11 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     event TaskCompleted(uint256 indexed taskId, address indexed completer);
 
     constructor() ERC20("LimetredGenerated", "LMT") Ownable(msg.sender) {
+        marketingWallet = msg.sender;
         _mint(msg.sender, TOTAL_SUPPLY);
     }
+
+    // --- Admin Functions ---
 
     /**
      * @dev Triggers stopped state.
@@ -82,25 +101,37 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     }
 
     /**
+     * @dev Removes max transaction and wallet limits. Irreversible.
+     */
+    function removeLimits() external onlyOwner {
+        limitsInEffect = false;
+    }
+
+    /**
+     * @dev Updates tax fees (Max 10% to prevent honeypots).
+     */
+    function updateFees(uint256 _buyTax, uint256 _sellTax) external onlyOwner {
+        if (_buyTax > 10 || _sellTax > 10) revert InvalidTax();
+        buyTax = _buyTax;
+        sellTax = _sellTax;
+    }
+
+    /**
+     * @dev Emergency withdraw of stuck ETH.
+     */
+    function withdrawStuckEth() external onlyOwner {
+        (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
+        require(success, "Transfer failed");
+    }
+
+    // --- View Functions ---
+
+    /**
      * @dev Returns the total supply calculated from mints and burns.
      * Required for dashboard tracking.
      */
     function calculatedTotalSupply() public view returns (uint256) {
         return totalSupply();
-    }
-
-    /**
-     * @dev Creates a new task/bounty.
-     */
-    function createTask(string memory description, uint256 dueDate) external onlyOwner {
-        tasks[nextTaskId] = Task({
-            description: description,
-            dueDate: dueDate,
-            isCompleted: false,
-            assignee: address(0)
-        });
-        emit TaskCreated(nextTaskId, description, dueDate);
-        nextTaskId++;
     }
 
     /**
@@ -111,8 +142,35 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         return (t.description, t.dueDate, t.isCompleted);
     }
 
+    // --- Internal Logic ---
+
     function _update(address from, address to, uint256 value) internal override(ERC20) whenNotPaused {
-        super._update(from, to, value);
+        // 1. Skip logic for Minting/Burning
+        if (from == address(0) || to == address(0)) {
+            super._update(from, to, value);
+            return;
+        }
+
+        // 2. Check Limits (if enabled and not owner)
+        if (limitsInEffect && from != owner() && to != owner()) {
+            if (!tradingActive) revert TradingNotActive();
+            if (value > maxTxAmount) revert MaxTxAmountExceeded();
+            if (balanceOf(to) + value > maxWalletSize) revert MaxWalletExceeded();
+        }
+
+        // 3. Tax Logic (Simplified: Flat tax on all transfers except owner)
+        uint256 taxAmount = 0;
+        if (from != owner() && to != owner()) {
+            // Apply tax (Buy or Sell - simplified as flat rate for template)
+            taxAmount = (value * buyTax) / 100;
+        }
+
+        if (taxAmount > 0) {
+            super._update(from, marketingWallet, taxAmount);
+            super._update(from, to, value - taxAmount);
+        } else {
+            super._update(from, to, value);
+        }
     }
 
     function transferOwnership(address newOwner) public override onlyOwner {
