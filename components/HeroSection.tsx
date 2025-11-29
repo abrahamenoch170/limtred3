@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
 
@@ -258,6 +258,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [swapAmount, setSwapAmount] = useState('1.0');
   const [swapSuccess, setSwapSuccess] = useState(false);
   
+  // Agent State
+  const [agentPurpose, setAgentPurpose] = useState('');
+  const [agentFunction, setAgentFunction] = useState('Trading Bot');
+  const [isGeneratingAgent, setIsGeneratingAgent] = useState(false);
+  const [agentSuccess, setAgentSuccess] = useState(false);
+  
   const activeChain = CHAINS[currentChain];
 
   // Logic calculation variables
@@ -295,6 +301,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             setTimeout(() => setSwapSuccess(false), 2000);
         }
     }
+  };
+
+  const handleGenerateAgent = () => {
+    if (!agentPurpose.trim()) return;
+    setIsGeneratingAgent(true);
+    setTimeout(() => {
+        setIsGeneratingAgent(false);
+        setAgentSuccess(true);
+        setTimeout(() => setAgentSuccess(false), 3000);
+        setAgentPurpose('');
+    }, 2500);
   };
 
   const openModal = (e: React.MouseEvent, type: ModalType) => {
@@ -591,7 +608,88 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
-      {/* ... (Documentation, Footer, Modals code remains the same) ... */}
+      {/* -------------------- AI AGENTS SECTION -------------------- */}
+      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative overflow-hidden">
+        <ScrollFade className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row gap-12 items-center">
+                <div className="flex-1">
+                    <Badge color="text-[#39b54a]">PHASE 3: AUTOMATION</Badge>
+                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                        Deploy Autonomous <br/> <span className="text-[#39b54a]">AI Agents</span>
+                    </h2>
+                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                        Spin up specialized AI agents to manage your protocol, optimize yield, or trade on your behalf. 
+                        Fully non-custodial and verifiable on-chain.
+                    </p>
+                    <ul className="space-y-4 mb-8">
+                        <ListItem text="24/7 Market Monitoring" />
+                        <ListItem text="MEV-Protected Execution" />
+                        <ListItem text="Sentiment Analysis Integration" />
+                    </ul>
+                </div>
+                
+                <div className="flex-1 w-full relative">
+                     <Card className="max-w-md mx-auto relative overflow-hidden group border-t-4 border-t-[#39b54a]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-[#39b54a]/10 border border-[#39b54a] flex items-center justify-center rounded-full">
+                                <Bot size={20} className="text-[#39b54a]" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white uppercase">Agent Constructor</h3>
+                                <p className="text-xs text-[#666666] font-mono">v1.0.2-beta</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Primary Function</label>
+                                <div className="relative">
+                                    <select 
+                                        value={agentFunction}
+                                        onChange={(e) => setAgentFunction(e.target.value)}
+                                        className="w-full bg-[#0c0c0c] border border-[#1f1f1f] text-white p-3 appearance-none outline-none focus:border-[#39b54a] text-sm font-mono uppercase"
+                                    >
+                                        <option>Trading Bot</option>
+                                        <option>Portfolio Manager</option>
+                                        <option>Yield Optimizer</option>
+                                        <option>Sentiment Analyst</option>
+                                        <option>Risk Guardian</option>
+                                    </select>
+                                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] pointer-events-none" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Agent Directives</label>
+                                <textarea 
+                                    value={agentPurpose}
+                                    onChange={(e) => setAgentPurpose(e.target.value)}
+                                    placeholder="e.g. Accumulate ETH when RSI < 30, sell when RSI > 70..."
+                                    className="w-full bg-[#0c0c0c] border border-[#1f1f1f] text-white p-3 outline-none focus:border-[#39b54a] text-sm min-h-[100px] resize-none font-mono"
+                                />
+                            </div>
+
+                            <Button 
+                                fullWidth 
+                                onClick={handleGenerateAgent}
+                                disabled={isGeneratingAgent || !agentPurpose}
+                                className="flex items-center justify-center gap-2"
+                            >
+                                {isGeneratingAgent ? (
+                                    <><Loader2 className="animate-spin" size={16} /> INITIALIZING AGENT...</>
+                                ) : agentSuccess ? (
+                                    <><CheckCircle size={16} /> AGENT DEPLOYED</>
+                                ) : (
+                                    <><Zap size={16} /> GENERATE AGENT</>
+                                )}
+                            </Button>
+                        </div>
+                     </Card>
+                </div>
+            </div>
+        </ScrollFade>
+      </section>
+
       {/* -------------------- DOCUMENTATION SECTION -------------------- */}
       <div className="bg-[#111111]/95 backdrop-blur-md border-t border-[#1f1f1f] relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
         {/* Features Grid */}
