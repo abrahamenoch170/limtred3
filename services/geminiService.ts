@@ -102,7 +102,8 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            - **Task / Bounty System:**
              - Implement \`struct Task\` (string description, uint256 dueDate, bool isCompleted, address assignee).
              - Implement \`mapping(uint256 => Task) public tasks\` and \`nextTaskId\`.
-             - \`createTask(...)\`: onlyOwner, nonReentrant.
+             - **Events:** \`event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate, address indexed assignee);\`.
+             - \`createTask(...)\`: onlyOwner, nonReentrant. Emits TaskCreated with assignee.
              - \`completeTask(uint256 taskId)\`: Callable ONLY by the assignee, nonReentrant. Checks if already completed. Emits \`TaskCompleted\`.
              - Include custom errors: \`error NotTaskAssignee();\`, \`error TaskAlreadyCompleted();\`.
 

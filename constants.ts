@@ -73,7 +73,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     mapping(uint256 => Task) public tasks;
     uint256 public nextTaskId;
 
-    event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate);
+    event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate, address indexed assignee);
     event TaskCompleted(uint256 indexed taskId, address indexed completer);
 
     // --- Vesting Logic ---
@@ -204,7 +204,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
             isCompleted: false,
             assignee: _assignee
         });
-        emit TaskCreated(taskId, _description, _dueDate);
+        emit TaskCreated(taskId, _description, _dueDate, _assignee);
     }
 
     // --- User Functions ---
