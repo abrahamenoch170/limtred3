@@ -32,8 +32,9 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
-contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard {
+contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
     
     // Anti-Rug Mechanics
@@ -44,8 +45,48 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard {
         _mint(msg.sender, TOTAL_SUPPLY);
     }
 
-    function enableTrading() external onlyOwner {
+    /**
+     * @dev Triggers stopped state.
+     * Requirements:
+     * - The contract must not be paused.
+     */
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    /**
+     * @dev Returns to normal state.
+     * Requirements:
+     * - The contract must be paused.
+     */
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    /**
+     * @dev Enables trading. Protected against reentrancy.
+     */
+    function enableTrading() external onlyOwner nonReentrant {
         tradingActive = true;
+    }
+
+    /**
+     * @dev Returns the total supply calculated from mints and burns.
+     * Mirrors the standard totalSupply() but exposed explicitly as requested.
+     */
+    function calculatedTotalSupply() public view returns (uint256) {
+        return totalSupply();
+    }
+
+    /**
+     * @dev Hook that is called before any transfer of tokens. This includes
+     * minting and burning.
+     *
+     * Requirements:
+     * - The contract must not be paused.
+     */
+    function _update(address from, address to, uint256 value) internal override(ERC20) whenNotPaused {
+        super._update(from, to, value);
     }
 
     /**
