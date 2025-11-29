@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, CHAINS } from '../constants';
-import { Zap, Shield, ChevronDown, ArrowRight, Activity, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe, ShieldCheck } from 'lucide-react';
+import { Zap, Shield, ChevronDown, ArrowRight, Activity, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe, ShieldCheck, Search, AlertCircle, Twitter, Github, Disc } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade } from './ui/MotionComponents';
 
@@ -29,13 +29,28 @@ const Logo = () => (
 type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | 'WHITEPAPER' | 'VESTING' | null;
 
 const PROTOCOL_CONTENT = {
-  DOCS: { title: "PROTOCOL DOCUMENTATION", icon: <Layers size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm">Full documentation loaded...</div> },
-  TOKENOMICS: { title: "TOKEN ECONOMICS", icon: <Activity size={24} className="text-[#8b5cf6]" />, content: <div className="text-gray-400 text-sm">Tokenomics loaded...</div> },
-  BOUNTY: { title: "BUG BOUNTY PROGRAM", icon: <Bot size={24} className="text-red-500" />, content: <div className="text-gray-400 text-sm">Bounty program loaded...</div> },
-  AUDITS: { title: "SECURITY AUDITS", icon: <Shield size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm">Audits loaded...</div> },
-  VESTING: { title: "VESTING SCHEDULES", icon: <Clock size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm">Vesting loaded...</div> },
-  WHITEPAPER: { title: "LIMETRED WHITE PAPER", icon: <BookOpen size={24} className="text-white" />, content: <div className="text-gray-400 text-sm">Whitepaper loaded...</div> },
+  DOCS: { title: "PROTOCOL DOCUMENTATION", icon: <Layers size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm p-4 font-mono">Documentation modules loading...<br/><br/>[1] Architecture Overview<br/>[2] Smart Contracts<br/>[3] SDK Reference</div> },
+  TOKENOMICS: { title: "TOKEN ECONOMICS", icon: <Activity size={24} className="text-[#8b5cf6]" />, content: <div className="text-gray-400 text-sm p-4 font-mono">Total Supply: 1,000,000,000 LMT<br/>Circulating: 12.5%<br/>Treasury: 40%<br/>Team: 15% (Vested)</div> },
+  BOUNTY: { title: "BUG BOUNTY PROGRAM", icon: <Bot size={24} className="text-red-500" />, content: <div className="text-gray-400 text-sm p-4 font-mono">Active Bounties:<br/>- Smart Contract Logic (Critical): $50,000<br/>- Frontend Injection (High): $10,000</div> },
+  AUDITS: { title: "SECURITY AUDITS", icon: <Shield size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm p-4 font-mono">Last Audit: 2 days ago by CertiK<br/>Score: 98/100<br/>Status: PASSED</div> },
+  VESTING: { title: "VESTING SCHEDULES", icon: <Clock size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm p-4 font-mono">No active vesting schedules found for current wallet.</div> },
+  WHITEPAPER: { title: "LIMETRED WHITE PAPER", icon: <BookOpen size={24} className="text-white" />, content: <div className="text-gray-400 text-sm p-4 font-mono">Abstract: Limetred is a Venture-as-a-Service protocol enabling instantaneous deployment of complex DeFi primitives via generative AI.</div> },
 };
+
+interface Token {
+    symbol: string;
+    name: string;
+    address: string;
+    logo?: string;
+    isNative?: boolean;
+}
+
+const COMMON_TOKENS: Token[] = [
+    { symbol: 'USDC', name: 'USD Coin', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
+    { symbol: 'USDT', name: 'Tether USD', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' },
+    { symbol: 'LMT', name: 'Limetred', address: '0x1234...LMT', isNative: false },
+    { symbol: 'WIF', name: 'dogwifhat', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm' },
+];
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   onGenerate, 
@@ -63,6 +78,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [poolSuccess, setPoolSuccess] = useState(false);
   const [bridgeSuccess, setBridgeSuccess] = useState(false);
   
+  // Token Selector State
+  const activeChain = CHAINS[currentChain];
+  const [payToken, setPayToken] = useState<Token>({ symbol: activeChain.symbol, name: activeChain.name, address: 'NATIVE', isNative: true });
+  const [receiveToken, setReceiveToken] = useState<Token>({ symbol: 'LMT', name: 'Limetred', address: '0x1234...LMT', isNative: false });
+  const [tokenSelectorOpen, setTokenSelectorOpen] = useState<'PAY' | 'RECEIVE' | null>(null);
+  const [tokenSearch, setTokenSearch] = useState('');
+
+  // Update Pay Token default when chain changes
+  useEffect(() => {
+      setPayToken({ symbol: activeChain.symbol, name: activeChain.name, address: 'NATIVE', isNative: true });
+  }, [currentChain]);
+
   // Agent State
   const [agentPurpose, setAgentPurpose] = useState('');
   const [agentFunction, setAgentFunction] = useState('Trading Bot');
@@ -75,9 +102,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [tokenDecimals, setTokenDecimals] = useState('18');
   const [isGeneratingToken, setIsGeneratingToken] = useState(false);
 
-  const activeChain = CHAINS[currentChain];
   const amountVal = parseFloat(swapAmount) || 0;
-  const hasInsufficientFunds = isConnected && amountVal > walletBalance.native;
+  const hasInsufficientFunds = isConnected && amountVal > walletBalance.native && payToken.isNative;
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -117,7 +143,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const handleAskGuardian = () => {
     if (onOpenAI) {
-      const context = `I am considering swapping ${swapAmount} ${activeChain.symbol} for LMT on ${activeChain.name}. Can you analyze the safety of this transaction and check for potential honeypots?`;
+      const context = `I am considering swapping ${swapAmount} ${payToken.symbol} (${payToken.address}) for ${receiveToken.symbol} (${receiveToken.address}) on ${activeChain.name}. 
+      
+      Contract Verification Data:
+      - Chain: ${activeChain.name}
+      - Pay Token: ${payToken.symbol} (Native: ${payToken.isNative})
+      - Receive Token: ${receiveToken.symbol} (Native: ${receiveToken.isNative})
+      - Address: ${receiveToken.address}
+      
+      Can you analyze the safety of this transaction, check for potential honeypots, and verify if the contract address looks suspicious?`;
+      
       onOpenAI(context);
     }
   };
@@ -131,7 +166,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
 
     if (!isNaN(amountVal) && amountVal > 0) {
-        const received = amountVal * 14020.5;
+        // Mock swap
+        const received = amountVal * 14020.5; // Mock rate
         const success = onSwap(amountVal, received);
         if (success) {
             setSwapSuccess(true);
@@ -200,8 +236,90 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       }, 300);
   };
 
+  // --- Token Selector Helper ---
+  const handleSelectToken = (token: Token) => {
+      if (tokenSelectorOpen === 'PAY') setPayToken(token);
+      else setReceiveToken(token);
+      setTokenSelectorOpen(null);
+      setTokenSearch('');
+  };
+
+  const filteredTokens = [
+      { symbol: activeChain.symbol, name: activeChain.name, address: 'NATIVE', isNative: true }, 
+      ...COMMON_TOKENS
+  ].filter(t => t.symbol.toLowerCase().includes(tokenSearch.toLowerCase()) || t.name.toLowerCase().includes(tokenSearch.toLowerCase()));
+
+  // Check if search might be an address
+  const isAddressSearch = tokenSearch.startsWith('0x') || tokenSearch.length > 20;
+
+
   return (
     <div className="relative bg-transparent w-full">
+      
+      {/* -------------------- MOBILE MENU OVERLAY -------------------- */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+            <motion.div
+                initial={{ opacity: 0, x: '100%' }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: '100%' }}
+                transition={{ type: "tween", duration: 0.2 }}
+                className="fixed inset-0 bg-[#0c0c0c] z-[200] flex flex-col w-full h-full overflow-y-auto"
+            >
+                {/* Mobile Menu Header */}
+                <div className="h-16 px-4 flex items-center justify-between border-b border-[#1f1f1f] bg-[#0c0c0c] shrink-0 sticky top-0 z-10">
+                    <div className="flex items-center gap-2">
+                            <Logo />
+                            <span className="font-bold text-white uppercase tracking-wider">Limetred</span>
+                    </div>
+                    <button onClick={toggleMobileMenu} className="p-2 text-white bg-[#1f1f1f] rounded border border-[#333]">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Mobile Menu Content */}
+                <div className="flex-1 p-6 flex flex-col gap-4">
+                    <button 
+                        onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
+                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                    >
+                        <Zap size={24} className="text-[#39b54a]" /> Launchpad
+                    </button>
+                    <button 
+                        onClick={() => scrollToSection('dex')} 
+                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                    >
+                        <ArrowLeftRight size={24} className="text-[#8b5cf6]" /> DEX & Swap
+                    </button>
+                    <button 
+                        onClick={() => scrollToSection('agents')} 
+                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                    >
+                            <Bot size={24} className="text-[#39b54a]" /> AI Agents
+                    </button>
+                    <button 
+                        onClick={() => scrollToSection('token-factory')} 
+                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                    >
+                            <Coins size={24} className="text-[#8b5cf6]" /> Token Factory
+                    </button>
+                    
+                    <div className="mt-8 p-6 bg-[#111] border border-[#1f1f1f] rounded-none">
+                        <h4 className="text-xs text-[#666] font-bold uppercase mb-4">Protocol Stats</h4>
+                        <div className="flex justify-between text-base text-white font-mono mb-2">
+                            <span>TVL</span>
+                            <span className="text-[#39b54a] font-bold">$14.2M</span>
+                        </div>
+                        <div className="flex justify-between text-base text-white font-mono">
+                            <span>Volume</span>
+                            <span className="text-[#8b5cf6] font-bold">$2.4M</span>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* -------------------- NAVBAR -------------------- */}
       <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-[#1f1f1f]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex justify-between items-center">
@@ -269,70 +387,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
         </div>
       </nav>
-
-        {/* Mobile Menu Overlay */}
-        <AnimatePresence>
-            {isMobileMenuOpen && (
-                <motion.div
-                    initial={{ opacity: 0, x: '100%' }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: '100%' }}
-                    transition={{ type: "tween", duration: 0.2 }}
-                    className="fixed inset-0 bg-[#0c0c0c] z-[100] flex flex-col w-full h-full overflow-y-auto"
-                >
-                    {/* Mobile Menu Header */}
-                    <div className="h-16 px-4 flex items-center justify-between border-b border-[#1f1f1f] bg-[#0c0c0c] shrink-0 sticky top-0 z-10">
-                        <div className="flex items-center gap-2">
-                             <Logo />
-                             <span className="font-bold text-white uppercase tracking-wider">Limetred</span>
-                        </div>
-                        <button onClick={toggleMobileMenu} className="p-2 text-white bg-[#1f1f1f] rounded border border-[#333]">
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    {/* Mobile Menu Content */}
-                    <div className="flex-1 p-6 flex flex-col gap-4">
-                        <button 
-                            onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
-                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
-                        >
-                            <Zap size={24} className="text-[#39b54a]" /> Launchpad
-                        </button>
-                        <button 
-                            onClick={() => scrollToSection('dex')} 
-                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
-                        >
-                            <ArrowLeftRight size={24} className="text-[#8b5cf6]" /> DEX & Swap
-                        </button>
-                        <button 
-                            onClick={() => scrollToSection('agents')} 
-                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
-                        >
-                             <Bot size={24} className="text-[#39b54a]" /> AI Agents
-                        </button>
-                        <button 
-                            onClick={() => scrollToSection('token-factory')} 
-                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
-                        >
-                             <Coins size={24} className="text-[#8b5cf6]" /> Token Factory
-                        </button>
-                        
-                        <div className="mt-8 p-6 bg-[#111] border border-[#1f1f1f] rounded-none">
-                            <h4 className="text-xs text-[#666] font-bold uppercase mb-4">Protocol Stats</h4>
-                            <div className="flex justify-between text-base text-white font-mono mb-2">
-                                <span>TVL</span>
-                                <span className="text-[#39b54a] font-bold">$14.2M</span>
-                            </div>
-                            <div className="flex justify-between text-base text-white font-mono">
-                                <span>Volume</span>
-                                <span className="text-[#8b5cf6] font-bold">$2.4M</span>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
 
       {/* -------------------- HERO -------------------- */}
       <div className="flex flex-col relative z-10">
@@ -514,10 +568,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                             </div>
                                         </div>
                                         
+                                        {/* PAY INPUT */}
                                         <div className="bg-[#111] p-4 mb-2 border border-[#333] hover:border-[#666] transition-colors relative">
                                             <div className="flex justify-between mb-2">
                                                 <span className="text-xs text-[#666666] font-bold">PAY</span>
-                                                <span className="text-xs text-[#666666]">BAL: {isConnected ? walletBalance.native.toFixed(4) : '--'}</span>
+                                                <span className="text-xs text-[#666666]">BAL: {isConnected && payToken.isNative ? walletBalance.native.toFixed(4) : '--'}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <input 
@@ -530,9 +585,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                     className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none placeholder-[#333]"
                                                     placeholder="0.00"
                                                 />
-                                                <button className="bg-[#1f1f1f] px-3 py-1 text-xs font-bold rounded-full flex items-center gap-2 hover:bg-[#333]">
-                                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: activeChain.color }}></div>
-                                                    {activeChain.symbol} <ChevronDown size={12}/>
+                                                <button 
+                                                    onClick={() => setTokenSelectorOpen('PAY')}
+                                                    className="bg-[#1f1f1f] px-3 py-1 text-xs font-bold rounded-full flex items-center gap-2 hover:bg-[#333] transition-colors border border-[#333]"
+                                                >
+                                                    {payToken.isNative && <div className="w-4 h-4 rounded-full" style={{ backgroundColor: activeChain.color }}></div>}
+                                                    {payToken.symbol} <ChevronDown size={12}/>
                                                 </button>
                                             </div>
                                         </div>
@@ -543,21 +601,92 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                             </div>
                                         </div>
 
+                                        {/* RECEIVE INPUT */}
                                         <div className="bg-[#111] p-4 mt-2 mb-6 border border-[#333] hover:border-[#666] transition-colors">
                                             <div className="flex justify-between mb-2">
                                                 <span className="text-xs text-[#666666] font-bold">RECEIVE</span>
-                                                <span className="text-xs text-[#666666]">EST: {(parseFloat(swapAmount || '0') * 14020).toLocaleString()} LMT</span>
+                                                <span className="text-xs text-[#666666]">EST: {(parseFloat(swapAmount || '0') * 14020).toLocaleString()} {receiveToken.symbol}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-2xl font-bold font-mono text-[#39b54a]">
                                                     {(parseFloat(swapAmount || '0') * 14020.5).toLocaleString(undefined, { maximumFractionDigits: 1 })}
                                                 </span>
-                                                <button className="bg-[#1f1f1f] px-3 py-1 text-xs font-bold rounded-full flex items-center gap-2 hover:bg-[#333]">
-                                                    <div className="w-4 h-4 rounded-full bg-[#39b54a]"></div>
-                                                    LMT <ChevronDown size={12}/>
+                                                <button 
+                                                    onClick={() => setTokenSelectorOpen('RECEIVE')}
+                                                    className="bg-[#1f1f1f] px-3 py-1 text-xs font-bold rounded-full flex items-center gap-2 hover:bg-[#333] transition-colors border border-[#333]"
+                                                >
+                                                    {!receiveToken.isNative && receiveToken.symbol === 'LMT' && <div className="w-4 h-4 rounded-full bg-[#39b54a]"></div>}
+                                                    {receiveToken.symbol} <ChevronDown size={12}/>
                                                 </button>
                                             </div>
                                         </div>
+
+                                        {/* TOKEN SELECTOR MODAL/OVERLAY */}
+                                        <AnimatePresence>
+                                            {tokenSelectorOpen && (
+                                                <motion.div 
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: 10 }}
+                                                    className="absolute inset-0 z-30 bg-[#0c0c0c] flex flex-col p-4"
+                                                >
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h3 className="text-white font-bold text-xs uppercase">Select Token</h3>
+                                                        <button onClick={() => setTokenSelectorOpen(null)}><X size={16} className="text-[#666] hover:text-white"/></button>
+                                                    </div>
+                                                    
+                                                    <div className="relative mb-4">
+                                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666]"/>
+                                                        <input 
+                                                            autoFocus
+                                                            placeholder="Search name or paste address" 
+                                                            className="w-full bg-[#111] border border-[#333] pl-9 pr-3 py-2 text-xs text-white outline-none focus:border-[#39b54a]"
+                                                            value={tokenSearch}
+                                                            onChange={(e) => setTokenSearch(e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="flex-1 overflow-y-auto space-y-1">
+                                                        {isAddressSearch && (
+                                                            <button 
+                                                                onClick={() => handleSelectToken({ 
+                                                                    symbol: 'CUSTOM', 
+                                                                    name: 'Custom Token', 
+                                                                    address: tokenSearch,
+                                                                    isNative: false 
+                                                                })}
+                                                                className="w-full text-left p-2 flex items-center justify-between hover:bg-[#1a1a1a] border border-dashed border-[#333] mb-2"
+                                                            >
+                                                                <div>
+                                                                    <div className="text-white text-xs font-bold">Import Address</div>
+                                                                    <div className="text-[10px] text-[#666] font-mono">{tokenSearch.slice(0, 16)}...</div>
+                                                                </div>
+                                                                <Plus size={14} className="text-[#39b54a]"/>
+                                                            </button>
+                                                        )}
+
+                                                        {filteredTokens.map((t, i) => (
+                                                            <button 
+                                                                key={i}
+                                                                onClick={() => handleSelectToken(t)}
+                                                                className="w-full text-left p-2 flex items-center gap-3 hover:bg-[#1a1a1a] transition-colors"
+                                                            >
+                                                                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-black" style={{ backgroundColor: t.isNative ? activeChain.color : '#333', color: t.isNative ? 'black' : 'white' }}>
+                                                                    {t.symbol[0]}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-white text-xs font-bold">{t.symbol}</div>
+                                                                    <div className="text-[10px] text-[#666]">{t.name}</div>
+                                                                </div>
+                                                                {((tokenSelectorOpen === 'PAY' && payToken.symbol === t.symbol) || (tokenSelectorOpen === 'RECEIVE' && receiveToken.symbol === t.symbol)) && (
+                                                                    <div className="ml-auto text-[#39b54a]"><CheckCircle size={14}/></div>
+                                                                )}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
 
                                         {scanResult === 'SAFE' && (
                                             <div className="mb-4 bg-[#39b54a]/10 border border-[#39b54a] p-2 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
@@ -569,7 +698,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                         )}
 
                                         <div className="flex gap-2">
-                                             {!scanResult && !swapSuccess && isConnected && !hasInsufficientFunds && amountVal > 0 && (
+                                             {!scanResult && !swapSuccess && isConnected && amountVal > 0 && (
                                                  <Button 
                                                     variant="secondary" 
                                                     className="flex-1 text-xs py-3"
@@ -739,11 +868,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <p className="text-[#666666] text-xs font-mono max-w-xs leading-relaxed mb-6">
                     The Venture-as-a-Service protocol. <br/> Built for speed. Secured by math.
                 </p>
+                <div className="flex gap-4">
+                    <button className="text-[#666] hover:text-white transition-colors"><Twitter size={20}/></button>
+                    <button className="text-[#666] hover:text-white transition-colors"><Github size={20}/></button>
+                    <button className="text-[#666] hover:text-white transition-colors"><Disc size={20}/></button>
+                </div>
             </div>
-            <div className="flex flex-col gap-3">
-                <button onClick={(e) => openModal(e, 'DOCS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left">Documentation</button>
-                <button onClick={(e) => openModal(e, 'TOKENOMICS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left">Tokenomics</button>
-                <button onClick={(e) => openModal(e, 'AUDITS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left">Security Audits</button>
+            <div className="flex flex-col gap-4 md:items-end">
+                <button onClick={(e) => openModal(e, 'DOCS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left md:text-right transition-colors">Documentation</button>
+                <button onClick={(e) => openModal(e, 'TOKENOMICS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left md:text-right transition-colors">Tokenomics</button>
+                <button onClick={(e) => openModal(e, 'AUDITS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left md:text-right transition-colors">Security Audits</button>
+                <div className="flex gap-4 mt-2">
+                     <span className="text-[10px] text-[#444] font-mono">Terms of Service</span>
+                     <span className="text-[10px] text-[#444] font-mono">Privacy Policy</span>
+                </div>
             </div>
         </div>
       </footer>
@@ -753,15 +891,25 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         {activeModal && PROTOCOL_CONTENT[activeModal] && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
             onClick={() => setActiveModal(null)}
           >
-            <motion.div className="bg-[#111111] border border-[#39b54a] w-full max-w-2xl p-8" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-black uppercase text-white">{PROTOCOL_CONTENT[activeModal].title}</h3>
+            <motion.div 
+                initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+                className="bg-[#111111] border border-[#39b54a] w-full max-w-2xl max-h-[80vh] overflow-y-auto" 
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex justify-between items-center p-6 border-b border-[#1f1f1f] bg-[#0c0c0c] sticky top-0">
+                    <div className="flex items-center gap-3">
+                        {PROTOCOL_CONTENT[activeModal].icon}
+                        <h3 className="text-lg font-black uppercase text-white tracking-wider">{PROTOCOL_CONTENT[activeModal].title}</h3>
+                    </div>
                     <button onClick={() => setActiveModal(null)}><X className="text-[#666] hover:text-white"/></button>
                 </div>
                 {PROTOCOL_CONTENT[activeModal].content}
+                <div className="p-6 border-t border-[#1f1f1f] flex justify-end">
+                    <Button onClick={() => setActiveModal(null)} variant="outline" className="text-xs py-2">CLOSE MODULE</Button>
+                </div>
             </motion.div>
           </motion.div>
         )}

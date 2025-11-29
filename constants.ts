@@ -1,3 +1,4 @@
+
 import { TickerItem, ChainId, ChainConfig, LaunchpadProject, ProjectCategory } from './types';
 
 export const COLORS = {
@@ -85,7 +86,6 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     address public marketingWallet;
 
     // --- Buyback System ---
-    IUniswapV2Router02 public immutable router;
     bool public buybackEnabled;
     uint256 public buybackPercentage;
 
@@ -123,8 +123,6 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     constructor() ERC20("LimetredGenerated", "LMT") Ownable(msg.sender) {
         marketingWallet = msg.sender;
-        // Placeholder router address (Uniswap V2 Mainnet), allows compilation
-        router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         _mint(msg.sender, TOTAL_SUPPLY);
     }
 

@@ -89,7 +89,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            **ADVANCED FEATURES (REQUIRED):**
            - **Buyback Mechanism:**
              - Include \`enableBuyback(uint256 _percentage)\`.
-             - Include \`executeBuyback(address _router)\` which swaps ETH for tokens and burns them.
+             - Include \`executeBuyback(address _router)\` which swaps ETH for tokens and burns them. Use the passed router address for flexibility.
            - **Scalable Vesting:** 
              - Use \`mapping(address => VestingSchedule[]) public vestingSchedules;\`.
              - Implement \`createVestingSchedule\`, \`revokeVestingSchedule\`, and \`claimVesting(uint256 index)\`.
