@@ -16,7 +16,7 @@ interface HeroSectionProps {
   currentChain: ChainId;
   onOpenLaunchpad?: () => void;
   onGenerateToken?: (name: string, symbol: string, supply: string, decimals: string) => void;
-  onOpenAI?: () => void;
+  onOpenAI?: (context?: string) => void;
 }
 
 const Logo = () => (
@@ -115,6 +115,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       }, 2000);
   };
 
+  const handleAskGuardian = () => {
+    if (onOpenAI) {
+      const context = `I am considering swapping ${swapAmount} ${activeChain.symbol} for LMT on ${activeChain.name}. Can you analyze the safety of this transaction and check for potential honeypots?`;
+      onOpenAI(context);
+    }
+  };
+
   const handleSwapClick = () => {
     if (!isConnected || hasInsufficientFunds || amountVal <= 0) return;
     
@@ -176,7 +183,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
-  // Robust scrolling specifically for mobile where 100vh containers fail
   const scrollToSection = (id: string) => {
       setIsMobileMenuOpen(false);
       setTimeout(() => {
@@ -190,10 +196,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   top: offsetPosition,
                   behavior: "smooth"
               });
-          } else {
-              console.warn(`Section with ID ${id} not found`);
           }
-      }, 300); // Increased timeout to ensure menu closes first
+      }, 300);
   };
 
   return (
@@ -235,7 +239,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 )}
             </div>
 
-            {/* Mobile Menu Toggle - Visible on Small Screens */}
+            {/* Mobile Menu Toggle */}
             <div className="flex md:hidden items-center gap-3">
                  {!isConnected && (
                     <Button 
@@ -257,14 +261,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                  )}
                 <button 
                     onClick={toggleMobileMenu} 
-                    className="text-white p-2 z-50 hover:bg-[#1a1a1a] rounded-none border border-transparent active:border-[#333] transition-colors"
+                    className="text-white p-2 z-50 bg-[#1f1f1f] rounded border border-[#333] active:bg-[#39b54a] transition-colors shadow-lg"
+                    aria-label="Toggle Menu"
                 >
-                    <Menu size={24} />
+                    <Menu size={20} />
                 </button>
             </div>
         </div>
+      </nav>
 
-        {/* Mobile Menu Overlay - FIXED FULL SCREEN z-[100] with SOLID BACKGROUND */}
+        {/* Mobile Menu Overlay */}
         <AnimatePresence>
             {isMobileMenuOpen && (
                 <motion.div
@@ -280,8 +286,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                              <Logo />
                              <span className="font-bold text-white uppercase tracking-wider">Limetred</span>
                         </div>
-                        <button onClick={toggleMobileMenu} className="p-2 text-white hover:text-[#39b54a]">
-                            <X size={24} />
+                        <button onClick={toggleMobileMenu} className="p-2 text-white bg-[#1f1f1f] rounded border border-[#333]">
+                            <X size={20} />
                         </button>
                     </div>
 
@@ -327,7 +333,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 </motion.div>
             )}
         </AnimatePresence>
-      </nav>
 
       {/* -------------------- HERO -------------------- */}
       <div className="flex flex-col relative z-10">
@@ -502,7 +507,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                         <div className="flex justify-between items-center mb-6">
                                             <span className="font-bold uppercase text-white text-sm">Market Order</span>
                                             <div className="flex gap-2">
-                                                 <button onClick={() => onOpenAI && onOpenAI()} className="text-[10px] text-[#39b54a] border border-[#39b54a]/30 px-2 py-1 flex items-center gap-1 hover:bg-[#39b54a]/10 transition-colors">
+                                                 <button onClick={handleAskGuardian} className="text-[10px] text-[#39b54a] border border-[#39b54a]/30 px-2 py-1 flex items-center gap-1 hover:bg-[#39b54a]/10 transition-colors">
                                                      <Bot size={12} /> ASK GUARDIAN
                                                  </button>
                                                  <span className="text-xs text-[#666666] font-mono py-1">SLIPPAGE: AUTO</span>

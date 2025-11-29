@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, Loader2, Sparkles, ShieldAlert, Lock, CheckCircle, ArrowRight, AlertTriangle } from 'lucide-react';
@@ -6,9 +7,10 @@ import { getChatResponse } from '../services/geminiService';
 interface AIAssistantProps {
     isOpen?: boolean;
     onToggle?: () => void;
+    initialMessage?: string;
 }
 
-const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onToggle }) => {
+const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onToggle, initialMessage }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<{role: 'user' | 'model', text: string, type?: 'TX_REQUEST', txDetails?: any}[]>([
@@ -20,6 +22,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
   const toggleOpen = onToggle || (() => setInternalIsOpen(!internalIsOpen));
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const processedInitialMessageRef = useRef<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,6 +31,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
   useEffect(() => {
     scrollToBottom();
   }, [messages, isOpen]);
+
+  // Handle incoming context message
+  useEffect(() => {
+    if (isOpen && initialMessage && initialMessage !== processedInitialMessageRef.current) {
+        processedInitialMessageRef.current = initialMessage;
+        handleSend(initialMessage);
+    }
+  }, [isOpen, initialMessage]);
 
   const parseTransactionIntent = (text: string) => {
       // Regex to find: "Send [Amount] [Token] to [Address]"
@@ -43,16 +54,16 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
       return null;
   };
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (messageOverride?: string) => {
+    const textToSend = messageOverride || input;
+    if (!textToSend.trim()) return;
     
-    const userMsg = input;
     setInput("");
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setMessages(prev => [...prev, { role: 'user', text: textToSend }]);
     setIsTyping(true);
 
     // 1. Check for Transaction Intent
-    const txIntent = parseTransactionIntent(userMsg);
+    const txIntent = parseTransactionIntent(textToSend);
     
     if (txIntent) {
         // Simulate Security Scan delay
@@ -81,7 +92,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
       parts: [{ text: m.text }]
     }));
 
-    const response = await getChatResponse(history, userMsg);
+    const response = await getChatResponse(history, textToSend);
     
     setIsTyping(false);
     if (response) {
@@ -181,7 +192,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
                 className="flex-1 bg-[#111] border border-[#333] text-white text-xs px-3 py-2 outline-none focus:border-[#39b54a] transition-colors"
               />
               <button 
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || isTyping}
                 className="bg-[#39b54a] text-black p-2 hover:bg-[#2ea03f] disabled:opacity-50 transition-colors"
               >

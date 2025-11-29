@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId, LaunchpadProject } from './types';
@@ -42,6 +43,7 @@ export default function App() {
   
   // AI Assistant State
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [aiContext, setAiContext] = useState<string | undefined>(undefined);
   
   const [walletBalance, setWalletBalance] = useState<WalletBalance>({
     native: 12.5, // Generic 'native' token amount (SOL, ETH, etc)
@@ -190,6 +192,11 @@ export default function App() {
       setPhase(AppPhase.DASHBOARD);
   };
 
+  const handleOpenAI = (context?: string) => {
+      setAiContext(context);
+      setIsAIOpen(true);
+  };
+
   return (
     <main className="min-h-screen w-full bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans relative overflow-x-hidden">
       
@@ -210,7 +217,7 @@ export default function App() {
               currentChain={currentChain}
               onOpenLaunchpad={handleOpenLaunchpad}
               onGenerateToken={handleGenerateToken}
-              onOpenAI={() => setIsAIOpen(true)}
+              onOpenAI={handleOpenAI}
             />
           )}
 
@@ -258,7 +265,11 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      <AIAssistant isOpen={isAIOpen} onToggle={() => setIsAIOpen(!isAIOpen)} />
+      <AIAssistant 
+          isOpen={isAIOpen} 
+          onToggle={() => setIsAIOpen(!isAIOpen)} 
+          initialMessage={aiContext}
+      />
 
       <WalletDrawer 
         isOpen={isWalletOpen}
