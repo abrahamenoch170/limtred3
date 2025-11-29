@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, ChevronRight, Loader2, ArrowLeftRight } from 'lucide-react';
+import { X, Shield, ChevronRight, Loader2, ArrowLeftRight, AlertCircle } from 'lucide-react';
 import { ChainId } from '../types';
 import { CHAINS } from '../constants';
 
@@ -33,8 +33,6 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
 
   const handleSwitchAndConnect = (walletId: string, targetChain: ChainId) => {
     onSwitchChain(targetChain);
-    // Optional: Auto-connect after switch could be implemented here, 
-    // but typically switching network is the primary action first.
   };
 
   const activeChainConfig = CHAINS[currentChain];
@@ -89,49 +87,37 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                       disabled={connecting !== null}
                       className={`w-full flex items-center justify-between p-4 border transition-all duration-200 group relative overflow-hidden ${
                         isSupported 
-                          ? 'bg-[#0c0c0c] border-[#1f1f1f] hover:border-[#39b54a] hover:bg-[#1a1a1a] cursor-pointer' 
-                          : 'bg-[#1a1a1a] border-[#1f1f1f] hover:border-[#8b5cf6] cursor-pointer'
+                          ? 'bg-[#0c0c0c] border-[#1f1f1f] hover:border-[#39b54a] hover:bg-[#39b54a]/5'
+                          : 'bg-[#111111] border-[#1f1f1f] opacity-80 hover:opacity-100 hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/5'
                       }`}
                     >
                       <div className="flex items-center gap-4 relative z-10">
-                        <span className="text-2xl">{wallet.icon}</span>
+                        <div className="text-2xl">{wallet.icon}</div>
                         <div className="text-left">
-                          <div className={`font-bold font-mono uppercase ${isSupported ? 'text-white' : 'text-[#888]'}`}>
-                            {wallet.name}
-                          </div>
-                          {!isSupported && targetChainId && (
-                            <div className="text-[10px] text-[#8b5cf6] font-mono flex items-center gap-1 font-bold mt-1">
-                              <ArrowLeftRight size={10} /> Switch to {targetChainName}
-                            </div>
+                          <div className={`font-bold ${isSupported ? 'text-white' : 'text-[#888]'}`}>{wallet.name}</div>
+                          {!isSupported && (
+                              <div className="text-[10px] text-[#8b5cf6] font-mono flex items-center gap-1 mt-0.5">
+                                <AlertCircle size={10} /> Not on {activeChainConfig.name}
+                              </div>
                           )}
                         </div>
                       </div>
 
                       <div className="relative z-10">
                         {isConnecting ? (
-                          <Loader2 className="animate-spin text-[#39b54a]" size={20} />
+                           <Loader2 className="animate-spin text-[#39b54a]" size={18} />
                         ) : isSupported ? (
-                          <ChevronRight className="text-[#333] group-hover:text-[#39b54a] transition-colors" size={20} />
+                           <ChevronRight className="text-[#333] group-hover:text-[#39b54a] transition-colors" size={18} />
                         ) : (
-                          <span className="bg-[#8b5cf6]/10 text-[#8b5cf6] text-[10px] px-2 py-1 rounded-none border border-[#8b5cf6]/30 uppercase font-bold group-hover:bg-[#8b5cf6] group-hover:text-black transition-colors">
-                              Switch
-                          </span>
+                           <div className="flex items-center gap-1 bg-[#8b5cf6]/10 border border-[#8b5cf6] px-2 py-1 text-[10px] font-bold text-[#8b5cf6] uppercase">
+                              <ArrowLeftRight size={10} />
+                              Switch to {targetChainName}
+                           </div>
                         )}
                       </div>
-
-                      {/* Hover Effect */}
-                      {isSupported && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#39b54a]/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                      )}
                     </button>
                   );
                 })}
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-[#1f1f1f] text-center">
-                <p className="text-[10px] text-[#666666] font-mono leading-relaxed">
-                  By connecting a wallet, you agree to the <span className="text-[#39b54a] cursor-pointer hover:underline">Terms of Service</span> and acknowledge that crypto assets are highly volatile.
-                </p>
               </div>
             </div>
           </motion.div>
