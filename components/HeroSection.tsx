@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
@@ -178,25 +179,49 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <button onClick={() => scrollToSection('dex')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">DEX</button>
                 <button onClick={() => scrollToSection('agents')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Agents</button>
                 <button onClick={() => scrollToSection('token-factory')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Factory</button>
-                <Button 
-                    variant={isConnected ? "outline" : "primary"} 
-                    className="py-2 px-6 text-xs flex items-center gap-2"
-                    onClick={onConnectWallet}
-                >
-                    {isConnected && <Wallet size={14} />}
-                    {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
-                </Button>
+                
+                {!isConnected && (
+                    <Button 
+                        variant="primary" 
+                        className="py-2 px-6 text-xs flex items-center gap-2"
+                        onClick={onConnectWallet}
+                    >
+                        CONNECT WALLET
+                    </Button>
+                )}
+
+                {isConnected && (
+                    <Button 
+                        variant="outline" 
+                        className="py-2 px-6 text-xs flex items-center gap-2"
+                        onClick={onConnectWallet}
+                    >
+                        <Wallet size={14} />
+                        0x8A...4B2F
+                    </Button>
+                )}
             </div>
 
             {/* Mobile Menu Toggle */}
             <div className="flex md:hidden items-center gap-3">
-                 <Button 
-                    variant={isConnected ? "outline" : "primary"} 
-                    className="py-1 px-3 text-[10px] flex items-center gap-2 h-8"
-                    onClick={onConnectWallet}
-                >
-                    {isConnected ? "0x8A..." : "CONNECT"}
-                </Button>
+                 {!isConnected && (
+                    <Button 
+                        variant="primary" 
+                        className="py-1 px-3 text-[10px] flex items-center gap-2 h-8"
+                        onClick={onConnectWallet}
+                    >
+                        CONNECT
+                    </Button>
+                 )}
+                 {isConnected && (
+                    <Button 
+                        variant="outline" 
+                        className="py-1 px-3 text-[10px] flex items-center gap-2 h-8"
+                        onClick={onConnectWallet}
+                    >
+                        0x8A...
+                    </Button>
+                 )}
                 <button onClick={toggleMobileMenu} className="text-white p-2">
                     {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
