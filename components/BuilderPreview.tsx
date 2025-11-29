@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/GlintComponents';
 import { GeneratedApp, ChainId } from '../types';
-import { generateProjectAsset } from '../services/geminiService';
+import { generateProjectAsset, analyzeImage } from '../services/geminiService';
 import { 
   Rocket, Smartphone, CheckCircle, Loader2, Monitor, Tablet, 
   RefreshCw, Maximize2, X, ChevronDown, FileCode, Image as ImageIcon, Download, Copy, Check, Terminal, Box,
-  RotateCcw, Minus, Plus
+  RotateCcw, Minus, Plus, Upload, FileJson, ScrollText, AppWindow
 } from 'lucide-react';
 import { CHAINS } from '../constants';
 
@@ -15,6 +15,24 @@ interface BuilderPreviewProps {
   onDeploy: () => void;
   currentChain: ChainId;
 }
+
+// Device Configuration Types
+interface DeviceConfig {
+  name: string;
+  width: number | string;
+  height: number | string;
+  type: 'MOBILE' | 'TABLET' | 'DESKTOP';
+}
+
+const DEVICES: DeviceConfig[] = [
+  { name: 'iPhone 13', width: 375, height: 812, type: 'MOBILE' },
+  { name: 'iPhone 14 Pro', width: 393, height: 852, type: 'MOBILE' },
+  { name: 'Pixel 7', width: 412, height: 915, type: 'MOBILE' },
+  { name: 'iPad Mini', width: 768, height: 1024, type: 'TABLET' },
+  { name: 'iPad Pro 11"', width: 834, height: 1194, type: 'TABLET' },
+  { name: 'Desktop (1080p)', width: 1920, height: 1080, type: 'DESKTOP' },
+  { name: 'Responsive', width: '100%', height: '100%', type: 'DESKTOP' },
+];
 
 // Simple regex-based syntax highlighter for visual effect
 const SyntaxHighlight = ({ code }: { code: string }) => {
@@ -55,7 +73,7 @@ const SyntaxHighlight = ({ code }: { code: string }) => {
 
 const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, currentChain }) => {
   const [activeFile, setActiveFile] = useState('Contract.sol');
-  const [deviceMode, setDeviceMode] = useState<'MOBILE' | 'TABLET' | 'DESKTOP'>('MOBILE');
+  const [activeDevice, setActiveDevice] = useState<DeviceConfig>(DEVICES[1]); // Default to iPhone 14 Pro
   const [zoom, setZoom] = useState(1.0);
   const [showDeployModal, setShowDeployModal] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
@@ -69,6 +87,11 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const [isGeneratingAsset, setIsGeneratingAsset] = useState(false);
   const [generatedAsset, setGeneratedAsset] = useState<string | null>(null);
   
+  // Upload & Analysis State
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
   const activeChain = CHAINS[currentChain];
 
   const handleRefresh = () => {
@@ -78,7 +101,7 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
 
   const handleResetView = () => {
       setZoom(1.0);
-      setDeviceMode('MOBILE');
+      setActiveDevice(DEVICES[1]); // Reset to default iPhone
   };
 
   const handleConfirmDeploy = async () => {
@@ -126,6 +149,39 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
     URL.revokeObjectURL(url);
   };
 
+  // --- Drag & Drop Handlers ---
+  const handleDrag = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.type === "dragenter" || e.type === "dragover") {
+          setDragActive(true);
+      } else if (e.type === "dragleave") {
+          setDragActive(false);
+      }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFile(e.dataTransfer.files[0]);
+      }
+  };
+
+  const handleFile = (file: File) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+          const result = e.target?.result as string;
+          setUploadedImage(result);
+          setIsAnalyzing(true);
+          const analysis = await analyzeImage(result);
+          setAssetPrompt(analysis);
+          setIsAnalyzing(false);
+      };
+      reader.readAsDataURL(file);
+  };
+
   return (
     <div className="h-full flex flex-col bg-[#0c0c0c] text-white overflow-hidden relative">
       
@@ -166,13 +222,13 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                       <div className="text-[#ccc] text-xs font-bold mb-2 flex items-center gap-1"><ChevronDown size={12}/> {appData.name.replace(/\s+/g, '_')}</div>
                       <div className="pl-4 space-y-1">
                           <button onClick={() => setActiveFile('Contract.sol')} className={`w-full text-left text-xs font-mono py-1 px-2 flex items-center gap-2 transition-colors ${activeFile === 'Contract.sol' ? 'bg-[#39b54a]/10 text-[#39b54a]' : 'text-[#888] hover:text-white'}`}>
-                              <FileCode size={12} /> Contract.sol
+                              <ScrollText size={12} /> Contract.sol
                           </button>
                           <button onClick={() => setActiveFile('App.tsx')} className={`w-full text-left text-xs font-mono py-1 px-2 flex items-center gap-2 transition-colors ${activeFile === 'App.tsx' ? 'bg-[#39b54a]/10 text-[#39b54a]' : 'text-[#888] hover:text-white'}`}>
-                              <FileCode size={12} /> App.tsx
+                              <AppWindow size={12} /> App.tsx
                           </button>
                           <button onClick={() => setActiveFile('Config.json')} className={`w-full text-left text-xs font-mono py-1 px-2 flex items-center gap-2 transition-colors ${activeFile === 'Config.json' ? 'bg-[#39b54a]/10 text-[#39b54a]' : 'text-[#888] hover:text-white'}`}>
-                              <FileCode size={12} /> Config.json
+                              <FileJson size={12} /> Config.json
                           </button>
                           <button onClick={() => setActiveFile('Assets')} className={`w-full text-left text-xs font-mono py-1 px-2 flex items-center gap-2 transition-colors ${activeFile === 'Assets' ? 'bg-[#8b5cf6]/10 text-[#8b5cf6]' : 'text-[#888] hover:text-white'}`}>
                               <ImageIcon size={12} /> Asset Studio
@@ -224,6 +280,43 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                         </h3>
                         
                         <div className="bg-[#111] border border-[#1f1f1f] p-4 mb-4">
+                            {/* Drag & Drop Area */}
+                            <div 
+                                className={`border border-dashed transition-all duration-200 p-6 mb-4 flex flex-col items-center justify-center cursor-pointer relative group ${dragActive ? 'border-[#39b54a] bg-[#39b54a]/10' : 'border-[#333] bg-[#0c0c0c] hover:border-[#666]'}`}
+                                onDragEnter={handleDrag}
+                                onDragLeave={handleDrag}
+                                onDragOver={handleDrag}
+                                onDrop={handleDrop}
+                                onClick={() => !uploadedImage && document.getElementById('asset-upload')?.click()}
+                            >
+                                <input id="asset-upload" type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+                                
+                                {uploadedImage ? (
+                                    <div className="relative w-full">
+                                        <img src={uploadedImage} alt="Analysis Target" className="h-48 w-full object-contain" />
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setUploadedImage(null); setAssetPrompt(""); }}
+                                            className="absolute top-2 right-2 bg-black/50 text-white p-1 hover:bg-red-500 transition-colors"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                        {isAnalyzing && (
+                                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
+                                                <Loader2 className="animate-spin text-[#39b54a]" size={24} />
+                                                <span className="text-xs font-mono text-[#39b54a] animate-pulse">ANALYZING VISUAL DATA...</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-12 h-12 bg-[#1a1a1a] rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                            <Upload size={20} className="text-[#666] group-hover:text-white" />
+                                        </div>
+                                        <p className="text-xs text-[#666] uppercase font-bold group-hover:text-white">Drag Image for Analysis</p>
+                                    </>
+                                )}
+                            </div>
+
                             <label className="text-xs text-[#666] uppercase font-bold mb-2 block">Prompt</label>
                             <textarea 
                                 value={assetPrompt}
@@ -250,7 +343,13 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                                 disabled={isGeneratingAsset || !assetPrompt}
                                 className="w-full bg-[#8b5cf6] text-white py-2 font-bold uppercase text-xs hover:bg-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                {isGeneratingAsset ? <Loader2 className="animate-spin" size={14}/> : 'GENERATE ASSET'}
+                                {isGeneratingAsset ? (
+                                    <>
+                                        <Loader2 className="animate-spin" size={14}/> GENERATING...
+                                    </>
+                                ) : (
+                                    'GENERATE ASSET'
+                                )}
                             </button>
                         </div>
 
@@ -303,7 +402,7 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
               {/* Toolbar */}
               <div className="h-10 bg-[#111] border-b border-[#1f1f1f] flex items-center justify-between px-4 shrink-0 z-20">
                   <div className="flex items-center gap-2">
-                      <div className="bg-[#000] text-[#666] text-[10px] px-2 py-1 rounded font-mono border border-[#222]">localhost:3000</div>
+                      <div className="bg-[#000] text-[#666] text-[10px] px-2 py-1 rounded-none font-mono border border-[#222]">localhost:3000</div>
                       <button onClick={handleRefresh} className="p-1 hover:text-white text-[#666]">
                           <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
                       </button>
@@ -312,8 +411,8 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                   {/* Zoom & Device Controls */}
                   <div className="flex items-center gap-4">
                       {/* Zoom Control */}
-                      <div className="flex items-center gap-2 bg-[#0c0c0c] rounded px-2 py-1 border border-[#333]">
-                          <button onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="text-[#666] hover:text-white"><Minus size={12}/></button>
+                      <div className="flex items-center gap-2 bg-[#0c0c0c] px-2 py-1 border border-[#333] sharp-corners">
+                          <button onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="text-[#666] hover:text-white transition-colors"><Minus size={12}/></button>
                           <input
                             type="range"
                             min="0.5"
@@ -321,21 +420,56 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                             step="0.1"
                             value={zoom}
                             onChange={(e) => setZoom(parseFloat(e.target.value))}
-                            className="w-16 h-1 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[#39b54a]"
+                            className="w-16 h-1 bg-[#333] appearance-none cursor-pointer accent-[#39b54a] sharp-corners"
                           />
-                          <button onClick={() => setZoom(Math.min(1.5, zoom + 0.1))} className="text-[#666] hover:text-white"><Plus size={12}/></button>
+                          <button onClick={() => setZoom(Math.min(1.5, zoom + 0.1))} className="text-[#666] hover:text-white transition-colors"><Plus size={12}/></button>
                           <span className="text-[10px] text-[#666] font-mono w-8 text-right">{(zoom * 100).toFixed(0)}%</span>
                           <div className="w-px h-3 bg-[#333] mx-1"></div>
-                          <button onClick={handleResetView} className="text-[#666] hover:text-[#39b54a]" title="Reset View">
+                          <button onClick={handleResetView} className="text-[#666] hover:text-[#39b54a] transition-colors" title="Reset View">
                               <RotateCcw size={12} />
                           </button>
                       </div>
 
-                      {/* Orientation / Device Control */}
-                      <div className="flex items-center gap-1 bg-[#0c0c0c] rounded p-0.5 border border-[#333]">
-                          <button onClick={() => setDeviceMode('MOBILE')} className={`p-1.5 rounded ${deviceMode === 'MOBILE' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Smartphone size={14} /></button>
-                          <button onClick={() => setDeviceMode('TABLET')} className={`p-1.5 rounded ${deviceMode === 'TABLET' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Tablet size={14} /></button>
-                          <button onClick={() => setDeviceMode('DESKTOP')} className={`p-1.5 rounded ${deviceMode === 'DESKTOP' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Monitor size={14} /></button>
+                      {/* Device Selection Dropdown */}
+                      <div className="relative group bg-[#0c0c0c] border border-[#333] px-2 py-1 sharp-corners flex items-center">
+                          <select 
+                              className="bg-transparent text-[10px] text-[#666] uppercase font-mono outline-none appearance-none pr-6 cursor-pointer hover:text-white transition-colors min-w-[100px]"
+                              value={activeDevice.name}
+                              onChange={(e) => {
+                                   const d = DEVICES.find(dev => dev.name === e.target.value);
+                                   if (d) setActiveDevice(d);
+                              }}
+                          >
+                              {DEVICES.map(d => (
+                                  <option key={d.name} value={d.name} className="bg-[#111] text-[#ccc]">{d.name}</option>
+                              ))}
+                          </select>
+                          <ChevronDown size={10} className="absolute right-2 text-[#666] pointer-events-none" />
+                      </div>
+
+                      {/* Orientation / Device Type Shortcuts */}
+                      <div className="flex items-center gap-px bg-[#0c0c0c] p-0.5 border border-[#333] sharp-corners">
+                          <button 
+                            onClick={() => setActiveDevice(DEVICES.find(d => d.type === 'MOBILE')!)} 
+                            className={`p-1.5 sharp-corners transition-colors ${activeDevice.type === 'MOBILE' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white hover:bg-[#1a1a1a]'}`} 
+                            title="Mobile"
+                          >
+                            <Smartphone size={14} />
+                          </button>
+                          <button 
+                            onClick={() => setActiveDevice(DEVICES.find(d => d.type === 'TABLET')!)} 
+                            className={`p-1.5 sharp-corners transition-colors ${activeDevice.type === 'TABLET' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white hover:bg-[#1a1a1a]'}`} 
+                            title="Tablet"
+                          >
+                            <Tablet size={14} />
+                          </button>
+                          <button 
+                            onClick={() => setActiveDevice(DEVICES.find(d => d.type === 'DESKTOP')!)} 
+                            className={`p-1.5 sharp-corners transition-colors ${activeDevice.type === 'DESKTOP' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white hover:bg-[#1a1a1a]'}`} 
+                            title="Desktop"
+                          >
+                            <Monitor size={14} />
+                          </button>
                       </div>
                   </div>
               </div>
@@ -345,9 +479,9 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                   <div style={{ transform: `scale(${zoom})`, transition: 'transform 0.2s ease-out', transformOrigin: 'center center' }} className="flex items-center justify-center w-full h-full">
                     <motion.div 
                         animate={{ 
-                            width: deviceMode === 'MOBILE' ? 320 : deviceMode === 'TABLET' ? 600 : '100%',
-                            height: deviceMode === 'DESKTOP' ? '100%' : 600,
-                            borderRadius: deviceMode === 'DESKTOP' ? 0 : 20
+                            width: activeDevice.width,
+                            height: activeDevice.type === 'DESKTOP' ? '100%' : activeDevice.height,
+                            borderRadius: activeDevice.type === 'DESKTOP' ? 0 : 40
                         }}
                         className="bg-black border-4 border-[#333] shadow-2xl overflow-hidden relative flex flex-col transition-all duration-300 ease-in-out"
                     >
@@ -385,7 +519,7 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                                             </div>
                                             <h3 className="text-xl font-bold mb-2">Welcome to {appData.name}</h3>
                                             <p className="text-xs text-gray-500 mb-6 max-w-[80%]">{appData.description}</p>
-                                            <button className="bg-[#39b54a] text-black w-full py-3 font-bold uppercase text-xs hover:bg-[#2ea03f] transition-colors mb-4">
+                                            <button className="bg-[#39b54a] text-black w-full py-3 font-bold uppercase text-xs hover:bg-[#2ea03f] transition-colors mb-4 rounded-none">
                                                 Connect Wallet
                                             </button>
                                             <div className="flex gap-2 text-[10px] text-[#666]">

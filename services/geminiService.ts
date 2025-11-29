@@ -187,3 +187,26 @@ export const generateProjectAsset = async (prompt: string, aspectRatio: string =
     return null;
   }
 };
+
+// --- IMAGE ANALYSIS (For Asset Studio) ---
+export const analyzeImage = async (imageBase64: string): Promise<string> => {
+  const client = getClient();
+  if (!client) return "Mock Analysis: A futuristic 3D icon with glowing green accents suitable for a DeFi protocol. Sharp geometric shapes and high contrast.";
+
+  try {
+    const base64Data = imageBase64.split(',')[1] || imageBase64;
+    const response = await client.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: {
+        parts: [
+            { inlineData: { mimeType: "image/png", data: base64Data } },
+            { text: "Analyze this image and provide a concise, descriptive text prompt that could be used to recreate a similar style asset using an AI image generator. Focus on visual style, colors, lighting, subject matter, and composition. Keep it under 50 words." }
+        ]
+      }
+    });
+    return response.text || "";
+  } catch (error) {
+    console.error("Analysis error:", error);
+    return "Failed to analyze image.";
+  }
+};
