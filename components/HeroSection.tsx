@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, CHAINS } from '../constants';
@@ -78,6 +78,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const activeChain = CHAINS[currentChain];
   const amountVal = parseFloat(swapAmount) || 0;
   const hasInsufficientFunds = isConnected && amountVal > walletBalance.native;
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isMobileMenuOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,18 +180,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const scrollToSection = (id: string) => {
       setIsMobileMenuOpen(false);
-      const element = document.getElementById(id);
-      if (element) {
-          // Manual offset calculation for reliability
-          const headerOffset = 80;
-          const elementPosition = element.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      
-          window.scrollTo({
-              top: offsetPosition,
-              behavior: "smooth"
-          });
-      }
+      // Small timeout to allow menu to close before scrolling
+      setTimeout(() => {
+          const element = document.getElementById(id);
+          if (element) {
+              const headerOffset = 80;
+              const elementPosition = element.getBoundingClientRect().top;
+              const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          
+              window.scrollTo({
+                  top: offsetPosition,
+                  behavior: "smooth"
+              });
+          }
+      }, 100);
   };
 
   return (
@@ -190,9 +201,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       {/* -------------------- NAVBAR -------------------- */}
       <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-[#1f1f1f]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex justify-between items-center">
-            <div className="flex items-center gap-3" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} role="button">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                 <Logo />
-                <span className="font-bold uppercase tracking-wider text-white hidden md:block text-lg">Limetred</span>
+                <span className="font-bold uppercase tracking-wider text-white hidden sm:block text-lg">Limetred</span>
             </div>
             
             {/* Desktop Menu */}
@@ -224,7 +235,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 )}
             </div>
 
-            {/* Mobile Menu Toggle */}
+            {/* Mobile Menu Toggle - Visible on Small Screens */}
             <div className="flex md:hidden items-center gap-3">
                  {!isConnected && (
                     <Button 
@@ -244,22 +255,38 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         0x8A...
                     </Button>
                  )}
-                <button onClick={toggleMobileMenu} className="text-white p-2 z-50">
-                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                <button 
+                    onClick={toggleMobileMenu} 
+                    className="text-white p-2 z-50 hover:bg-[#1a1a1a] rounded-none border border-transparent active:border-[#333] transition-colors"
+                >
+                    <Menu size={24} />
                 </button>
             </div>
         </div>
 
-        {/* Mobile Menu Overlay - FIXED POSITIONING */}
+        {/* Mobile Menu Overlay - FULL SCREEN z-[100] */}
         <AnimatePresence>
             {isMobileMenuOpen && (
                 <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="md:hidden fixed inset-0 top-16 bg-[#0c0c0c] z-40 flex flex-col p-6 overflow-y-auto"
+                    initial={{ opacity: 0, x: '100%' }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: '100%' }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="md:hidden fixed inset-0 bg-[#0c0c0c] z-[100] flex flex-col"
                 >
-                    <div className="flex flex-col gap-6">
+                    {/* Mobile Menu Header */}
+                    <div className="h-16 px-4 flex items-center justify-between border-b border-[#1f1f1f]">
+                        <div className="flex items-center gap-2">
+                             <Logo />
+                             <span className="font-bold text-white uppercase tracking-wider">Limetred</span>
+                        </div>
+                        <button onClick={toggleMobileMenu} className="p-2 text-white hover:text-[#39b54a]">
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    {/* Mobile Menu Content */}
+                    <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-2">
                         <button 
                             onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
                             className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
@@ -285,15 +312,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                              <Coins size={24} className="text-[#8b5cf6]" /> Token Factory
                         </button>
                         
-                        <div className="mt-8 p-4 bg-[#111] border border-[#1f1f1f] rounded-none">
-                            <h4 className="text-xs text-[#666] font-bold uppercase mb-2">Protocol Stats</h4>
-                            <div className="flex justify-between text-sm text-white font-mono mb-1">
+                        <div className="mt-8 p-6 bg-[#111] border border-[#1f1f1f] rounded-none">
+                            <h4 className="text-xs text-[#666] font-bold uppercase mb-4">Protocol Stats</h4>
+                            <div className="flex justify-between text-base text-white font-mono mb-2">
                                 <span>TVL</span>
-                                <span className="text-[#39b54a]">$14.2M</span>
+                                <span className="text-[#39b54a] font-bold">$14.2M</span>
                             </div>
-                            <div className="flex justify-between text-sm text-white font-mono">
+                            <div className="flex justify-between text-base text-white font-mono">
                                 <span>Volume</span>
-                                <span className="text-[#8b5cf6]">$2.4M</span>
+                                <span className="text-[#8b5cf6] font-bold">$2.4M</span>
                             </div>
                         </div>
                     </div>
@@ -304,10 +331,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* -------------------- HERO -------------------- */}
       <div className="min-h-[calc(100vh-64px)] flex flex-col relative z-10">
-        <div className="w-full bg-[#111111]/90 border-b border-[#1f1f1f] h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
-          <div className="animate-marquee flex space-x-12 px-4">
+        {/* Marquee - Responsive sizing */}
+        <div className="w-full bg-[#111111]/90 border-b border-[#1f1f1f] h-8 md:h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
+          <div className="animate-marquee flex space-x-8 md:space-x-12 px-4">
             {[...MOCK_TICKER, ...MOCK_TICKER].map((item, i) => (
-              <span key={i} className="font-mono text-xs text-[#666666] flex items-center gap-2">
+              <span key={i} className="font-mono text-[10px] md:text-xs text-[#666666] flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#39b54a] animate-pulse"></span>
                 <span className="text-white font-bold">{item.user}</span> deployed <span className="text-[#39b54a]">{item.app}</span> ({item.gain})
               </span>
@@ -318,13 +346,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-12 md:py-20">
              {/* ... Hero Content ... */}
              <div className="flex justify-center mb-6">
-                <Badge color="text-[#8b5cf6] border-[#8b5cf6] bg-[#8b5cf6]/10">AI VENTURE PROTOCOL V1.0</Badge>
+                <Badge color="text-[#8b5cf6] border-[#8b5cf6] bg-[#8b5cf6]/10 text-[10px] md:text-xs">AI VENTURE PROTOCOL V1.0</Badge>
              </div>
              
-             <div className="flex justify-center">
+             <div className="flex justify-center w-full overflow-hidden">
+               {/* RESPONSIVE TEXT SIZE: text-5xl on mobile, 9xl on desktop */}
                <TextReveal 
                   text="LIMETRED" 
-                  className="text-5xl sm:text-6xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85]" 
+                  className="text-5xl sm:text-6xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85] w-full justify-center" 
                />
              </div>
              
@@ -332,23 +361,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <p className="text-[#39b54a] font-bold tracking-[0.2em] text-[10px] md:text-xs uppercase mb-4 animate-pulse">
                     Venture-as-a-Service Protocol
                 </p>
-                <p className="text-[#cccccc] text-base md:text-xl font-light leading-relaxed mb-6 px-4">
+                <p className="text-[#cccccc] text-sm md:text-xl font-light leading-relaxed mb-6 px-4">
                     Launch a fully functional dApp, token, and liquidity market from a single text prompt.
                 </p>
             </ScrollFade>
 
-            <ScrollFade delay={0.6}>
-              <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto px-2 md:px-0">
+            <ScrollFade delay={0.6} className="w-full">
+              <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto px-0 md:px-0">
                 <div className="relative">
                   <Input 
                     autoFocus
                     placeholder="Describe your billion-dollar idea..." 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="text-xl md:text-3xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-24 md:h-32 pr-12 rounded-none"
+                    className="text-base md:text-3xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-20 md:h-32 pr-12 rounded-none"
                   />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-                    <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full text-[#666] hover:text-white transition-colors"><ImageIcon size={20} /></button>
+                  <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 flex gap-2">
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full text-[#666] hover:text-white transition-colors"><ImageIcon size={18} /></button>
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                   </div>
                 </div>
@@ -364,7 +393,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 </AnimatePresence>
                 
                 <div className="mt-8 md:mt-12 flex justify-center">
-                  <Button type="submit" variant="primary" className="w-full md:w-auto min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-base md:text-lg">
+                  <Button type="submit" variant="primary" className="w-full md:w-auto min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-base md:text-lg py-4">
                     <Zap size={20} /> INITIALIZE PROTOCOL
                   </Button>
                 </div>
@@ -377,14 +406,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       <section id="launchpad" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                     <Badge color="text-[#8b5cf6]">PHASE 1: INCUBATION</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">The Fair Launch <br/> <span className="text-[#39b54a]">Bonding Curve</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">The Fair Launch <br/> <span className="text-[#39b54a]">Bonding Curve</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Every app generated on Limetred starts on a mathematical bonding curve. No pre-sale. No insiders. Just pure price discovery.</p>
-                    <Button variant="outline" className="flex items-center gap-2 w-full md:w-auto justify-center" onClick={onOpenLaunchpad}>OPEN LAUNCHPAD APP <ArrowRight size={16} /></Button>
+                    <Button variant="outline" fullWidth className="md:w-auto flex items-center gap-2 justify-center py-4" onClick={onOpenLaunchpad}>OPEN LAUNCHPAD APP <ArrowRight size={16} /></Button>
                 </div>
                 <div className="flex-1 w-full relative">
-                     <Card className="h-[300px] md:h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a] bg-[#0c0c0c]">
+                     <Card className="h-[250px] md:h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a] bg-[#0c0c0c]">
                         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#39b54a 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
                         <div className="w-full h-full p-8 flex items-end">
                             <div className="w-full h-full relative">
@@ -408,22 +437,22 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             <div className="flex flex-col md:flex-row gap-12 items-start">
                 
                 {/* Left: Info */}
-                <div className="flex-1 sticky top-24">
+                <div className="flex-1 sticky top-24 w-full">
                     <Badge color="text-[#39b54a]">PHASE 2: TRADING</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">Limetred <br/> <span className="text-[#8b5cf6]">Terminal</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">Limetred <br/> <span className="text-[#8b5cf6]">Terminal</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
                         A fully integrated aggregation layer. Swap tokens, bridge assets, and provide liquidity directly from the protocol interface.
                     </p>
                     <div className="space-y-4">
                         <div className="flex items-start gap-4 p-4 border border-[#1f1f1f] bg-[#111]">
-                            <ScanLine className="text-[#39b54a] mt-1" size={20} />
+                            <ScanLine className="text-[#39b54a] mt-1 shrink-0" size={20} />
                             <div>
                                 <h4 className="text-white font-bold text-sm uppercase">AI Safety Layer</h4>
                                 <p className="text-[#666] text-xs mt-1">Every transaction is simulated. The AI warns you of honey-pots, high taxes, or ownership issues.</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-4 p-4 border border-[#1f1f1f] bg-[#111]">
-                            <BarChart3 className="text-[#8b5cf6] mt-1" size={20} />
+                            <BarChart3 className="text-[#8b5cf6] mt-1 shrink-0" size={20} />
                             <div>
                                 <h4 className="text-white font-bold text-sm uppercase">Advanced Charting</h4>
                                 <p className="text-[#666] text-xs mt-1">Real-time TradingView integration with on-chain data overlays.</p>
@@ -447,7 +476,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             ))}
                         </div>
                         
-                        <div className="p-6 relative">
+                        <div className="p-4 md:p-6 relative">
                              {/* AI RISK SCAN OVERLAY */}
                              <AnimatePresence>
                                 {isRiskScanning && (
@@ -472,7 +501,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                 {dexTab === 'SWAP' && (
                                     <motion.div key="swap" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                                         <div className="flex justify-between items-center mb-6">
-                                            <span className="font-bold uppercase text-white">Market Order</span>
+                                            <span className="font-bold uppercase text-white text-sm">Market Order</span>
                                             <div className="flex gap-2">
                                                  <button onClick={() => onOpenAI && onOpenAI()} className="text-[10px] text-[#39b54a] border border-[#39b54a]/30 px-2 py-1 flex items-center gap-1 hover:bg-[#39b54a]/10 transition-colors">
                                                      <Bot size={12} /> ASK GUARDIAN
@@ -492,7 +521,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                     value={swapAmount}
                                                     onChange={(e) => {
                                                         setSwapAmount(e.target.value);
-                                                        setScanResult(null); // Reset scan on input change
+                                                        setScanResult(null);
                                                     }}
                                                     className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none placeholder-[#333]"
                                                     placeholder="0.00"
@@ -539,7 +568,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                              {!scanResult && !swapSuccess && isConnected && !hasInsufficientFunds && amountVal > 0 && (
                                                  <Button 
                                                     variant="secondary" 
-                                                    className="flex-1 text-xs"
+                                                    className="flex-1 text-xs py-3"
                                                     onClick={handleScanRisk}
                                                     disabled={isRiskScanning}
                                                  >
@@ -552,7 +581,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                 variant={swapSuccess ? 'primary' : hasInsufficientFunds ? 'outline' : 'primary'} 
                                                 onClick={handleSwapClick}
                                                 disabled={!isConnected || hasInsufficientFunds || amountVal <= 0 || swapSuccess || isRiskScanning}
-                                                className={`${hasInsufficientFunds ? "border-red-500 text-red-500 hover:bg-red-500/10" : ""} flex-[2]`}
+                                                className={`${hasInsufficientFunds ? "border-red-500 text-red-500 hover:bg-red-500/10" : ""} flex-[2] py-3`}
                                             >
                                                 {swapSuccess ? 'SWAP SUCCESSFUL' : !isConnected ? 'CONNECT WALLET' : hasInsufficientFunds ? 'INSUFFICIENT FUNDS' : 'SWAP TOKENS'}
                                             </Button>
@@ -576,7 +605,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                  <span className="text-xs text-[#39b54a] font-bold">50%</span>
                                              </div>
                                          </div>
-                                         <Button fullWidth onClick={handlePoolClick} disabled={!isConnected || poolSuccess} variant="outline">
+                                         <Button fullWidth onClick={handlePoolClick} disabled={!isConnected || poolSuccess} variant="outline" className="py-3">
                                              {poolSuccess ? <><CheckCircle size={14} className="mr-2" /> LIQUIDITY ADDED</> : <><Plus size={14} className="mr-2" /> ADD LIQUIDITY</>}
                                          </Button>
                                      </motion.div>
@@ -598,7 +627,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                  <div className="text-sm font-bold text-white">Base</div>
                                              </div>
                                          </div>
-                                         <Button fullWidth onClick={handleBridgeClick} disabled={!isConnected || bridgeSuccess} variant="outline">
+                                         <Button fullWidth onClick={handleBridgeClick} disabled={!isConnected || bridgeSuccess} variant="outline" className="py-3">
                                              {bridgeSuccess ? <><CheckCircle size={14} className="mr-2" /> BRIDGE INITIATED</> : <><Globe size={14} className="mr-2" /> BRIDGE ASSETS</>}
                                          </Button>
                                      </motion.div>
@@ -615,9 +644,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden scroll-mt-20 z-10">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                     <Badge color="text-[#39b54a]">PHASE 3: AUTOMATION</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">Deploy Autonomous <br/> <span className="text-[#39b54a]">AI Agents</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">Deploy Autonomous <br/> <span className="text-[#39b54a]">AI Agents</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Spin up specialized AI agents to manage your protocol, optimize yield, or trade on your behalf.</p>
                 </div>
                 
@@ -654,7 +683,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                     className="w-full bg-[#111] border border-[#333] text-white p-3 outline-none focus:border-[#39b54a] text-sm min-h-[100px] font-mono resize-none"
                                 />
                             </div>
-                            <Button fullWidth onClick={handleGenerateAgent} disabled={isGeneratingAgent || !agentPurpose} className="flex items-center justify-center gap-2">
+                            <Button fullWidth onClick={handleGenerateAgent} disabled={isGeneratingAgent || !agentPurpose} className="flex items-center justify-center gap-2 py-3">
                                 {isGeneratingAgent ? <><Loader2 className="animate-spin" size={16} /> INITIALIZING ARCHITECTURE...</> : <><Terminal size={16} /> GENERATE AGENT</>}
                             </Button>
                         </div>
@@ -668,9 +697,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20 z-10">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                     <Badge color="text-[#39b54a]">PHASE 4: TOKEN FACTORY</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">Standardized <br/> <span className="text-[#8b5cf6]">Token Generation</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">Standardized <br/> <span className="text-[#8b5cf6]">Token Generation</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Launch your own custom ERC20 token in seconds.</p>
                 </div>
                 <div className="flex-1 w-full">
@@ -685,7 +714,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                 <div><label className="text-xs font-bold text-[#666] block mb-1">Symbol</label><Input value={tokenSymbol} onChange={e => setTokenSymbol(e.target.value.toUpperCase())} placeholder="BTC2" className="py-2 text-sm uppercase"/></div>
                             </div>
                             <div><label className="text-xs font-bold text-[#666] block mb-1">Supply</label><Input type="number" value={tokenSupply} onChange={e => setTokenSupply(e.target.value)} className="py-2 text-sm"/></div>
-                            <Button fullWidth onClick={handleTokenGenClick} disabled={isGeneratingToken || !tokenName} variant="secondary">
+                            <Button fullWidth onClick={handleTokenGenClick} disabled={isGeneratingToken || !tokenName} variant="secondary" className="py-3">
                                 {isGeneratingToken ? <><Loader2 className="animate-spin" size={16} /> DEPLOYING...</> : <><Zap size={16} /> DEPLOY TOKEN</>}
                             </Button>
                         </div>
