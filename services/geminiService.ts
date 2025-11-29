@@ -79,10 +79,11 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard, Pausable { ... }\`
            - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
            - **CRITICAL REQUIREMENT:** Implement \`pause()\` and \`unpause()\` functions, restricted to \`onlyOwner\`.
+           - **CRITICAL REQUIREMENT:** Implement a function \`enableTrading()\` that sets \`tradingActive = true\`. It MUST use modifiers \`external onlyOwner nonReentrant whenNotPaused\`.
            - **CRITICAL REQUIREMENT:** Apply the \`nonReentrant\` modifier to all external/public functions that change state or transfer assets.
            - **CRITICAL REQUIREMENT:** Apply the \`whenNotPaused\` modifier to critical functions (like deposits, withdrawals, or trading).
            - **CRITICAL REQUIREMENT:** You MUST implement an explicit \`transferOwnership(address newOwner)\` function that overrides Ownable logic to explicitly check \`require(newOwner != address(0), "New owner cannot be zero address");\`.
-           - **CRITICAL REQUIREMENT:** You MUST implement a public view function \`calculatedTotalSupply() returns (uint256)\` that returns the current total supply (reflecting initial mint and subsequent burns).
+           - **CRITICAL REQUIREMENT:** You MUST implement a public view function \`calculatedTotalSupply() returns (uint256)\` that returns the current total supply (reflecting initial mint and subsequent burns). This is essential for the dashboard.
            - **CRITICAL REQUIREMENT:** If your logic uses structs (like Task, Item, Bet, etc.), you MUST implement a helper view function to return its details. 
              Example: \`function getTaskDetails(uint256 taskId) public view returns (string memory, uint256, bool) { ... }\`.
            - Implement specific logic requested by the user (e.g., Staking, DAO, Lending, Marketplace).
@@ -184,10 +185,14 @@ export const generateProjectAsset = async (prompt: string, aspectRatio: string =
       }
     });
 
-    if (response.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
-        const base64 = response.candidates[0].content.parts[0].inlineData.data;
-        const mimeType = response.candidates[0].content.parts[0].inlineData.mimeType || "image/png";
-        return `data:${mimeType};base64,${base64}`;
+    if (response.candidates?.[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+                const base64 = part.inlineData.data;
+                const mimeType = part.inlineData.mimeType || "image/png";
+                return `data:${mimeType};base64,${base64}`;
+            }
+        }
     }
     return null;
   } catch (error) {

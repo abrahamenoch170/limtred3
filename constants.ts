@@ -73,14 +73,15 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Enables trading. Protected against reentrancy.
+     * @dev Enables trading. Protected against reentrancy and pause state.
      */
-    function enableTrading() external onlyOwner nonReentrant {
+    function enableTrading() external onlyOwner nonReentrant whenNotPaused {
         tradingActive = true;
     }
 
     /**
      * @dev Returns the total supply calculated from mints and burns.
+     * Required for dashboard tracking.
      */
     function calculatedTotalSupply() public view returns (uint256) {
         return totalSupply();

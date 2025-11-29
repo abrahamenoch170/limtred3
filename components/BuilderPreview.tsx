@@ -86,6 +86,7 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [isGeneratingAsset, setIsGeneratingAsset] = useState(false);
   const [generatedAsset, setGeneratedAsset] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState(false);
   
   // Upload & Analysis State
   const [dragActive, setDragActive] = useState(false);
@@ -116,8 +117,14 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const handleGenerateAsset = async () => {
     if (!assetPrompt) return;
     setIsGeneratingAsset(true);
+    setGenerationError(false);
+    setGeneratedAsset(null); // Clear previous
     const result = await generateProjectAsset(assetPrompt, aspectRatio);
-    setGeneratedAsset(result);
+    if (result) {
+        setGeneratedAsset(result);
+    } else {
+        setGenerationError(true);
+    }
     setIsGeneratingAsset(false);
   };
 
@@ -351,6 +358,12 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                                     'GENERATE ASSET'
                                 )}
                             </button>
+                            
+                            {generationError && (
+                                <div className="mt-2 p-2 bg-red-500/10 border border-red-500 text-red-500 text-xs flex items-center justify-center">
+                                    Generation Failed. Try again.
+                                </div>
+                            )}
                         </div>
 
                         {generatedAsset && (
