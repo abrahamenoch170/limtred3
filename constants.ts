@@ -194,19 +194,22 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         buybackPercentage = _percentage;
     }
 
-    function executeBuyback() external onlyOwner nonReentrant {
+    function executeBuyback(address _router) external onlyOwner nonReentrant {
         if (!buybackEnabled) revert BuybackDisabled();
         uint256 balance = address(this).balance;
         if (balance == 0) revert InsufficientEthForBuyback();
 
         uint256 buybackAmount = (balance * buybackPercentage) / 100;
         
+        // Use provided router address for flexibility
+        IUniswapV2Router02 buybackRouter = IUniswapV2Router02(_router);
+        
         address[] memory path = new address[](2);
-        path[0] = router.WETH();
+        path[0] = buybackRouter.WETH();
         path[1] = address(this);
 
         // Swap ETH for Tokens and burn them (send to dead)
-        router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: buybackAmount}(
+        buybackRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: buybackAmount}(
             0,
             path,
             address(0xdead),
@@ -218,9 +221,6 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     // --- Vesting Management ---
 
-    /**
-     * @dev Create a vesting schedule. Supports multiple schedules per user.
-     */
     function createVestingSchedule(
         address _recipient, 
         uint256 _startDate, 
@@ -246,10 +246,6 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         emit VestingCreated(_recipient, _amount, vestingSchedules[_recipient].length - 1);
     }
 
-    /**
-     * @dev Allows owner to revoke a vesting schedule if needed (e.g. employee termination).
-     * Returns unvested tokens to owner.
-     */
     function revokeVestingSchedule(address _recipient, uint256 _index) external onlyOwner nonReentrant {
         if (_index >= vestingSchedules[_recipient].length) revert InvalidVestingIndex();
         VestingSchedule storage schedule = vestingSchedules[_recipient][_index];
@@ -261,12 +257,10 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
         schedule.revoked = true;
         
-        // Transfer vested tokens to recipient
         if (vested > 0) {
             schedule.claimed += vested;
             _transfer(address(this), _recipient, vested);
         }
-        // Refund unvested to owner
         if (refund > 0) {
             _transfer(address(this), owner(), refund);
         }
@@ -325,9 +319,6 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         emit TaskCompleted(taskId, msg.sender);
     }
 
-    /**
-     * @dev Claim tokens from a specific vesting schedule.
-     */
     function claimVesting(uint256 _index) external nonReentrant {
         if (_index >= vestingSchedules[msg.sender].length) revert InvalidVestingIndex();
         VestingSchedule storage schedule = vestingSchedules[msg.sender][_index];

@@ -4,17 +4,12 @@ import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
 
 const getClient = () => {
   try {
-    // Robust Safety check: Handle cases where process is undefined (browser) vs defined (Node)
-    // This prevents "ReferenceError: process is not defined" crashes on Vercel/Vite
     let apiKey = undefined;
     try {
-      // Use a safe access pattern for process.env
-      // We check if 'process' exists as a global first
       if (typeof process !== 'undefined' && process && process.env) {
         apiKey = process.env.API_KEY;
       }
     } catch (e) {
-      // Ignore process access errors in strict browser environments
       console.warn("Process env access failed, likely browser environment.", e);
     }
 
@@ -26,7 +21,6 @@ const getClient = () => {
   }
 };
 
-// High-fidelity mock data for fallback scenarios
 const MOCK_APP_DATA: GeneratedApp = {
   name: "NeoMarket V1 (Beta)",
   description: "A decentralized marketplace for trading fractionalized attention spans. Users stake attention tokens to boost content visibility.",
@@ -37,7 +31,6 @@ const MOCK_APP_DATA: GeneratedApp = {
   marketCap: 12500
 };
 
-// --- CORE APP GENERATION (Thinking + Image Analysis) ---
 export const generateAppConcept = async (prompt: string, imageBase64?: string): Promise<GeneratedApp> => {
   const client = getClient();
   
@@ -50,7 +43,6 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
   try {
     const parts: any[] = [];
     
-    // Add image part if provided (Image Analysis)
     if (imageBase64) {
       const base64Data = imageBase64.split(',')[1] || imageBase64;
       parts.push({
@@ -77,39 +69,38 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              \`import "@openzeppelin/contracts/utils/Pausable.sol";\`
              \`import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";\`
            - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20, Ownable, ReentrancyGuard, and Pausable.
-             Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard, Pausable { ... }\`
            
            **SECURITY & SCALABILITY REQUIREMENTS (BETA STANDARD):**
-           - **Gas Optimization:** Use custom \`error\` definitions and \`revert\` statements instead of string-based \`require\`. All validations (including array length checks) must use custom errors.
+           - **Gas Optimization:** Use custom \`error\` definitions instead of string-based \`require\`.
            - **Anti-Honeypot:** 
              - Ensure \`updateFees\` checks that taxes <= 10%.
              - Ensure \`updateLimits\` prevents setting limits < 0.5% of totalSupply.
-             - Override \`transferOwnership\` to prevent renouncing ownership to 0x0 if trading is disabled.
+             - Override \`transferOwnership\` to prevent renouncing to 0x0 if trading is disabled.
            - **Asset Safety:**
              - Implement \`recoverForeignTokens\`.
            - **Reentrancy Protection:** 
              - Override \`transfer\` and \`transferFrom\` with \`nonReentrant\`.
              - Apply \`nonReentrant\` to ALL state-changing functions.
            - **Pausable Logic:**
-             - Implement \`pause()\` and \`unpause()\` functions callable only by owner.
-             - Apply \`whenNotPaused\` to the \`_update\` override and \`enableTrading\`.
+             - Implement \`pause()\` and \`unpause()\`.
+             - Apply \`whenNotPaused\` to \`_update\` and \`enableTrading\`.
            
            **ADVANCED FEATURES (REQUIRED):**
            - **Buyback Mechanism:**
-             - Include \`enableBuyback(uint256 _percentage)\` (onlyOwner).
-             - Include \`executeBuyback()\` (onlyOwner, nonReentrant) which swaps ETH for tokens (using a Router interface) and burns them.
+             - Include \`enableBuyback(uint256 _percentage)\`.
+             - Include \`executeBuyback(address _router)\` which swaps ETH for tokens and burns them.
            - **Scalable Vesting:** 
-             - Use \`mapping(address => VestingSchedule[]) public vestingSchedules;\` to allow multiple schedules per user.
+             - Use \`mapping(address => VestingSchedule[]) public vestingSchedules;\`.
              - Implement \`createVestingSchedule\`, \`revokeVestingSchedule\`, and \`claimVesting(uint256 index)\`.
            - **Task / Bounty System:**
-             - Implement \`struct Task\` with \`batchCreateTasks\` for scalability.
+             - Implement \`struct Task\` with \`batchCreateTasks\`.
              - Implement \`cancelTask\` and \`completeTask\`.
-             - Events: \`TaskCreated\` (include assignee), \`TaskCompleted\`, \`TaskCancelled\`.
+             - Event \`TaskCreated\` must index assignee.
 
            **STANDARD FUNCTIONS:**
            - \`enableTrading()\` (onlyOwner, nonReentrant, whenNotPaused).
-           - \`setMarketingWallet(address _marketingWallet)\` (onlyOwner).
-           - \`calculatedTotalSupply()\` (public view, returns totalSupply).
+           - \`setMarketingWallet(address _marketingWallet)\`.
+           - \`calculatedTotalSupply()\`.
 
         2. **Frontend (React Component)**:
            - Generate a functional React dashboard component.
@@ -117,9 +108,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            - Use Tailwind CSS for styling (dark mode, sharp corners).
            
         3. **Metadata**:
-           - Name: Creative, viral crypto-native name.
-           - Rarity: LEGENDARY (Complex), RARE (Utility), or COMMON (Meme).
-           - Market Cap: Integer between 10000 and 1000000.
+           - Name, Rarity, Market Cap.
 
         Strictly output valid JSON matching the schema.
     `});
@@ -165,7 +154,6 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
   }
 };
 
-// --- CUSTOM TOKEN GENERATOR ---
 export const generateTokenApp = async (name: string, symbol: string, supply: string, decimals: string): Promise<GeneratedApp> => {
   const client = getClient();
   if (!client) return MOCK_APP_DATA;
@@ -177,14 +165,13 @@ export const generateTokenApp = async (name: string, symbol: string, supply: str
     - Total Supply: ${supply} (Adjusted for ${decimals} decimals)
     - Decimals: ${decimals}
 
-    Include all the standard security features (Anti-Whale, Fees, Pausable, ReentrancyGuard, Foreign Token Recovery) specified in the standard prompt.
-    The Frontend (React) should be a "Token Control Panel" for managing this specific token.
+    Include all standard security features (Anti-Whale, Fees, Pausable, ReentrancyGuard, Foreign Token Recovery).
+    The Frontend (React) should be a "Token Control Panel".
   `;
 
   return generateAppConcept(prompt);
 };
 
-// --- CHATBOT (AI Assistant) ---
 export const getChatResponse = async (history: {role: string, parts: {text: string}[]}[], message: string) => {
   const client = getClient();
   if (!client) return "I am running in demo mode. Please configure an API Key to chat.";
@@ -194,7 +181,7 @@ export const getChatResponse = async (history: {role: string, parts: {text: stri
       model: 'gemini-3-pro-preview',
       history: history,
       config: {
-        systemInstruction: "You are the Limetred Protocol AI Assistant and Security Specialist. Your goal is to help users generate apps AND stay safe in Web3. If a user asks about sending money or connecting to a protocol, analyze the context for potential scams (honeypots, wallet drainers). Advise caution, suggest verifying contract addresses, and never sharing private keys. Be concise, technical, and helpful."
+        systemInstruction: "You are the Limetred Protocol AI Assistant. Goal: Help users generate apps AND stay safe in Web3. If a user asks about sending money, analyze the context for potential scams (honeypots, wallet drainers). Advise caution, verify addresses, and never share private keys."
       }
     });
 
@@ -206,7 +193,6 @@ export const getChatResponse = async (history: {role: string, parts: {text: stri
   }
 };
 
-// --- IMAGE GENERATION (Asset Studio) ---
 export const generateProjectAsset = async (prompt: string, aspectRatio: string = "1:1") => {
   const client = getClient();
   if (!client) return null;
@@ -219,7 +205,7 @@ export const generateProjectAsset = async (prompt: string, aspectRatio: string =
       },
       config: {
         imageConfig: {
-          aspectRatio: aspectRatio as any, // 1:1, 16:9, etc.
+          aspectRatio: aspectRatio as any, 
           imageSize: "1K"
         }
       }
@@ -241,10 +227,9 @@ export const generateProjectAsset = async (prompt: string, aspectRatio: string =
   }
 };
 
-// --- IMAGE ANALYSIS (For Asset Studio) ---
 export const analyzeImage = async (imageBase64: string): Promise<string> => {
   const client = getClient();
-  if (!client) return "Mock Analysis: A futuristic 3D icon with glowing green accents suitable for a DeFi protocol. Sharp geometric shapes and high contrast.";
+  if (!client) return "Mock Analysis: A futuristic 3D icon with glowing green accents suitable for a DeFi protocol.";
 
   try {
     const base64Data = imageBase64.split(',')[1] || imageBase64;
@@ -253,7 +238,7 @@ export const analyzeImage = async (imageBase64: string): Promise<string> => {
       contents: {
         parts: [
             { inlineData: { mimeType: "image/png", data: base64Data } },
-            { text: "Analyze this image and provide a concise, descriptive text prompt that could be used to recreate a similar style asset using an AI image generator. Focus on visual style, colors, lighting, subject matter, and composition. Keep it under 50 words." }
+            { text: "Analyze this image and provide a concise, descriptive text prompt for an AI image generator. Keep it under 50 words." }
         ]
       }
     });

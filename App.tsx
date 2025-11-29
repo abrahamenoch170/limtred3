@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId, LaunchpadProject } from './types';
 import { generateAppConcept, generateTokenApp } from './services/geminiService';
@@ -54,6 +54,8 @@ export default function App() {
 
   const handleGenerate = async (prompt: string, imageBase64?: string) => {
     setPhase(AppPhase.LOADING);
+    // Simulate thinking time before API call for effect
+    await new Promise(resolve => setTimeout(resolve, 500));
     const data = await generateAppConcept(prompt, imageBase64);
     setAppData(data);
   };
@@ -189,13 +191,12 @@ export default function App() {
   };
 
   return (
-    // Changed: Removed h-screen/overflow-hidden to allow natural scrolling which fixes navigation anchors
     <main className="min-h-screen w-full bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans relative overflow-x-hidden">
       
       {/* 3D Background - Fixed position */}
       <Background3D />
 
-      <div className="relative z-10 w-full">
+      <div className="relative z-10 w-full flex flex-col min-h-screen">
         <AnimatePresence mode="wait">
           
           {phase === AppPhase.HOME && (
@@ -214,13 +215,13 @@ export default function App() {
           )}
 
           {phase === AppPhase.LOADING && (
-            <div className="h-screen w-full">
+            <div className="h-screen w-full fixed inset-0 z-50">
                <GenerationTheater key="loading" onComplete={handleTheaterComplete} />
             </div>
           )}
 
           {phase === AppPhase.PREVIEW && appData && (
-            <div className="h-screen w-full">
+            <div className="h-screen w-full fixed inset-0 z-50 bg-[#0c0c0c]">
               <BuilderPreview 
                 key="preview" 
                 appData={appData} 

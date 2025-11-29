@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, CHAINS } from '../constants';
-import { Zap, Shield, ChevronDown, ArrowRight, Activity, Repeat, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe, Search, ShieldCheck } from 'lucide-react';
+import { Zap, Shield, ChevronDown, ArrowRight, Activity, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe, ShieldCheck } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade } from './ui/MotionComponents';
 
@@ -150,14 +150,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     if (!agentPurpose.trim()) return;
     setIsGeneratingAgent(true);
     
-    // Construct a comprehensive prompt for the AI to build an Agent Dashboard
-    const engineeredPrompt = `Create a sophisticated AI Agent Dashboard for a "${agentFunction}". 
-    Primary Directive: ${agentPurpose}.
-    Features: Real-time activity logs, performance metrics (APY/Success Rate), and a configuration panel for risk parameters.
-    The UI should look like a sci-fi command center.`;
-
-    // Trigger the main generation flow
+    // Trigger main flow
     setTimeout(() => {
+        const engineeredPrompt = `Create a sophisticated AI Agent Dashboard for a "${agentFunction}". 
+        Primary Directive: ${agentPurpose}.
+        Features: Real-time activity logs, performance metrics (APY/Success Rate), and a configuration panel for risk parameters.
+        The UI should look like a sci-fi command center.`;
         onGenerate(engineeredPrompt);
         setIsGeneratingAgent(false);
     }, 1500);
@@ -178,13 +176,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  // Robust scrolling specifically for mobile where 100vh containers fail
   const scrollToSection = (id: string) => {
       setIsMobileMenuOpen(false);
-      // Small timeout to allow menu to close before scrolling
       setTimeout(() => {
           const element = document.getElementById(id);
           if (element) {
-              const headerOffset = 80;
+              const headerOffset = 70; // Header height
               const elementPosition = element.getBoundingClientRect().top;
               const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
           
@@ -192,8 +190,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                   top: offsetPosition,
                   behavior: "smooth"
               });
+          } else {
+              console.warn(`Section with ID ${id} not found`);
           }
-      }, 100);
+      }, 300); // Increased timeout to ensure menu closes first
   };
 
   return (
@@ -264,18 +264,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
         </div>
 
-        {/* Mobile Menu Overlay - FULL SCREEN z-[100] */}
+        {/* Mobile Menu Overlay - FIXED FULL SCREEN z-[100] with SOLID BACKGROUND */}
         <AnimatePresence>
             {isMobileMenuOpen && (
                 <motion.div
                     initial={{ opacity: 0, x: '100%' }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: '100%' }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="md:hidden fixed inset-0 bg-[#0c0c0c] z-[100] flex flex-col"
+                    transition={{ type: "tween", duration: 0.2 }}
+                    className="fixed inset-0 bg-[#0c0c0c] z-[100] flex flex-col w-full h-full overflow-y-auto"
                 >
                     {/* Mobile Menu Header */}
-                    <div className="h-16 px-4 flex items-center justify-between border-b border-[#1f1f1f]">
+                    <div className="h-16 px-4 flex items-center justify-between border-b border-[#1f1f1f] bg-[#0c0c0c] shrink-0 sticky top-0 z-10">
                         <div className="flex items-center gap-2">
                              <Logo />
                              <span className="font-bold text-white uppercase tracking-wider">Limetred</span>
@@ -286,28 +286,28 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     </div>
 
                     {/* Mobile Menu Content */}
-                    <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-2">
+                    <div className="flex-1 p-6 flex flex-col gap-4">
                         <button 
                             onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
-                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
                         >
                             <Zap size={24} className="text-[#39b54a]" /> Launchpad
                         </button>
                         <button 
                             onClick={() => scrollToSection('dex')} 
-                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
                         >
                             <ArrowLeftRight size={24} className="text-[#8b5cf6]" /> DEX & Swap
                         </button>
                         <button 
                             onClick={() => scrollToSection('agents')} 
-                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
                         >
                              <Bot size={24} className="text-[#39b54a]" /> AI Agents
                         </button>
                         <button 
                             onClick={() => scrollToSection('token-factory')} 
-                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                            className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
                         >
                              <Coins size={24} className="text-[#8b5cf6]" /> Token Factory
                         </button>
@@ -330,8 +330,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </nav>
 
       {/* -------------------- HERO -------------------- */}
-      <div className="min-h-[calc(100vh-64px)] flex flex-col relative z-10">
-        {/* Marquee - Responsive sizing */}
+      <div className="flex flex-col relative z-10">
+        {/* Marquee */}
         <div className="w-full bg-[#111111]/90 border-b border-[#1f1f1f] h-8 md:h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
           <div className="animate-marquee flex space-x-8 md:space-x-12 px-4">
             {[...MOCK_TICKER, ...MOCK_TICKER].map((item, i) => (
@@ -343,17 +343,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-12 md:py-20">
-             {/* ... Hero Content ... */}
+        <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-16 md:py-24">
              <div className="flex justify-center mb-6">
                 <Badge color="text-[#8b5cf6] border-[#8b5cf6] bg-[#8b5cf6]/10 text-[10px] md:text-xs">AI VENTURE PROTOCOL V1.0</Badge>
              </div>
              
              <div className="flex justify-center w-full overflow-hidden">
-               {/* RESPONSIVE TEXT SIZE: text-5xl on mobile, 9xl on desktop */}
+               {/* Fixed Text Size for Mobile responsiveness */}
                <TextReveal 
                   text="LIMETRED" 
-                  className="text-5xl sm:text-6xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85] w-full justify-center" 
+                  className="text-5xl sm:text-7xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85] w-full justify-center" 
                />
              </div>
              
@@ -403,10 +402,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </div>
 
       {/* -------------------- LAUNCHPAD -------------------- */}
-      <section id="launchpad" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden">
+      <section id="launchpad" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden z-20">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full text-center md:text-left">
                     <Badge color="text-[#8b5cf6]">PHASE 1: INCUBATION</Badge>
                     <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">The Fair Launch <br/> <span className="text-[#39b54a]">Bonding Curve</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Every app generated on Limetred starts on a mathematical bonding curve. No pre-sale. No insiders. Just pure price discovery.</p>
@@ -430,20 +429,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
-      {/* -------------------- DEX SECTION (FIXED ID) -------------------- */}
-      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20 z-10">
+      {/* -------------------- DEX SECTION -------------------- */}
+      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative z-20">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#8b5cf6]/5 to-transparent pointer-events-none"></div>
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-start">
                 
                 {/* Left: Info */}
-                <div className="flex-1 sticky top-24 w-full">
+                <div className="flex-1 w-full text-center md:text-left">
                     <Badge color="text-[#39b54a]">PHASE 2: TRADING</Badge>
                     <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">Limetred <br/> <span className="text-[#8b5cf6]">Terminal</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
                         A fully integrated aggregation layer. Swap tokens, bridge assets, and provide liquidity directly from the protocol interface.
                     </p>
-                    <div className="space-y-4">
+                    <div className="space-y-4 text-left">
                         <div className="flex items-start gap-4 p-4 border border-[#1f1f1f] bg-[#111]">
                             <ScanLine className="text-[#39b54a] mt-1 shrink-0" size={20} />
                             <div>
@@ -640,11 +639,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
-      {/* -------------------- AGENTS SECTION (FIXED ID) -------------------- */}
-      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden scroll-mt-20 z-10">
+      {/* -------------------- AGENTS SECTION -------------------- */}
+      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden z-20">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full text-center md:text-left">
                     <Badge color="text-[#39b54a]">PHASE 3: AUTOMATION</Badge>
                     <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">Deploy Autonomous <br/> <span className="text-[#39b54a]">AI Agents</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Spin up specialized AI agents to manage your protocol, optimize yield, or trade on your behalf.</p>
@@ -693,11 +692,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
-      {/* -------------------- TOKEN FACTORY (FIXED ID) -------------------- */}
-      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20 z-10">
+      {/* -------------------- TOKEN FACTORY -------------------- */}
+      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative z-20">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full text-center md:text-left">
                     <Badge color="text-[#39b54a]">PHASE 4: TOKEN FACTORY</Badge>
                     <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white leading-tight">Standardized <br/> <span className="text-[#8b5cf6]">Token Generation</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Launch your own custom ERC20 token in seconds.</p>
@@ -726,7 +725,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* ... Footer ... */}
       <footer className="bg-[#0c0c0c] border-t border-[#1f1f1f] py-16 relative z-20">
-         {/* Kept existing footer */}
          <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
             <div className="text-left">
                 <div className="flex items-center gap-2 mb-2">
