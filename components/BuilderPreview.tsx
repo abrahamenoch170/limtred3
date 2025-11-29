@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui/GlintComponents';
 import { GeneratedApp, ChainId } from '../types';
 import { generateProjectAsset, analyzeImage } from '../services/geminiService';
 import { 
   Rocket, Smartphone, CheckCircle, Loader2, Monitor, Tablet, 
-  RefreshCw, Maximize2, X, ChevronDown, FileCode, Image as ImageIcon, Download, Copy, Check, Terminal, Box,
-  RotateCcw, Minus, Plus, Upload, FileJson, ScrollText, AppWindow
+  RefreshCw, Maximize2, X, ChevronDown, Image as ImageIcon, Download, Copy, Check, Terminal, Box,
+  RotateCcw, Minus, Plus, Upload, FileJson, ScrollText, AppWindow, RotateCw, Settings, AlertCircle
 } from 'lucide-react';
 import { CHAINS } from '../constants';
 
@@ -75,11 +74,13 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const [activeFile, setActiveFile] = useState('Contract.sol');
   const [activeDevice, setActiveDevice] = useState<DeviceConfig>(DEVICES[1]); // Default to iPhone 14 Pro
   const [zoom, setZoom] = useState(1.0);
+  const [isLandscape, setIsLandscape] = useState(false);
   const [showDeployModal, setShowDeployModal] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDeviceMenu, setShowDeviceMenu] = useState(false);
   
   // Asset Studio State
   const [assetPrompt, setAssetPrompt] = useState("");
@@ -115,6 +116,13 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const handleResetView = () => {
       setZoom(1.0);
       setActiveDevice(DEVICES[1]); // Reset to default iPhone
+      setIsLandscape(false);
+  };
+
+  const toggleOrientation = () => {
+      if (activeDevice.type !== 'DESKTOP') {
+          setIsLandscape(!isLandscape);
+      }
   };
 
   const handleConfirmDeploy = async () => {
@@ -363,268 +371,266 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                                 className="w-full bg-[#8b5cf6] text-white py-2 font-bold uppercase text-xs hover:bg-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {isGeneratingAsset ? (
-                                    <>
-                                        <Loader2 className="animate-spin" size={14}/> GENERATING...
-                                    </>
+                                    <><Loader2 className="animate-spin" size={16} /> GENERATING...</>
                                 ) : (
-                                    'GENERATE ASSET'
+                                    <><Rocket size={16} /> GENERATE ASSET</>
                                 )}
                             </button>
                             
                             {generationError && (
-                                <div className="mt-2 p-2 bg-red-500/10 border border-red-500 text-red-500 text-xs flex items-center justify-center">
-                                    Generation Failed. Try again.
+                                <div className="mt-3 bg-red-500/10 border border-red-500/50 p-3 flex flex-col items-center gap-2">
+                                    <span className="text-red-400 text-[10px] font-bold uppercase flex items-center gap-1">
+                                        <AlertCircle size={12} /> Generation Failed
+                                    </span>
+                                    <button 
+                                        onClick={handleGenerateAsset}
+                                        className="text-[10px] bg-red-500/20 text-red-400 px-3 py-1 hover:bg-red-500/30 transition-colors uppercase font-bold"
+                                    >
+                                        Retry
+                                    </button>
                                 </div>
                             )}
                         </div>
-
+                        
+                        {/* Result Area */}
                         {generatedAsset && (
-                            <div className="bg-[#111] border border-[#1f1f1f] p-2">
-                                <img src={generatedAsset} alt="Generated Asset" className="w-full h-auto border border-[#333]" />
-                                <a 
-                                    href={generatedAsset} 
-                                    download={`asset-${Date.now()}.png`}
-                                    className="block text-center text-xs text-[#8b5cf6] mt-2 hover:underline"
-                                >
-                                    Download Image
-                                </a>
+                            <div className="bg-[#111] border border-[#39b54a] p-4 animate-in fade-in slide-in-from-bottom-4">
+                                <h4 className="text-[#39b54a] font-bold text-xs uppercase mb-3 flex items-center gap-2">
+                                    <CheckCircle size={14} /> Asset Generated
+                                </h4>
+                                <img src={generatedAsset} alt="Generated Asset" className="w-full mb-3 border border-[#333]" />
+                                <button className="w-full border border-[#333] text-[#ccc] py-2 text-xs hover:bg-[#1f1f1f] flex items-center justify-center gap-2">
+                                    <Download size={14} /> Download Asset
+                                </button>
                             </div>
                         )}
                     </div>
                 </div>
               ) : (
-                <div className="flex-1 bg-[#0c0c0c] p-4 overflow-auto relative group">
-                    <SyntaxHighlight code={getActiveCode()} />
-                </div>
-              )}
+                <div className="flex-1 flex overflow-hidden">
+                    {/* Code Column */}
+                    <div className="flex-1 bg-[#0c0c0c] overflow-auto border-r border-[#1f1f1f] flex flex-col relative">
+                         <div className="flex-1 overflow-auto p-4">
+                            <SyntaxHighlight code={getActiveCode()} />
+                         </div>
+                         <div className="bg-[#111] border-t border-[#1f1f1f] p-2 flex justify-between items-center text-[10px] text-[#666]">
+                             <div className="flex items-center gap-2"><Terminal size={10} /> <span>Ln 1, Col 1</span></div>
+                             <div>UTF-8</div>
+                         </div>
+                    </div>
 
-              {/* Terminal */}
-              <div className="h-32 border-t border-[#1f1f1f] bg-[#111] flex flex-col shrink-0">
-                  <div className="flex items-center justify-between px-3 py-1 border-b border-[#1f1f1f]">
-                      <div className="flex gap-4">
-                          <span className="text-[10px] uppercase font-bold text-[#39b54a] border-b border-[#39b54a] pb-0.5 cursor-pointer">Output</span>
-                          <span className="text-[10px] uppercase font-bold text-[#666] cursor-pointer hover:text-white">Problems</span>
-                          <span className="text-[10px] uppercase font-bold text-[#666] cursor-pointer hover:text-white">Debug Console</span>
-                      </div>
-                      <div className="flex gap-2">
-                          <Maximize2 size={10} className="text-[#666] cursor-pointer hover:text-white" />
-                          <X size={10} className="text-[#666] cursor-pointer hover:text-white" />
-                      </div>
-                  </div>
-                  <div className="flex-1 p-2 font-mono text-[10px] text-[#888] overflow-y-auto space-y-1">
-                      <div className="flex items-center gap-2 text-white"><Terminal size={10}/> {`limetred-cli build --target ${currentChain}`}</div>
-                      <div className="text-[#39b54a]">✔ Contract compiled successfully in 420ms</div>
-                      <div className="text-[#39b54a]">✔ React components optimized</div>
-                      <div className="text-[#666]">   - 28 modules transformed</div>
-                      <div className="text-[#666]">   - 0 errors, 0 warnings</div>
-                      <div className="animate-pulse">{`> Ready for deployment on ${activeChain.name}...`}</div>
-                  </div>
-              </div>
-          </div>
-
-          {/* Preview Area */}
-          <div className="flex-1 bg-[#1a1a1a] flex flex-col relative border-l border-[#1f1f1f] overflow-hidden">
-              {/* Toolbar */}
-              <div className="h-10 bg-[#111] border-b border-[#1f1f1f] flex items-center justify-between px-4 shrink-0 z-20">
-                  <div className="flex items-center gap-2">
-                      <div className="bg-[#000] text-[#666] text-[10px] px-2 py-1 rounded-none font-mono border border-[#222]">localhost:3000</div>
-                      <button onClick={handleRefresh} className="p-1 hover:text-white text-[#666]">
-                          <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
-                      </button>
-                  </div>
-                  
-                  {/* Zoom & Device Controls */}
-                  <div className="flex items-center gap-4">
-                      {/* Zoom Control */}
-                      <div className="flex items-center gap-2 bg-[#0c0c0c] px-2 py-1 border border-[#333] sharp-corners">
-                          <button onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="text-[#666] hover:text-white transition-colors"><Minus size={12}/></button>
-                          <input
-                            type="range"
-                            min="0.5"
-                            max="1.5"
-                            step="0.1"
-                            value={zoom}
-                            onChange={(e) => setZoom(parseFloat(e.target.value))}
-                            className="w-16 h-1 bg-[#333] appearance-none cursor-pointer accent-[#39b54a] sharp-corners"
-                          />
-                          <button onClick={() => setZoom(Math.min(1.5, zoom + 0.1))} className="text-[#666] hover:text-white transition-colors"><Plus size={12}/></button>
-                          <span className="text-[10px] text-[#666] font-mono w-8 text-right">{(zoom * 100).toFixed(0)}%</span>
-                          <div className="w-px h-3 bg-[#333] mx-1"></div>
-                          <button onClick={handleResetView} className="text-[#666] hover:text-[#39b54a] transition-colors" title="Reset View">
-                              <RotateCcw size={12} />
-                          </button>
-                      </div>
-
-                      {/* Device Selection Dropdown */}
-                      <div className="relative group bg-[#0c0c0c] border border-[#333] px-2 py-1 sharp-corners flex items-center">
-                          <select 
-                              className="bg-transparent text-[10px] text-[#666] uppercase font-mono outline-none appearance-none pr-6 cursor-pointer hover:text-white transition-colors min-w-[100px]"
-                              value={activeDevice.name}
-                              onChange={(e) => {
-                                   const d = DEVICES.find(dev => dev.name === e.target.value);
-                                   if (d) setActiveDevice(d);
-                              }}
-                          >
-                              {DEVICES.map(d => (
-                                  <option key={d.name} value={d.name} className="bg-[#111] text-[#ccc]">{d.name}</option>
-                              ))}
-                          </select>
-                          <ChevronDown size={10} className="absolute right-2 text-[#666] pointer-events-none" />
-                      </div>
-
-                      {/* Orientation / Device Type Shortcuts */}
-                      <div className="flex items-center gap-px bg-[#0c0c0c] p-0.5 border border-[#333] sharp-corners">
-                          <button 
-                            onClick={() => setActiveDevice(DEVICES.find(d => d.type === 'MOBILE')!)} 
-                            className={`p-1.5 sharp-corners transition-colors ${activeDevice.type === 'MOBILE' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white hover:bg-[#1a1a1a]'}`} 
-                            title="Mobile"
-                          >
-                            <Smartphone size={14} />
-                          </button>
-                          <button 
-                            onClick={() => setActiveDevice(DEVICES.find(d => d.type === 'TABLET')!)} 
-                            className={`p-1.5 sharp-corners transition-colors ${activeDevice.type === 'TABLET' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white hover:bg-[#1a1a1a]'}`} 
-                            title="Tablet"
-                          >
-                            <Tablet size={14} />
-                          </button>
-                          <button 
-                            onClick={() => setActiveDevice(DEVICES.find(d => d.type === 'DESKTOP')!)} 
-                            className={`p-1.5 sharp-corners transition-colors ${activeDevice.type === 'DESKTOP' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white hover:bg-[#1a1a1a]'}`} 
-                            title="Desktop"
-                          >
-                            <Monitor size={14} />
-                          </button>
-                      </div>
-                  </div>
-              </div>
-
-              {/* Device Frame */}
-              <div className="flex-1 flex items-center justify-center p-8 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden relative">
-                  <div style={{ transform: `scale(${zoom})`, transition: 'transform 0.2s ease-out', transformOrigin: 'center center' }} className="flex items-center justify-center w-full h-full">
-                    <motion.div 
-                        animate={{ 
-                            width: activeDevice.width,
-                            height: activeDevice.type === 'DESKTOP' ? '100%' : activeDevice.height,
-                            borderRadius: activeDevice.type === 'DESKTOP' ? 0 : 40
-                        }}
-                        className="bg-black border-4 border-[#333] shadow-2xl overflow-hidden relative flex flex-col transition-all duration-300 ease-in-out"
-                    >
-                        {/* Mock App Content inside Device */}
-                        <div className="bg-[#111111] text-white h-full flex flex-col">
-                            <div className="p-4 border-b border-[#333] flex justify-between items-center shrink-0">
-                                <span className="font-bold text-sm truncate">{appData.name}</span>
-                                <div className="flex gap-1">
-                                    <div className="w-1 h-1 bg-white rounded-full"></div>
-                                    <div className="w-1 h-1 bg-white rounded-full"></div>
-                                </div>
-                            </div>
-                            <div className="flex-1 relative overflow-hidden">
-                                <AnimatePresence mode="wait">
-                                    {isRefreshing ? (
-                                        <motion.div
-                                            key="loader"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="absolute inset-0 flex items-center justify-center bg-[#111111] z-10"
-                                        >
-                                            <Loader2 className="animate-spin text-[#39b54a]" size={32} />
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="content"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            className="flex flex-col items-center justify-center text-center p-6 h-full overflow-y-auto"
-                                        >
-                                            <div className="w-16 h-16 border border-[#39b54a] flex items-center justify-center mb-4 rounded-full">
-                                                <Rocket size={24} className="text-[#39b54a]" />
-                                            </div>
-                                            <h3 className="text-xl font-bold mb-2">Welcome to {appData.name}</h3>
-                                            <p className="text-xs text-gray-500 mb-6 max-w-[80%]">{appData.description}</p>
-                                            <button className="bg-[#39b54a] text-black w-full py-3 font-bold uppercase text-xs hover:bg-[#2ea03f] transition-colors mb-4 rounded-none">
-                                                Connect Wallet
+                    {/* Preview Column (Device) */}
+                    <div className="w-[45%] bg-[#111] flex flex-col relative hidden lg:flex">
+                        {/* Device Toolbar */}
+                        <div className="h-10 bg-[#0c0c0c] border-b border-[#1f1f1f] flex items-center justify-between px-3 shrink-0">
+                            <div className="flex items-center gap-2 relative">
+                                <button 
+                                    onClick={() => setShowDeviceMenu(!showDeviceMenu)}
+                                    className="flex items-center gap-2 text-xs text-[#ccc] hover:text-white px-2 py-1 bg-[#1a1a1a] border border-[#333]"
+                                >
+                                    {activeDevice.name} <ChevronDown size={10} />
+                                </button>
+                                
+                                {showDeviceMenu && (
+                                    <div className="absolute top-full left-0 mt-1 w-40 bg-[#111] border border-[#333] shadow-xl z-50">
+                                        {DEVICES.map(device => (
+                                            <button
+                                                key={device.name}
+                                                onClick={() => { setActiveDevice(device); setShowDeviceMenu(false); setZoom(1.0); }}
+                                                className={`w-full text-left px-3 py-2 text-[10px] hover:bg-[#39b54a]/10 hover:text-[#39b54a] flex items-center justify-between ${activeDevice.name === device.name ? 'text-[#39b54a]' : 'text-[#888]'}`}
+                                            >
+                                                {device.name}
+                                                {activeDevice.name === device.name && <Check size={10} />}
                                             </button>
-                                            <div className="flex gap-2 text-[10px] text-[#666]">
-                                                    {appData.attributes.map((attr, i) => (
-                                                        <span key={i} className="border border-[#333] px-2 py-1 rounded-full">{attr}</span>
-                                                    ))}
-                                            </div>
-                                            <div className="mt-8 text-[10px] text-[#444] font-mono">
-                                                Powered by Limetred Beta Protocol
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    </motion.div>
-                  </div>
-              </div>
-          </div>
 
-      </div>
+                            <div className="flex items-center bg-[#1a1a1a] border border-[#333]">
+                                <button onClick={toggleOrientation} className="p-1.5 hover:bg-[#333] text-[#888] hover:text-white border-r border-[#333] transition-colors" title="Rotate">
+                                    <RotateCw size={12} />
+                                </button>
+                                <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="p-1.5 hover:bg-[#333] text-[#888] hover:text-white border-r border-[#333] transition-colors"><Minus size={12} /></button>
+                                <div className="w-12 text-center text-[10px] text-[#888]">{Math.round(zoom * 100)}%</div>
+                                <button onClick={() => setZoom(z => Math.min(2, z + 0.1))} className="p-1.5 hover:bg-[#333] text-[#888] hover:text-white border-l border-[#333] transition-colors"><Plus size={12} /></button>
+                                <button onClick={handleResetView} className="p-1.5 hover:bg-[#333] text-[#888] hover:text-white border-l border-[#333] transition-colors" title="Reset View">
+                                    <RotateCcw size={12} />
+                                </button>
+                            </div>
 
-      {/* Modals */}
-      <AnimatePresence>
-            {showDeployModal && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-[#111111] border border-[#39b54a] p-8 max-w-sm w-full text-center shadow-[0_0_100px_rgba(57,181,74,0.1)]">
-                        <div className="w-16 h-16 bg-[#39b54a]/10 border border-[#39b54a] rounded-full flex items-center justify-center mx-auto mb-6">
-                            <Rocket size={32} className="text-[#39b54a]" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white mb-2 uppercase">Confirm Deployment</h3>
-                        <p className="text-[#666666] mb-6 text-sm leading-relaxed">
-                            You are about to launch <span className="text-white font-bold">{appData.name}</span>.
-                        </p>
-                        
-                        <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 mb-6 space-y-3">
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-[#666] uppercase font-bold">Network</span>
-                                <div className="flex items-center gap-2">
-                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: activeChain.color }}></div>
-                                     <span className="text-white font-mono">{activeChain.name}</span>
-                                </div>
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                                <span className="text-[#666] uppercase font-bold">Est. Gas Fee</span>
-                                <span className="text-white font-mono">{getGasEstimate()}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs border-t border-[#333] pt-2">
-                                <span className="text-[#666] uppercase font-bold">Total Cost</span>
-                                <span className="text-[#39b54a] font-mono font-bold">~${currentChain === 'SOL' ? '3.50' : currentChain === 'TON' ? '1.20' : '8.20'}</span>
+                            <div className="flex items-center gap-1">
+                                <button onClick={handleRefresh} className={`p-1.5 hover:text-white ${isRefreshing ? 'animate-spin text-[#39b54a]' : 'text-[#666]'}`}>
+                                    <RefreshCw size={12} />
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3">
-                            <Button onClick={handleConfirmDeploy} disabled={isDeploying} className="w-full">
-                                {isDeploying ? <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin" size={16} /> DEPLOYING...</span> : "CONFIRM & SIGN"}
-                            </Button>
-                            <Button variant="ghost" onClick={() => setShowDeployModal(false)} disabled={isDeploying} className="w-full">CANCEL</Button>
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
-      </AnimatePresence>
-      <AnimatePresence>
-            {showSuccessToast && (
-                <motion.div initial={{ opacity: 0, y: 50, x: 50 }} animate={{ opacity: 1, y: 0, x: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-8 right-8 z-[100] bg-[#111111] border border-[#39b54a] p-5 shadow-[0_0_50px_rgba(57,181,74,0.3)] flex items-center gap-4 min-w-[320px]">
-                    <div className="w-12 h-12 bg-[#39b54a]/10 border border-[#39b54a]/30 flex items-center justify-center rounded-none shrink-0"><CheckCircle className="text-[#39b54a]" size={24} /></div>
-                    <div>
-                        <h4 className="text-white font-bold uppercase tracking-wider text-sm">Deployment Successful</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[#666666] text-xs font-mono">Redirecting to Dashboard</span>
-                            <span className="flex gap-1">
-                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite]"></span>
-                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite_0.2s]"></span>
-                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite_0.4s]"></span>
-                            </span>
+                        {/* Device Canvas */}
+                        <div className="flex-1 flex items-center justify-center p-8 overflow-hidden relative">
+                             {/* Background Grid */}
+                             <div className="absolute inset-0 opacity-10 pointer-events-none" 
+                                  style={{ 
+                                      backgroundImage: 'radial-gradient(#666 1px, transparent 1px)', 
+                                      backgroundSize: '20px 20px' 
+                                  }} 
+                             />
+
+                             <motion.div 
+                                animate={{ 
+                                    scale: zoom,
+                                    rotate: isLandscape && activeDevice.type !== 'DESKTOP' ? 90 : 0
+                                }}
+                                transition={{ duration: 0.3 }}
+                                style={{
+                                    width: activeDevice.width,
+                                    height: activeDevice.height,
+                                }}
+                                className={`bg-white relative shadow-2xl transition-all ${activeDevice.type === 'MOBILE' ? 'rounded-[3rem] border-8 border-[#1f1f1f]' : activeDevice.type === 'TABLET' ? 'rounded-[2rem] border-8 border-[#1f1f1f]' : 'rounded-none border-0'}`}
+                             >
+                                 {/* Notch (Mobile Only) */}
+                                 {activeDevice.type === 'MOBILE' && (
+                                     <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-32 bg-[#1f1f1f] rounded-b-xl z-20"></div>
+                                 )}
+
+                                 <div className="w-full h-full overflow-hidden bg-black relative">
+                                    <AnimatePresence mode="wait">
+                                        {isRefreshing ? (
+                                            <motion.div
+                                                key="loader"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                exit={{ opacity: 0 }}
+                                                className="absolute inset-0 z-50 bg-[#0c0c0c] flex items-center justify-center"
+                                            >
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <Loader2 size={32} className="text-[#39b54a] animate-spin" />
+                                                    <div className="text-[#39b54a] text-xs font-mono animate-pulse">BOOTING KERNEL...</div>
+                                                </div>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="content"
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: 1 }}
+                                                transition={{ delay: 0.2 }}
+                                                className="w-full h-full"
+                                            >
+                                                <iframe 
+                                                    srcDoc={`
+                                                        <html>
+                                                          <head>
+                                                            <script src="https://cdn.tailwindcss.com"></script>
+                                                            <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+                                                            <style>body { font-family: 'Montserrat', sans-serif; }</style>
+                                                          </head>
+                                                          <body>
+                                                            <div id="root"></div>
+                                                            <script type="module">
+                                                              import React from 'https://esm.sh/react@18';
+                                                              import ReactDOM from 'https://esm.sh/react-dom@18/client';
+                                                              
+                                                              const App = () => React.createElement('div', { className: 'h-screen w-full bg-[#0c0c0c] text-white flex flex-col items-center justify-center p-6' }, 
+                                                                React.createElement('div', { className: 'text-[#39b54a] font-bold text-sm mb-4' }, 'PREVIEW MODE'),
+                                                                React.createElement('h1', { className: 'text-3xl font-black mb-4 text-center uppercase' }, '${appData.name}'),
+                                                                React.createElement('p', { className: 'text-gray-400 text-center text-sm mb-8' }, '${appData.description}'),
+                                                                React.createElement('button', { className: 'bg-[#39b54a] text-black px-6 py-3 font-bold uppercase tracking-wider hover:bg-[#2ea03f]' }, 'Connect Wallet')
+                                                              );
+
+                                                              const root = ReactDOM.createRoot(document.getElementById('root'));
+                                                              root.render(React.createElement(App));
+                                                            </script>
+                                                          </body>
+                                                        </html>
+                                                    `}
+                                                    className="w-full h-full border-0"
+                                                    title="App Preview"
+                                                />
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                 </div>
+                             </motion.div>
                         </div>
                     </div>
-                </motion.div>
-            )}
+                </div>
+              )}
+          </div>
+      </div>
+
+      {/* Deployment Modal */}
+      <AnimatePresence>
+        {showDeployModal && (
+          <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#111] border border-[#39b54a] w-full max-w-lg p-8 relative overflow-hidden"
+            >
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#39b54a] to-transparent animate-pulse"></div>
+                
+                <h2 className="text-2xl font-black uppercase text-white mb-6 flex items-center gap-3">
+                    <Rocket className="text-[#39b54a]" /> Confirm Deployment
+                </h2>
+                
+                <div className="space-y-4 mb-8">
+                    <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 flex justify-between items-center">
+                        <span className="text-[#888] text-xs font-bold uppercase">Target Network</span>
+                        <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: activeChain.color }}></div>
+                             <span className="text-white font-mono">{activeChain.name} Mainnet</span>
+                        </div>
+                    </div>
+                    <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 flex justify-between items-center">
+                        <span className="text-[#888] text-xs font-bold uppercase">Contract Type</span>
+                        <span className="text-white font-mono">ERC20 + AccessControl</span>
+                    </div>
+                    <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 flex justify-between items-center">
+                        <span className="text-[#888] text-xs font-bold uppercase">Estimated Gas</span>
+                        <span className="text-[#39b54a] font-mono font-bold">{getGasEstimate()}</span>
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <button 
+                        onClick={() => setShowDeployModal(false)}
+                        className="flex-1 border border-[#333] text-[#888] py-3 font-bold uppercase hover:bg-[#1f1f1f] transition-colors"
+                        disabled={isDeploying}
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onClick={handleConfirmDeploy}
+                        disabled={isDeploying}
+                        className="flex-1 bg-[#39b54a] text-black py-3 font-bold uppercase hover:bg-[#2ea03f] flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+                    >
+                        {isDeploying ? <Loader2 className="animate-spin" size={18} /> : 'Confirm & Deploy'}
+                    </button>
+                </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Toast */}
+      <AnimatePresence>
+        {showSuccessToast && (
+          <motion.div 
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            className="fixed bottom-8 right-8 bg-[#111] border border-[#39b54a] p-4 flex items-center gap-4 z-[150] shadow-[0_0_30px_rgba(57,181,74,0.3)]"
+          >
+            <div className="w-10 h-10 bg-[#39b54a]/20 flex items-center justify-center rounded-full text-[#39b54a]">
+                <CheckCircle size={20} />
+            </div>
+            <div>
+                <h4 className="font-bold text-white uppercase text-sm">Deployment Successful</h4>
+                <p className="text-[#666] text-xs font-mono">Contract verified on {activeChain.name}</p>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
