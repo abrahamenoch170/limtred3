@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, ChevronRight, Loader2, ArrowLeftRight, AlertCircle } from 'lucide-react';
+import { X, Shield, ChevronRight, Loader2, ArrowLeftRight, AlertCircle, CheckCircle, WifiOff } from 'lucide-react';
 import { ChainId } from '../types';
 import { CHAINS } from '../constants';
 
@@ -19,15 +19,33 @@ const WALLETS = [
   { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔵', color: '#0052FF', chains: ['ETH', 'BASE', 'SOL'] },
 ];
 
+type ConnectionStatus = 'IDLE' | 'CONNECTING' | 'SUCCESS' | 'ERROR';
+
 const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose, onConnect, currentChain, onSwitchChain }) => {
-  const [connecting, setConnecting] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('IDLE');
+  const [activeWalletId, setActiveWalletId] = useState<string | null>(null);
+
+  // Reset state when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+        setConnectionStatus('IDLE');
+        setActiveWalletId(null);
+    }
+  }, [isOpen]);
 
   const handleWalletClick = (walletId: string) => {
-    setConnecting(walletId);
-    // Simulate connection delay
+    setActiveWalletId(walletId);
+    setConnectionStatus('CONNECTING');
+    
+    // Simulate connection lifecycle
     setTimeout(() => {
-      onConnect(walletId);
-      setConnecting(null);
+      // Mock Success Transition
+      setConnectionStatus('SUCCESS');
+      
+      setTimeout(() => {
+        onConnect(walletId);
+        // State reset handled by useEffect on close
+      }, 800);
     }, 1500);
   };
 
@@ -58,7 +76,11 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                   <p className="text-[#666666] text-xs font-mono">Secure connection to {activeChainConfig.name}</p>
                 </div>
               </div>
-              <button onClick={onClose} className="text-[#666666] hover:text-white transition-colors">
+              <button 
+                onClick={onClose} 
+                className="text-[#666666] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={connectionStatus !== 'IDLE'}
+              >
                 <X size={24} />
               </button>
             </div>
@@ -68,11 +90,38 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
               <div className="space-y-3">
                 {WALLETS.map((wallet) => {
                   const isSupported = wallet.chains.includes(currentChain);
-                  const isConnecting = connecting === wallet.id;
+                  const isActive = activeWalletId === wallet.id;
                   
                   // If not supported, suggest the first supported chain
                   const targetChainId = !isSupported ? wallet.chains[0] as ChainId : null;
                   const targetChainName = targetChainId ? CHAINS[targetChainId]?.name : '';
+
+                  // Dynamic Styles based on Status
+                  let containerStyles = "";
+                  let iconElement = null;
+
+                  if (isActive) {
+                      switch (connectionStatus) {
+                          case 'CONNECTING':
+                              containerStyles = "bg-[#39b54a]/10 border-[#39b54a] animate-pulse";
+                              iconElement = <Loader2 className="animate-spin text-[#39b54a]" size={18} />;
+                              break;
+                          case 'SUCCESS':
+                              containerStyles = "bg-[#39b54a]/20 border-[#39b54a]";
+                              iconElement = <CheckCircle className="text-[#39b54a]" size={18} />;
+                              break;
+                          case 'ERROR':
+                              containerStyles = "bg-red-500/10 border-red-500";
+                              iconElement = <AlertCircle className="text-red-500" size={18} />;
+                              break;
+                          default:
+                              break;
+                      }
+                  } else {
+                      containerStyles = isSupported 
+                          ? "bg-[#0c0c0c] border-[#1f1f1f] hover:border-[#39b54a] hover:bg-[#39b54a]/5"
+                          : "bg-[#111111] border-[#1f1f1f] opacity-80 hover:opacity-100 hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/5";
+                  }
 
                   return (
                     <button
@@ -84,28 +133,31 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                             handleSwitchAndConnect(wallet.id, targetChainId);
                         }
                       }}
-                      disabled={connecting !== null}
-                      className={`w-full flex items-center justify-between p-4 border transition-all duration-200 group relative overflow-hidden ${
-                        isSupported 
-                          ? 'bg-[#0c0c0c] border-[#1f1f1f] hover:border-[#39b54a] hover:bg-[#39b54a]/5'
-                          : 'bg-[#111111] border-[#1f1f1f] opacity-80 hover:opacity-100 hover:border-[#8b5cf6] hover:bg-[#8b5cf6]/5'
-                      }`}
+                      disabled={connectionStatus !== 'IDLE' && !isActive}
+                      className={`w-full flex items-center justify-between p-4 border transition-all duration-200 group relative overflow-hidden ${containerStyles} ${connectionStatus !== 'IDLE' && !isActive ? 'opacity-30 cursor-not-allowed' : ''}`}
                     >
                       <div className="flex items-center gap-4 relative z-10">
                         <div className="text-2xl">{wallet.icon}</div>
                         <div className="text-left">
-                          <div className={`font-bold ${isSupported ? 'text-white' : 'text-[#888]'}`}>{wallet.name}</div>
-                          {!isSupported && (
+                          <div className={`font-bold ${isSupported || isActive ? 'text-white' : 'text-[#888]'}`}>
+                             {wallet.name}
+                          </div>
+                          {!isSupported && !isActive && (
                               <div className="text-[10px] text-[#8b5cf6] font-mono flex items-center gap-1 mt-0.5">
                                 <AlertCircle size={10} /> Not on {activeChainConfig.name}
+                              </div>
+                          )}
+                          {isActive && connectionStatus === 'SUCCESS' && (
+                              <div className="text-[10px] text-[#39b54a] font-mono flex items-center gap-1 mt-0.5">
+                                Connected
                               </div>
                           )}
                         </div>
                       </div>
 
                       <div className="relative z-10">
-                        {isConnecting ? (
-                           <Loader2 className="animate-spin text-[#39b54a]" size={18} />
+                        {isActive ? (
+                           iconElement
                         ) : isSupported ? (
                            <ChevronRight className="text-[#333] group-hover:text-[#39b54a] transition-colors" size={18} />
                         ) : (
@@ -120,6 +172,13 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                 })}
               </div>
             </div>
+            
+            {/* Footer status if connecting */}
+            {connectionStatus === 'CONNECTING' && (
+                <div className="p-3 bg-[#0c0c0c] border-t border-[#1f1f1f] flex justify-center">
+                    <span className="text-xs font-mono text-[#666] animate-pulse">Requesting signature...</span>
+                </div>
+            )}
           </motion.div>
         </div>
       )}

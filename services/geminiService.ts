@@ -78,33 +78,30 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              \`import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";\`
            - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20, Ownable, ReentrancyGuard, and Pausable.
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard, Pausable { ... }\`
-           - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
            
            **SECURITY & SCALABILITY REQUIREMENTS (BETA STANDARD):**
            - **Gas Optimization:** Use \`error\` definitions instead of string require statements.
-             - Example: \`error InvalidWallet();\`, \`error LimitTooLow();\`.
            - **Anti-Honeypot:** 
              - Ensure \`updateFees\` checks that taxes <= 10%.
              - Ensure \`updateLimits\` prevents setting limits < 0.5% of totalSupply.
              - Override \`transferOwnership\` to prevent renouncing ownership to 0x0 if trading is disabled.
            - **Asset Safety:**
-             - Implement \`recoverForeignTokens(address _tokenAddr, address _to)\` to rescue stuck tokens (excluding native LMT if trading active).
-           - **Anti-Whale:** Implement \`maxTxAmount\` and \`maxWalletSize\`.
-           - **Fees:** Implement \`buyTax\` and \`sellTax\` variables and a \`marketingWallet\`.
+             - Implement \`recoverForeignTokens\`.
            - **Reentrancy Protection:** 
              - Override \`transfer\` and \`transferFrom\` with \`nonReentrant\`.
              - Apply \`nonReentrant\` to ALL state-changing functions.
            - **Pausable Logic:**
              - Implement \`pause()\` and \`unpause()\` functions callable only by owner.
              - Apply \`whenNotPaused\` to the \`_update\` override and \`enableTrading\`.
-           - **_update Override:** You MUST override the \`_update\` function to handle:
-             1. Trading Active check (using \`whenNotPaused\`).
-             2. Max Tx / Max Wallet limits.
-             3. Fee deduction (send tax to marketing wallet).
-           - **Vesting:** Implement \`struct VestingSchedule\` and secure \`createVestingSchedule\` and \`claimVestedTokens\` functions.
+           
+           **ADVANCED FEATURES (REQUIRED):**
+           - **Scalable Vesting:** 
+             - Use \`mapping(address => VestingSchedule[]) public vestingSchedules;\` to allow multiple schedules per user.
+             - Implement \`createVestingSchedule\`, \`revokeVestingSchedule\`, and \`claimVesting(uint256 index)\`.
            - **Task / Bounty System:**
              - Implement \`struct Task\` with \`batchCreateTasks\` for scalability.
-             - Events: \`TaskCreated\`, \`TaskCompleted\`.
+             - Implement \`cancelTask\` and \`completeTask\`.
+             - Events: \`TaskCreated\` (include assignee), \`TaskCompleted\`, \`TaskCancelled\`.
 
            **STANDARD FUNCTIONS:**
            - \`enableTrading()\` (onlyOwner, nonReentrant, whenNotPaused).

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
 
@@ -306,6 +306,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // DEX State
@@ -388,6 +389,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     setActiveModal(type);
   };
 
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -397,20 +400,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     >
       {/* -------------------- NAVBAR -------------------- */}
       <nav className="sticky top-0 z-40 bg-[#0c0c0c]/80 backdrop-blur-md border-b border-[#1f1f1f]">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex justify-between items-center">
             <div className="flex items-center gap-3">
                 <Logo />
                 <span className="font-bold uppercase tracking-wider text-white hidden md:block text-lg">Limetred</span>
             </div>
             
-            <div className="flex items-center gap-6">
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-6">
                 <button 
                     onClick={onOpenLaunchpad}
-                    className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block"
+                    className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors"
                 >
                     Launchpad
                 </button>
-                <a href="#dex" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors hidden md:block">DEX</a>
+                <a href="#dex" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors">DEX</a>
                 <Button 
                     variant={isConnected ? "outline" : "primary"} 
                     className="py-2 px-6 text-xs flex items-center gap-2"
@@ -420,7 +424,45 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     {isConnected ? "0x8A...4B2F" : "CONNECT WALLET"}
                 </Button>
             </div>
+
+            {/* Mobile Menu Toggle */}
+            <div className="flex md:hidden items-center gap-3">
+                 <Button 
+                    variant={isConnected ? "outline" : "primary"} 
+                    className="py-1 px-3 text-[10px] flex items-center gap-2 h-8"
+                    onClick={onConnectWallet}
+                >
+                    {isConnected ? "0x8A..." : "CONNECT"}
+                </Button>
+                <button onClick={toggleMobileMenu} className="text-white">
+                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+            </div>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+            {isMobileMenuOpen && (
+                <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="md:hidden bg-[#0c0c0c] border-b border-[#1f1f1f] overflow-hidden"
+                >
+                    <div className="p-4 flex flex-col gap-4">
+                        <button 
+                            onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
+                            className="text-sm font-bold uppercase text-white py-2 border-b border-[#1f1f1f]"
+                        >
+                            Launchpad
+                        </button>
+                        <a href="#dex" onClick={toggleMobileMenu} className="text-sm font-bold uppercase text-white py-2 border-b border-[#1f1f1f]">DEX</a>
+                        <a href="#agents" onClick={toggleMobileMenu} className="text-sm font-bold uppercase text-white py-2 border-b border-[#1f1f1f]">AI Agents</a>
+                        <a href="#token-factory" onClick={toggleMobileMenu} className="text-sm font-bold uppercase text-white py-2">Token Factory</a>
+                    </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
       </nav>
 
       {/* -------------------- HERO (ABOVE THE FOLD) -------------------- */}
@@ -438,7 +480,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
 
         {/* Main Input Area */}
-        <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-20">
+        <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-12 md:py-20">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -452,33 +494,33 @@ const HeroSection: React.FC<HeroSectionProps> = ({
              <div className="flex justify-center">
                <TextReveal 
                   text="LIMETRED" 
-                  className="text-6xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85]" 
+                  className="text-5xl sm:text-6xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85]" 
                />
              </div>
              
              {/* ENHANCED INTRO TEXT */}
              <ScrollFade delay={0.4} className="max-w-2xl mx-auto text-center mb-12">
-                <p className="text-[#39b54a] font-bold tracking-[0.2em] text-xs uppercase mb-4">
+                <p className="text-[#39b54a] font-bold tracking-[0.2em] text-[10px] md:text-xs uppercase mb-4">
                     Venture-as-a-Service Protocol
                 </p>
-                <p className="text-[#cccccc] text-lg md:text-xl font-light leading-relaxed mb-6">
+                <p className="text-[#cccccc] text-base md:text-xl font-light leading-relaxed mb-6 px-4">
                     Launch a fully functional dApp, token, and liquidity market from a single text prompt.
                 </p>
-                <p className="text-[#666666] text-sm font-mono leading-relaxed max-w-lg mx-auto">
+                <p className="text-[#666666] text-xs md:text-sm font-mono leading-relaxed max-w-lg mx-auto px-4">
                     Limetred replaces weeks of full-stack engineering with 30 seconds of AI generation. 
                     Architected for Solana, Base, and Ethereum.
                 </p>
             </ScrollFade>
 
             <ScrollFade delay={0.6}>
-              <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto">
+              <form onSubmit={handleSubmit} className="w-full relative group max-w-3xl mx-auto px-2 md:px-0">
                 <div className="relative">
                   <Input 
                     autoFocus
                     placeholder="Describe your billion-dollar idea..." 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="text-2xl md:text-4xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-32 pr-12"
+                    className="text-xl md:text-4xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-24 md:h-32 pr-12"
                   />
                   
                   {/* Image Upload Trigger */}
@@ -521,8 +563,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     )}
                 </AnimatePresence>
                 
-                <div className="mt-12 flex justify-center">
-                  <Button type="submit" variant="primary" className="min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-lg">
+                <div className="mt-8 md:mt-12 flex justify-center">
+                  <Button type="submit" variant="primary" className="w-full md:w-auto min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-base md:text-lg">
                     <Zap size={20} /> INITIALIZE PROTOCOL
                   </Button>
                 </div>
@@ -546,15 +588,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </div>
 
       {/* -------------------- LAUNCHPAD SECTION -------------------- */}
-      <section id="launchpad" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative overflow-hidden">
+      <section id="launchpad" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#8b5cf6]">PHASE 1: INCUBATION</Badge>
-                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
                         The Fair Launch <br/> <span className="text-[#39b54a]">Bonding Curve</span>
                     </h2>
-                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
                         Every app generated on Limetred starts on a mathematical bonding curve. 
                         No pre-sale. No insiders. Just pure price discovery.
                     </p>
@@ -563,14 +605,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         <ListItem text="Graduation Target: $60k" />
                         <ListItem text="Trading Fee: 1%" />
                     </ul>
-                    <Button variant="outline" className="flex items-center gap-2" onClick={onOpenLaunchpad}>
+                    <Button variant="outline" className="flex items-center gap-2 w-full md:w-auto justify-center" onClick={onOpenLaunchpad}>
                         VIEW LIVE CURVES <ArrowRight size={16} />
                     </Button>
                 </div>
                 
-                <div className="flex-1 relative">
+                <div className="flex-1 w-full relative">
                      {/* Visual Representation of Curve */}
-                     <Card className="h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a] bg-[#0c0c0c]">
+                     <Card className="h-[300px] md:h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a] bg-[#0c0c0c]">
                         <div className="absolute inset-0 opacity-20" 
                              style={{ backgroundImage: 'radial-gradient(#39b54a 1px, transparent 1px)', backgroundSize: '20px 20px' }} 
                         />
@@ -593,27 +635,27 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </section>
 
       {/* -------------------- DEX SECTION -------------------- */}
-      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative">
+      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#39b54a]">PHASE 2: TRADING</Badge>
-                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
                         Instant Liquidity <br/> <span className="text-[#8b5cf6]">On {activeChain.dex}</span>
                     </h2>
-                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
                         Once a curve completes, liquidity is automatically seeded into a {activeChain.dex} AMM pool and burned.
                         Limetred apps are composable with the entire {activeChain.name} ecosystem instantly.
                     </p>
                     <div className="grid grid-cols-2 gap-4 mb-8">
                         <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
                             <Repeat size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase">Auto-Swap</h4>
+                            <h4 className="font-bold text-white uppercase text-sm">Auto-Swap</h4>
                             <p className="text-[#666666] text-xs">Seamless routing through aggregators.</p>
                         </div>
                         <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
                             <Lock size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase">LP Burned</h4>
+                            <h4 className="font-bold text-white uppercase text-sm">LP Burned</h4>
                             <p className="text-[#666666] text-xs">Liquidity tokens are sent to a burn address.</p>
                         </div>
                     </div>
@@ -678,15 +720,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </section>
 
       {/* -------------------- AI AGENTS SECTION -------------------- */}
-      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative overflow-hidden">
+      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#39b54a]">PHASE 3: AUTOMATION</Badge>
-                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
                         Deploy Autonomous <br/> <span className="text-[#39b54a]">AI Agents</span>
                     </h2>
-                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
                         Spin up specialized AI agents to manage your protocol, optimize yield, or trade on your behalf. 
                         Fully non-custodial and verifiable on-chain.
                     </p>
@@ -760,26 +802,26 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </section>
 
       {/* -------------------- TOKEN FACTORY SECTION -------------------- */}
-      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative">
+      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#39b54a]">PHASE 4: TOKEN FACTORY</Badge>
-                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
                         Standardized <br/> <span className="text-[#8b5cf6]">Token Generation</span>
                     </h2>
-                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
                         Launch your own custom ERC20 token in seconds. Define your parameters and let Limetred deploy a secure, verified contract to the network of your choice.
                     </p>
                     <div className="grid grid-cols-2 gap-4 mb-8">
                         <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
                             <Coins size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase">Custom Specs</h4>
+                            <h4 className="font-bold text-white uppercase text-sm">Custom Specs</h4>
                             <p className="text-[#666666] text-xs">Full control over supply and precision.</p>
                         </div>
                         <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
                             <Shield size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase">Verified Code</h4>
+                            <h4 className="font-bold text-white uppercase text-sm">Verified Code</h4>
                             <p className="text-[#666666] text-xs">Standard OpenZeppelin implementations.</p>
                         </div>
                     </div>
@@ -829,6 +871,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                     value={tokenSupply}
                                     onChange={(e) => setTokenSupply(e.target.value)}
                                     className="py-2 text-sm"
+                                    min={0}
                                 />
                             </div>
 
@@ -871,7 +914,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         <div className="max-w-7xl mx-auto px-6 py-24">
             <ScrollFade>
                 <div className="mb-16">
-                    <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-4">Core Protocol <br/> <span className="text-[#666666]">Features</span></h2>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-4">Core Protocol <br/> <span className="text-[#666666]">Features</span></h2>
                     <div className="w-24 h-1 bg-[#39b54a]"></div>
                 </div>
             </ScrollFade>
@@ -923,7 +966,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                     <div>
                         <h3 className="font-mono text-[#39b54a] text-sm mb-2">WHY LIMETRED?</h3>
-                        <h2 className="text-4xl font-bold uppercase mb-6">Stop wasting weeks <br/> on boilerplate.</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold uppercase mb-6">Stop wasting weeks <br/> on boilerplate.</h2>
                         <p className="text-[#666666] mb-8 leading-relaxed max-w-md">
                             Traditional web3 development is slow, expensive, and fragmented. 
                             Limetred consolidates the entire venture lifecycle—from IDE to DEX—into a single 30-second workflow.

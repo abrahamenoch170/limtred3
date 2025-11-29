@@ -48,9 +48,11 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     error TransferFailed();
     error InvalidOwner();
     error InvalidVestingSchedule();
+    error InvalidVestingIndex();
     error NothingToClaim();
     error NotTaskAssignee();
     error TaskAlreadyCompleted();
+    error TaskAlreadyCancelled();
     error LimitTooLow(); // Anti-Honeypot
     error CannotRenounceWhileDisabled(); // Safety
 
@@ -73,6 +75,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         string description;
         uint256 dueDate;
         bool isCompleted;
+        bool isCancelled;
         address assignee;
     }
     mapping(uint256 => Task) public tasks;
@@ -80,19 +83,23 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate, address indexed assignee);
     event TaskCompleted(uint256 indexed taskId, address indexed completer);
+    event TaskCancelled(uint256 indexed taskId);
 
-    // --- Vesting Logic ---
+    // --- Vesting Logic (Scalable) ---
     struct VestingSchedule {
-        address recipient;
         uint256 startDate;
         uint256 cliffDate;
         uint256 endDate;
         uint256 amount;
         uint256 claimed;
+        bool revoked;
     }
-    mapping(address => VestingSchedule) public vestingSchedules;
-    event VestingCreated(address indexed recipient, uint256 amount);
+    // Mapping from beneficiary to list of schedules (One-to-Many)
+    mapping(address => VestingSchedule[]) public vestingSchedules;
+    
+    event VestingCreated(address indexed recipient, uint256 amount, uint256 scheduleIndex);
     event VestedTokensClaimed(address indexed recipient, uint256 amount);
+    event VestingRevoked(address indexed recipient, uint256 scheduleIndex);
 
     constructor() ERC20("LimetredGenerated", "LMT") Ownable(msg.sender) {
         marketingWallet = msg.sender;
@@ -111,84 +118,54 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     // --- Admin Functions ---
 
-    /**
-     * @dev Triggers stopped state.
-     */
     function pause() public onlyOwner {
         _pause();
     }
 
-    /**
-     * @dev Returns to normal state.
-     */
     function unpause() public onlyOwner {
         _unpause();
     }
 
-    /**
-     * @dev Enables trading. Callable only by owner.
-     * Sets tradingActive to true.
-     * Protected by whenNotPaused and nonReentrant modifiers.
-     */
     function enableTrading() external onlyOwner nonReentrant whenNotPaused {
         tradingActive = true;
     }
 
-    /**
-     * @dev Removes max transaction and wallet limits. Irreversible.
-     */
     function removeLimits() external onlyOwner {
         limitsInEffect = false;
     }
 
-    /**
-     * @dev Updates tax fees (Max 10% to prevent honeypots).
-     */
     function updateFees(uint256 _buyTax, uint256 _sellTax) external onlyOwner {
         if (_buyTax > 10 || _sellTax > 10) revert InvalidTax();
         buyTax = _buyTax;
         sellTax = _sellTax;
     }
 
-    /**
-     * @dev Updates transaction limits. 
-     * IMPORTANT: Cannot set limits lower than 0.5% of supply to prevent honeypots.
-     */
     function updateLimits(uint256 _maxTx, uint256 _maxWallet) external onlyOwner {
         if (_maxTx < (TOTAL_SUPPLY * 5 / 1000) || _maxWallet < (TOTAL_SUPPLY * 5 / 1000)) revert LimitTooLow();
         maxTxAmount = _maxTx;
         maxWalletSize = _maxWallet;
     }
 
-    /**
-     * @dev Updates the marketing wallet address.
-     */
     function setMarketingWallet(address _marketingWallet) external onlyOwner {
         if (_marketingWallet == address(0)) revert InvalidWallet();
         marketingWallet = _marketingWallet;
     }
 
-    /**
-     * @dev Emergency withdraw of stuck ETH.
-     */
     function withdrawStuckEth() external onlyOwner nonReentrant {
         (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
         if (!success) revert TransferFailed();
     }
 
-    /**
-     * @dev Recover any ERC20 token sent to the contract by mistake.
-     * Cannot withdraw the native token if trading is active (liquidity protection).
-     */
     function recoverForeignTokens(address _tokenAddr, address _to) external onlyOwner nonReentrant {
-        if (_tokenAddr == address(this) && tradingActive) revert InvalidWallet(); // Cannot rug native token
+        if (_tokenAddr == address(this) && tradingActive) revert InvalidWallet(); 
         uint256 _amount = IERC20(_tokenAddr).balanceOf(address(this));
         IERC20(_tokenAddr).safeTransfer(_to, _amount);
     }
 
+    // --- Vesting Management ---
+
     /**
-     * @dev Create a vesting schedule for a recipient. 
-     * Transfers tokens from Owner to Contract to lock them.
+     * @dev Create a vesting schedule. Supports multiple schedules per user.
      */
     function createVestingSchedule(
         address _recipient, 
@@ -201,24 +178,50 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         if (_endDate <= _startDate || _cliffDate < _startDate) revert InvalidVestingSchedule();
         if (_amount == 0) revert InvalidVestingSchedule();
 
-        // Lock tokens by transferring from owner to this contract
         _transfer(msg.sender, address(this), _amount);
 
-        vestingSchedules[_recipient] = VestingSchedule({
-            recipient: _recipient,
+        vestingSchedules[_recipient].push(VestingSchedule({
             startDate: _startDate,
             cliffDate: _cliffDate,
             endDate: _endDate,
             amount: _amount,
-            claimed: 0
-        });
+            claimed: 0,
+            revoked: false
+        }));
 
-        emit VestingCreated(_recipient, _amount);
+        emit VestingCreated(_recipient, _amount, vestingSchedules[_recipient].length - 1);
     }
 
     /**
-     * @dev Create a new task.
+     * @dev Allows owner to revoke a vesting schedule if needed (e.g. employee termination).
+     * Returns unvested tokens to owner.
      */
+    function revokeVestingSchedule(address _recipient, uint256 _index) external onlyOwner nonReentrant {
+        if (_index >= vestingSchedules[_recipient].length) revert InvalidVestingIndex();
+        VestingSchedule storage schedule = vestingSchedules[_recipient][_index];
+        if (schedule.revoked) revert InvalidVestingSchedule();
+
+        uint256 vested = _computeReleasableAmount(schedule);
+        uint256 unreleased = schedule.amount - schedule.claimed;
+        uint256 refund = unreleased - vested;
+
+        schedule.revoked = true;
+        
+        // Transfer vested tokens to recipient
+        if (vested > 0) {
+            schedule.claimed += vested;
+            _transfer(address(this), _recipient, vested);
+        }
+        // Refund unvested to owner
+        if (refund > 0) {
+            _transfer(address(this), owner(), refund);
+        }
+
+        emit VestingRevoked(_recipient, _index);
+    }
+
+    // --- Task Management ---
+
     function createTask(string memory _description, uint256 _dueDate, address _assignee) external onlyOwner nonReentrant {
         if (_assignee == address(0)) revert InvalidWallet();
         uint256 taskId = nextTaskId++;
@@ -226,17 +229,22 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
             description: _description,
             dueDate: _dueDate,
             isCompleted: false,
+            isCancelled: false,
             assignee: _assignee
         });
         emit TaskCreated(taskId, _description, _dueDate, _assignee);
     }
 
-    /**
-     * @dev Batch create tasks for gas efficiency.
-     */
+    function cancelTask(uint256 taskId) external onlyOwner nonReentrant {
+        Task storage t = tasks[taskId];
+        if (t.isCompleted) revert TaskAlreadyCompleted();
+        if (t.isCancelled) revert TaskAlreadyCancelled();
+        t.isCancelled = true;
+        emit TaskCancelled(taskId);
+    }
+
     function batchCreateTasks(string[] memory _descriptions, uint256[] memory _dueDates, address[] memory _assignees) external onlyOwner nonReentrant {
         require(_descriptions.length == _dueDates.length && _descriptions.length == _assignees.length, "Length mismatch");
-        
         for(uint i = 0; i < _descriptions.length; i++) {
             if (_assignees[i] == address(0)) continue;
             uint256 taskId = nextTaskId++;
@@ -244,6 +252,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
                 description: _descriptions[i],
                 dueDate: _dueDates[i],
                 isCompleted: false,
+                isCancelled: false,
                 assignee: _assignees[i]
             });
             emit TaskCreated(taskId, _descriptions[i], _dueDates[i], _assignees[i]);
@@ -252,35 +261,24 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     // --- User Functions ---
 
-    /**
-     * @dev Mark a task as completed. Only callable by the assignee.
-     */
     function completeTask(uint256 taskId) external nonReentrant {
         Task storage t = tasks[taskId];
         if (msg.sender != t.assignee) revert NotTaskAssignee();
         if (t.isCompleted) revert TaskAlreadyCompleted();
+        if (t.isCancelled) revert TaskAlreadyCancelled();
         
         t.isCompleted = true;
         emit TaskCompleted(taskId, msg.sender);
     }
 
     /**
-     * @dev Claim available vested tokens.
+     * @dev Claim tokens from a specific vesting schedule.
      */
-    function claimVestedTokens() external nonReentrant {
-        VestingSchedule storage schedule = vestingSchedules[msg.sender];
-        if (schedule.amount == 0) revert InvalidVestingSchedule();
-
-        uint256 vested = 0;
-        if (block.timestamp >= schedule.endDate) {
-            vested = schedule.amount;
-        } else if (block.timestamp >= schedule.cliffDate) {
-            uint256 duration = schedule.endDate - schedule.startDate;
-            uint256 elapsed = block.timestamp - schedule.startDate;
-            vested = (schedule.amount * elapsed) / duration;
-        }
-
-        uint256 claimable = vested - schedule.claimed;
+    function claimVesting(uint256 _index) external nonReentrant {
+        if (_index >= vestingSchedules[msg.sender].length) revert InvalidVestingIndex();
+        VestingSchedule storage schedule = vestingSchedules[msg.sender][_index];
+        
+        uint256 claimable = _computeReleasableAmount(schedule);
         if (claimable == 0) revert NothingToClaim();
 
         schedule.claimed += claimable;
@@ -291,42 +289,54 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     // --- View Functions ---
 
-    /**
-     * @dev Returns the total supply calculated from mints and burns.
-     * Required for dashboard tracking.
-     */
     function calculatedTotalSupply() public view returns (uint256) {
         return totalSupply();
     }
 
-    /**
-     * @dev Returns the description, due date, and status of a specific task.
-     */
-    function getTaskDetails(uint256 taskId) public view returns (string memory description, uint256 dueDate, bool isCompleted, address assignee) {
+    function getTaskDetails(uint256 taskId) public view returns (string memory description, uint256 dueDate, bool isCompleted, bool isCancelled, address assignee) {
         Task memory t = tasks[taskId];
-        return (t.description, t.dueDate, t.isCompleted, t.assignee);
+        return (t.description, t.dueDate, t.isCompleted, t.isCancelled, t.assignee);
+    }
+
+    function getVestingSchedulesCount(address _beneficiary) external view returns(uint256){
+        return vestingSchedules[_beneficiary].length;
+    }
+
+    function getVestingSchedule(address _beneficiary, uint256 _index) external view returns(VestingSchedule memory) {
+        return vestingSchedules[_beneficiary][_index];
     }
 
     // --- Internal Logic ---
 
+    function _computeReleasableAmount(VestingSchedule memory schedule) internal view returns (uint256) {
+        if (schedule.revoked) return 0;
+        if (block.timestamp < schedule.cliffDate) return 0;
+        
+        uint256 vested;
+        if (block.timestamp >= schedule.endDate) {
+            vested = schedule.amount;
+        } else {
+            uint256 duration = schedule.endDate - schedule.startDate;
+            uint256 elapsed = block.timestamp - schedule.startDate;
+            vested = (schedule.amount * elapsed) / duration;
+        }
+        return vested > schedule.claimed ? vested - schedule.claimed : 0;
+    }
+
     function _update(address from, address to, uint256 value) internal override(ERC20) whenNotPaused {
-        // 1. Skip logic for Minting/Burning
         if (from == address(0) || to == address(0)) {
             super._update(from, to, value);
             return;
         }
 
-        // 2. Check Limits (if enabled and not owner)
         if (limitsInEffect && from != owner() && to != owner()) {
             if (!tradingActive) revert TradingNotActive();
             if (value > maxTxAmount) revert MaxTxAmountExceeded();
             if (balanceOf(to) + value > maxWalletSize) revert MaxWalletExceeded();
         }
 
-        // 3. Tax Logic (Simplified: Flat tax on all transfers except owner)
         uint256 taxAmount = 0;
         if (from != owner() && to != owner()) {
-            // Apply tax (Buy or Sell - simplified as flat rate for template)
             taxAmount = (value * buyTax) / 100;
         }
 
@@ -338,13 +348,8 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         }
     }
 
-    /**
-     * @dev Override to prevent accidental renouncement while contract is disabled.
-     * Safety feature to prevent dead/locked contracts.
-     */
-    function transferOwnership(address newOwner) public override onlyOwner {
+    function transferOwnership(address newOwner) public override onlyOwner nonReentrant {
         if (newOwner == address(0)) {
-             // If renouncing ownership, ensure trading is active to prevent getting stuck
              if (!tradingActive) revert CannotRenounceWhileDisabled();
         }
         super.transferOwnership(newOwner);
