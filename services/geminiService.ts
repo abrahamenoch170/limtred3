@@ -167,6 +167,25 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
   }
 };
 
+// --- CUSTOM TOKEN GENERATOR ---
+export const generateTokenApp = async (name: string, symbol: string, supply: string, decimals: string): Promise<GeneratedApp> => {
+  const client = getClient();
+  if (!client) return MOCK_APP_DATA;
+
+  const prompt = `
+    Create a custom ERC20 Token contract with the following specifications:
+    - Name: ${name}
+    - Symbol: ${symbol}
+    - Total Supply: ${supply} (Adjusted for ${decimals} decimals)
+    - Decimals: ${decimals}
+
+    Include all the standard security features (Anti-Whale, Fees, Pausable, ReentrancyGuard) specified in the standard prompt.
+    The Frontend (React) should be a "Token Control Panel" for managing this specific token.
+  `;
+
+  return generateAppConcept(prompt);
+};
+
 // --- CHATBOT (AI Assistant) ---
 export const getChatResponse = async (history: {role: string, parts: {text: string}[]}[], message: string) => {
   const client = getClient();

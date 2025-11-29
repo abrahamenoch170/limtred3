@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
 
@@ -14,6 +14,7 @@ interface HeroSectionProps {
   onSwap: (sol: number, lmt: number) => boolean;
   currentChain: ChainId;
   onOpenLaunchpad?: () => void;
+  onGenerateToken?: (name: string, symbol: string, supply: string, decimals: string) => void;
 }
 
 const Logo = () => (
@@ -299,7 +300,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   walletBalance,
   onSwap,
   currentChain,
-  onOpenLaunchpad
+  onOpenLaunchpad,
+  onGenerateToken
 }) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -316,6 +318,13 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [isGeneratingAgent, setIsGeneratingAgent] = useState(false);
   const [agentSuccess, setAgentSuccess] = useState(false);
   
+  // Token Generator State
+  const [tokenName, setTokenName] = useState('');
+  const [tokenSymbol, setTokenSymbol] = useState('');
+  const [tokenSupply, setTokenSupply] = useState('1000000000');
+  const [tokenDecimals, setTokenDecimals] = useState('18');
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+
   const activeChain = CHAINS[currentChain];
 
   // Logic calculation variables
@@ -364,6 +373,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         setTimeout(() => setAgentSuccess(false), 3000);
         setAgentPurpose('');
     }, 2500);
+  };
+  
+  const handleTokenGenClick = () => {
+      if (!tokenName || !tokenSymbol || !tokenSupply) return;
+      if (onGenerateToken) {
+          setIsGeneratingToken(true);
+          onGenerateToken(tokenName, tokenSymbol, tokenSupply, tokenDecimals);
+      }
   };
 
   const openModal = (e: React.MouseEvent, type: ModalType) => {
@@ -737,6 +754,112 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             </Button>
                         </div>
                      </Card>
+                </div>
+            </div>
+        </ScrollFade>
+      </section>
+
+      {/* -------------------- TOKEN FACTORY SECTION -------------------- */}
+      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-24 relative">
+        <ScrollFade className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
+                <div className="flex-1">
+                    <Badge color="text-[#39b54a]">PHASE 4: TOKEN FACTORY</Badge>
+                    <h2 className="text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
+                        Standardized <br/> <span className="text-[#8b5cf6]">Token Generation</span>
+                    </h2>
+                    <p className="text-[#666666] text-lg leading-relaxed mb-8">
+                        Launch your own custom ERC20 token in seconds. Define your parameters and let Limetred deploy a secure, verified contract to the network of your choice.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
+                            <Coins size={24} className="text-[#8b5cf6] mb-2" />
+                            <h4 className="font-bold text-white uppercase">Custom Specs</h4>
+                            <p className="text-[#666666] text-xs">Full control over supply and precision.</p>
+                        </div>
+                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
+                            <Shield size={24} className="text-[#8b5cf6] mb-2" />
+                            <h4 className="font-bold text-white uppercase">Verified Code</h4>
+                            <p className="text-[#666666] text-xs">Standard OpenZeppelin implementations.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex-1 w-full">
+                    {/* Token Generator Interface */}
+                    <Card className="max-w-md mx-auto relative overflow-hidden group hover:border-[#8b5cf6] transition-colors border-t-4 border-t-[#8b5cf6]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-[#8b5cf6]/10 border border-[#8b5cf6] flex items-center justify-center rounded-full">
+                                <Coins size={20} className="text-[#8b5cf6]" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-white uppercase">Token Constructor</h3>
+                                <p className="text-xs text-[#666666] font-mono">ERC20 Standard</p>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Token Name</label>
+                                    <Input 
+                                        placeholder="e.g. Limetred" 
+                                        value={tokenName}
+                                        onChange={(e) => setTokenName(e.target.value)}
+                                        className="py-2 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Symbol</label>
+                                    <Input 
+                                        placeholder="e.g. LMT" 
+                                        value={tokenSymbol}
+                                        onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+                                        className="py-2 text-sm uppercase"
+                                        maxLength={5}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Total Supply</label>
+                                <Input 
+                                    type="number"
+                                    placeholder="e.g. 1000000000" 
+                                    value={tokenSupply}
+                                    onChange={(e) => setTokenSupply(e.target.value)}
+                                    className="py-2 text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Decimals</label>
+                                <Input 
+                                    type="number"
+                                    placeholder="18" 
+                                    value={tokenDecimals}
+                                    onChange={(e) => setTokenDecimals(e.target.value)}
+                                    className="py-2 text-sm"
+                                    min={0}
+                                    max={18}
+                                />
+                            </div>
+
+                            <Button 
+                                fullWidth 
+                                onClick={handleTokenGenClick}
+                                disabled={isGeneratingToken || !tokenName || !tokenSymbol || !tokenSupply}
+                                className="flex items-center justify-center gap-2 mt-2"
+                                variant="secondary"
+                            >
+                                {isGeneratingToken ? (
+                                    <><Loader2 className="animate-spin" size={16} /> GENERATING CONTRACT...</>
+                                ) : (
+                                    <><Zap size={16} /> GENERATE TOKEN</>
+                                )}
+                            </Button>
+                        </div>
+                    </Card>
                 </div>
             </div>
         </ScrollFade>

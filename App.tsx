@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId, LaunchpadProject } from './types';
-import { generateAppConcept } from './services/geminiService';
+import { generateAppConcept, generateTokenApp } from './services/geminiService';
 import HeroSection from './components/HeroSection';
 import GenerationTheater from './components/GenerationTheater';
 import BuilderPreview from './components/BuilderPreview';
@@ -53,6 +53,12 @@ export default function App() {
     setPhase(AppPhase.LOADING);
     const data = await generateAppConcept(prompt, imageBase64);
     setAppData(data);
+  };
+  
+  const handleGenerateToken = async (name: string, symbol: string, supply: string, decimals: string) => {
+      setPhase(AppPhase.LOADING);
+      const data = await generateTokenApp(name, symbol, supply, decimals);
+      setAppData(data);
   };
 
   const handleTheaterComplete = () => {
@@ -198,6 +204,7 @@ export default function App() {
               onSwap={handleSwap}
               currentChain={currentChain}
               onOpenLaunchpad={handleOpenLaunchpad}
+              onGenerateToken={handleGenerateToken}
             />
           )}
 
