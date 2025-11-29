@@ -8,7 +8,8 @@ const getClient = () => {
     // This prevents "ReferenceError: process is not defined" crashes on Vercel/Vite
     let apiKey = undefined;
     try {
-      if (typeof process !== 'undefined' && process.env) {
+      // Use a safe access pattern for process.env
+      if (typeof process !== 'undefined' && process && process.env) {
         apiKey = process.env.API_KEY;
       }
     } catch (e) {
@@ -67,12 +68,14 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
 
         1. **Smart Contract (Solidity 0.8.20)**: 
            - Write a COMPLETE, COMPILABLE contract.
-           - **CRITICAL: You MUST include these exact imports at the top:**
+           - **CRITICAL REQUIREMENT:** You MUST include these imports at the top:
              \`import "@openzeppelin/contracts/token/ERC20/ERC20.sol";\`
              \`import "@openzeppelin/contracts/access/Ownable.sol";\`
              \`import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";\`
-           - **CRITICAL: The contract MUST inherit from ERC20 and Ownable (and ReentrancyGuard if needed).**
+           - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20 and Ownable.
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard { ... }\`
+           - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
+             Example: \`constructor() ERC20("AppName", "TICKER") Ownable(msg.sender) { ... }\`
            - Implement specific logic requested by the user (e.g., Staking, DAO, Lending, Marketplace).
            - If generic, implement a Bonding Curve token with Anti-Rug mechanics.
            - Include detailed comments explaining the logic.

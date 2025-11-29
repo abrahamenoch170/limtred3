@@ -5,7 +5,7 @@ import { GeneratedApp, ChainId } from '../types';
 import { generateProjectAsset } from '../services/geminiService';
 import { 
   Rocket, Smartphone, CheckCircle, Loader2, Monitor, Tablet, 
-  RefreshCw, Maximize2, X, ChevronDown, FileCode, Image as ImageIcon, Download, Copy, Check, Terminal
+  RefreshCw, Maximize2, X, ChevronDown, FileCode, Image as ImageIcon, Download, Copy, Check, Terminal, Box
 } from 'lucide-react';
 import { CHAINS } from '../constants';
 
@@ -135,6 +135,10 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
               </span>
           </div>
           <div className="flex gap-4">
+              <div className="hidden md:flex items-center gap-2 text-[10px] text-[#666] mr-4 font-mono">
+                  <Box size={12} />
+                  SANDBOX ENV: <span className="text-[#39b54a]">ACTIVE</span>
+              </div>
               <button 
                 onClick={() => setShowDeployModal(true)} 
                 className="bg-[#39b54a] text-black px-4 py-1 text-xs font-bold uppercase hover:bg-[#2ea03f] flex items-center gap-2 transition-colors"
@@ -196,11 +200,9 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                     <div className="flex items-center gap-1 px-2 border-l border-[#1f1f1f]">
                          <button onClick={handleCopyCode} className="p-2 text-[#666] hover:text-white transition-colors relative group" title="Copy to Clipboard">
                              {copied ? <Check size={14} className="text-[#39b54a]" /> : <Copy size={14} />}
-                             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black border border-[#333] px-2 py-1 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Copy Code</span>
                          </button>
                          <button onClick={handleDownload} className="p-2 text-[#666] hover:text-white transition-colors relative group" title="Download File">
                              <Download size={14} />
-                             <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black border border-[#333] px-2 py-1 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Download File</span>
                          </button>
                     </div>
                   )}
@@ -367,3 +369,35 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                         <h3 className="text-2xl font-bold text-white mb-2 uppercase">Ready to Launch?</h3>
                         <p className="text-[#666666] mb-6 text-sm leading-relaxed">This will deploy your smart contracts on <span className="text-white font-bold">{activeChain.name}</span>, initialize the bonding curve, and list on the Limetred dashboard.</p>
                         <div className="flex flex-col gap-3">
+                            <Button onClick={handleConfirmDeploy} disabled={isDeploying} className="w-full">
+                                {isDeploying ? <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin" size={16} /> DEPLOYING...</span> : "CONFIRM DEPLOYMENT"}
+                            </Button>
+                            <Button variant="ghost" onClick={() => setShowDeployModal(false)} disabled={isDeploying} className="w-full">CANCEL</Button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+      </AnimatePresence>
+      <AnimatePresence>
+            {showSuccessToast && (
+                <motion.div initial={{ opacity: 0, y: 50, x: 50 }} animate={{ opacity: 1, y: 0, x: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-8 right-8 z-[100] bg-[#111111] border border-[#39b54a] p-5 shadow-[0_0_50px_rgba(57,181,74,0.3)] flex items-center gap-4 min-w-[320px]">
+                    <div className="w-12 h-12 bg-[#39b54a]/10 border border-[#39b54a]/30 flex items-center justify-center rounded-none shrink-0"><CheckCircle className="text-[#39b54a]" size={24} /></div>
+                    <div>
+                        <h4 className="text-white font-bold uppercase tracking-wider text-sm">Deployment Successful</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[#666666] text-xs font-mono">Redirecting to Dashboard</span>
+                            <span className="flex gap-1">
+                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite]"></span>
+                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite_0.2s]"></span>
+                                <span className="w-1 h-1 bg-[#39b54a] rounded-full animate-[bounce_1s_infinite_0.4s]"></span>
+                            </span>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default BuilderPreview;
