@@ -31,20 +31,30 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract LimetredLaunch is ERC20, Ownable {
+contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard {
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
     
     // Anti-Rug Mechanics
     uint256 public constant MAX_WALLET = 2; // 2%
     bool public tradingActive = false;
 
-    constructor() ERC20("LimetredGenerated", "LMT") {
+    constructor() ERC20("LimetredGenerated", "LMT") Ownable(msg.sender) {
         _mint(msg.sender, TOTAL_SUPPLY);
     }
 
     function enableTrading() external onlyOwner {
         tradingActive = true;
+    }
+
+    /**
+     * @dev Explicit override of transferOwnership to ensure zero-address validation
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public override onlyOwner {
+        require(newOwner != address(0), "Limetred: New owner cannot be zero address");
+        super.transferOwnership(newOwner);
     }
 }`;
 

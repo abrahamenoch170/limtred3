@@ -5,7 +5,8 @@ import { GeneratedApp, ChainId } from '../types';
 import { generateProjectAsset } from '../services/geminiService';
 import { 
   Rocket, Smartphone, CheckCircle, Loader2, Monitor, Tablet, 
-  RefreshCw, Maximize2, X, ChevronDown, FileCode, Image as ImageIcon, Download, Copy, Check, Terminal, Box
+  RefreshCw, Maximize2, X, ChevronDown, FileCode, Image as ImageIcon, Download, Copy, Check, Terminal, Box,
+  RotateCcw, Minus, Plus
 } from 'lucide-react';
 import { CHAINS } from '../constants';
 
@@ -55,6 +56,7 @@ const SyntaxHighlight = ({ code }: { code: string }) => {
 const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, currentChain }) => {
   const [activeFile, setActiveFile] = useState('Contract.sol');
   const [deviceMode, setDeviceMode] = useState<'MOBILE' | 'TABLET' | 'DESKTOP'>('MOBILE');
+  const [zoom, setZoom] = useState(1.0);
   const [showDeployModal, setShowDeployModal] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -72,6 +74,11 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const handleRefresh = () => {
       setIsRefreshing(true);
       setTimeout(() => setIsRefreshing(false), 800);
+  };
+
+  const handleResetView = () => {
+      setZoom(1.0);
+      setDeviceMode('MOBILE');
   };
 
   const handleConfirmDeploy = async () => {
@@ -292,67 +299,94 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
           </div>
 
           {/* Preview Area */}
-          <div className="flex-1 bg-[#1a1a1a] flex flex-col relative border-l border-[#1f1f1f]">
+          <div className="flex-1 bg-[#1a1a1a] flex flex-col relative border-l border-[#1f1f1f] overflow-hidden">
               {/* Toolbar */}
-              <div className="h-10 bg-[#111] border-b border-[#1f1f1f] flex items-center justify-between px-4 shrink-0">
+              <div className="h-10 bg-[#111] border-b border-[#1f1f1f] flex items-center justify-between px-4 shrink-0 z-20">
                   <div className="flex items-center gap-2">
                       <div className="bg-[#000] text-[#666] text-[10px] px-2 py-1 rounded font-mono border border-[#222]">localhost:3000</div>
                       <button onClick={handleRefresh} className="p-1 hover:text-white text-[#666]">
                           <RefreshCw size={12} className={isRefreshing ? 'animate-spin' : ''} />
                       </button>
                   </div>
-                  <div className="flex items-center gap-1 bg-[#0c0c0c] rounded p-0.5 border border-[#333]">
-                      <button onClick={() => setDeviceMode('MOBILE')} className={`p-1.5 rounded ${deviceMode === 'MOBILE' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Smartphone size={14} /></button>
-                      <button onClick={() => setDeviceMode('TABLET')} className={`p-1.5 rounded ${deviceMode === 'TABLET' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Tablet size={14} /></button>
-                      <button onClick={() => setDeviceMode('DESKTOP')} className={`p-1.5 rounded ${deviceMode === 'DESKTOP' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Monitor size={14} /></button>
+                  
+                  {/* Zoom & Device Controls */}
+                  <div className="flex items-center gap-4">
+                      {/* Zoom Control */}
+                      <div className="flex items-center gap-2 bg-[#0c0c0c] rounded px-2 py-1 border border-[#333]">
+                          <button onClick={() => setZoom(Math.max(0.5, zoom - 0.1))} className="text-[#666] hover:text-white"><Minus size={12}/></button>
+                          <input
+                            type="range"
+                            min="0.5"
+                            max="1.5"
+                            step="0.1"
+                            value={zoom}
+                            onChange={(e) => setZoom(parseFloat(e.target.value))}
+                            className="w-16 h-1 bg-[#333] rounded-lg appearance-none cursor-pointer accent-[#39b54a]"
+                          />
+                          <button onClick={() => setZoom(Math.min(1.5, zoom + 0.1))} className="text-[#666] hover:text-white"><Plus size={12}/></button>
+                          <span className="text-[10px] text-[#666] font-mono w-8 text-right">{(zoom * 100).toFixed(0)}%</span>
+                          <div className="w-px h-3 bg-[#333] mx-1"></div>
+                          <button onClick={handleResetView} className="text-[#666] hover:text-[#39b54a]" title="Reset View">
+                              <RotateCcw size={12} />
+                          </button>
+                      </div>
+
+                      {/* Orientation / Device Control */}
+                      <div className="flex items-center gap-1 bg-[#0c0c0c] rounded p-0.5 border border-[#333]">
+                          <button onClick={() => setDeviceMode('MOBILE')} className={`p-1.5 rounded ${deviceMode === 'MOBILE' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Smartphone size={14} /></button>
+                          <button onClick={() => setDeviceMode('TABLET')} className={`p-1.5 rounded ${deviceMode === 'TABLET' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Tablet size={14} /></button>
+                          <button onClick={() => setDeviceMode('DESKTOP')} className={`p-1.5 rounded ${deviceMode === 'DESKTOP' ? 'bg-[#333] text-white' : 'text-[#666] hover:text-white'}`}><Monitor size={14} /></button>
+                      </div>
                   </div>
               </div>
 
               {/* Device Frame */}
-              <div className="flex-1 flex items-center justify-center p-8 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden">
-                  <motion.div 
-                    animate={{ 
-                        width: deviceMode === 'MOBILE' ? 320 : deviceMode === 'TABLET' ? 600 : '100%',
-                        height: deviceMode === 'DESKTOP' ? '100%' : 600,
-                        borderRadius: deviceMode === 'DESKTOP' ? 0 : 20
-                    }}
-                    className="bg-black border-4 border-[#333] shadow-2xl overflow-hidden relative flex flex-col transition-all duration-300 ease-in-out"
-                  >
-                      {/* Mock App Content inside Device */}
-                      <div className="bg-[#111111] text-white h-full flex flex-col">
-                           <div className="p-4 border-b border-[#333] flex justify-between items-center shrink-0">
-                               <span className="font-bold text-sm truncate">{appData.name}</span>
-                               <div className="flex gap-1">
-                                   <div className="w-1 h-1 bg-white rounded-full"></div>
-                                   <div className="w-1 h-1 bg-white rounded-full"></div>
-                               </div>
-                           </div>
-                           <div className="flex-1 flex flex-col items-center justify-center text-center p-6 overflow-y-auto">
-                               {isRefreshing ? (
-                                   <Loader2 className="animate-spin text-[#39b54a]" size={32} />
-                               ) : (
-                                   <>
-                                       <div className="w-16 h-16 border border-[#39b54a] flex items-center justify-center mb-4 rounded-full">
-                                           <Rocket size={24} className="text-[#39b54a]" />
-                                       </div>
-                                       <h3 className="text-xl font-bold mb-2">Welcome to {appData.name}</h3>
-                                       <p className="text-xs text-gray-500 mb-6 max-w-[80%]">{appData.description}</p>
-                                       <button className="bg-[#39b54a] text-black w-full py-3 font-bold uppercase text-xs hover:bg-[#2ea03f] transition-colors mb-4">
-                                           Connect Wallet
-                                       </button>
-                                       <div className="flex gap-2 text-[10px] text-[#666]">
-                                            {appData.attributes.map((attr, i) => (
-                                                <span key={i} className="border border-[#333] px-2 py-1 rounded-full">{attr}</span>
-                                            ))}
-                                       </div>
-                                       <div className="mt-8 text-[10px] text-[#444] font-mono">
-                                          Powered by Limetred Beta Protocol
-                                       </div>
-                                   </>
-                               )}
-                           </div>
-                      </div>
-                  </motion.div>
+              <div className="flex-1 flex items-center justify-center p-8 bg-[radial-gradient(#333_1px,transparent_1px)] [background-size:16px_16px] overflow-hidden relative">
+                  <div style={{ transform: `scale(${zoom})`, transition: 'transform 0.2s ease-out', transformOrigin: 'center center' }} className="flex items-center justify-center w-full h-full">
+                    <motion.div 
+                        animate={{ 
+                            width: deviceMode === 'MOBILE' ? 320 : deviceMode === 'TABLET' ? 600 : '100%',
+                            height: deviceMode === 'DESKTOP' ? '100%' : 600,
+                            borderRadius: deviceMode === 'DESKTOP' ? 0 : 20
+                        }}
+                        className="bg-black border-4 border-[#333] shadow-2xl overflow-hidden relative flex flex-col transition-all duration-300 ease-in-out"
+                    >
+                        {/* Mock App Content inside Device */}
+                        <div className="bg-[#111111] text-white h-full flex flex-col">
+                            <div className="p-4 border-b border-[#333] flex justify-between items-center shrink-0">
+                                <span className="font-bold text-sm truncate">{appData.name}</span>
+                                <div className="flex gap-1">
+                                    <div className="w-1 h-1 bg-white rounded-full"></div>
+                                    <div className="w-1 h-1 bg-white rounded-full"></div>
+                                </div>
+                            </div>
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 overflow-y-auto">
+                                {isRefreshing ? (
+                                    <Loader2 className="animate-spin text-[#39b54a]" size={32} />
+                                ) : (
+                                    <>
+                                        <div className="w-16 h-16 border border-[#39b54a] flex items-center justify-center mb-4 rounded-full">
+                                            <Rocket size={24} className="text-[#39b54a]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold mb-2">Welcome to {appData.name}</h3>
+                                        <p className="text-xs text-gray-500 mb-6 max-w-[80%]">{appData.description}</p>
+                                        <button className="bg-[#39b54a] text-black w-full py-3 font-bold uppercase text-xs hover:bg-[#2ea03f] transition-colors mb-4">
+                                            Connect Wallet
+                                        </button>
+                                        <div className="flex gap-2 text-[10px] text-[#666]">
+                                                {appData.attributes.map((attr, i) => (
+                                                    <span key={i} className="border border-[#333] px-2 py-1 rounded-full">{attr}</span>
+                                                ))}
+                                        </div>
+                                        <div className="mt-8 text-[10px] text-[#444] font-mono">
+                                            Powered by Limetred Beta Protocol
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                  </div>
               </div>
           </div>
 

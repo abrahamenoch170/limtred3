@@ -72,10 +72,11 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              \`import "@openzeppelin/contracts/token/ERC20/ERC20.sol";\`
              \`import "@openzeppelin/contracts/access/Ownable.sol";\`
              \`import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";\`
-           - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20 and Ownable.
+           - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20, Ownable, and ReentrancyGuard.
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard { ... }\`
            - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
              Example: \`constructor() ERC20("AppName", "TICKER") Ownable(msg.sender) { ... }\`
+           - **CRITICAL REQUIREMENT:** You MUST implement an explicit \`transferOwnership(address newOwner)\` function that overrides Ownable logic to explicitly check \`require(newOwner != address(0), "New owner cannot be zero address");\`.
            - Implement specific logic requested by the user (e.g., Staking, DAO, Lending, Marketplace).
            - If generic, implement a Bonding Curve token with Anti-Rug mechanics.
            - Include detailed comments explaining the logic.
