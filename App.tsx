@@ -257,6 +257,7 @@ export default function App() {
         onClose={() => setShowConnectModal(false)}
         onConnect={handleConnectWallet}
         currentChain={currentChain}
+        onSwitchChain={handleChainChange}
       />
     </main>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
+import { X, Shield, ChevronRight, Loader2, ArrowLeftRight } from 'lucide-react';
 import { ChainId } from '../types';
 import { CHAINS } from '../constants';
 
@@ -9,6 +9,7 @@ interface WalletConnectModalProps {
   onClose: () => void;
   onConnect: (provider: string) => void;
   currentChain: ChainId;
+  onSwitchChain: (chain: ChainId) => void;
 }
 
 const WALLETS = [
@@ -18,7 +19,7 @@ const WALLETS = [
   { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔵', color: '#0052FF', chains: ['ETH', 'BASE', 'SOL'] },
 ];
 
-const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose, onConnect, currentChain }) => {
+const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose, onConnect, currentChain, onSwitchChain }) => {
   const [connecting, setConnecting] = useState<string | null>(null);
 
   const handleWalletClick = (walletId: string) => {
@@ -28,6 +29,12 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
       onConnect(walletId);
       setConnecting(null);
     }, 1500);
+  };
+
+  const handleSwitchAndConnect = (walletId: string, targetChain: ChainId) => {
+    onSwitchChain(targetChain);
+    // Optional: Auto-connect after switch could be implemented here, 
+    // but typically switching network is the primary action first.
   };
 
   const activeChainConfig = CHAINS[currentChain];
@@ -64,27 +71,37 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                 {WALLETS.map((wallet) => {
                   const isSupported = wallet.chains.includes(currentChain);
                   const isConnecting = connecting === wallet.id;
+                  
+                  // If not supported, suggest the first supported chain
+                  const targetChainId = !isSupported ? wallet.chains[0] as ChainId : null;
+                  const targetChainName = targetChainId ? CHAINS[targetChainId]?.name : '';
 
                   return (
                     <button
                       key={wallet.id}
-                      onClick={() => isSupported && handleWalletClick(wallet.id)}
-                      disabled={!isSupported || connecting !== null}
+                      onClick={() => {
+                        if (isSupported) {
+                            handleWalletClick(wallet.id);
+                        } else if (targetChainId) {
+                            handleSwitchAndConnect(wallet.id, targetChainId);
+                        }
+                      }}
+                      disabled={connecting !== null}
                       className={`w-full flex items-center justify-between p-4 border transition-all duration-200 group relative overflow-hidden ${
                         isSupported 
                           ? 'bg-[#0c0c0c] border-[#1f1f1f] hover:border-[#39b54a] hover:bg-[#1a1a1a] cursor-pointer' 
-                          : 'bg-[#0a0a0a] border-[#1f1f1f] opacity-50 cursor-not-allowed'
+                          : 'bg-[#1a1a1a] border-[#1f1f1f] hover:border-[#8b5cf6] cursor-pointer'
                       }`}
                     >
                       <div className="flex items-center gap-4 relative z-10">
                         <span className="text-2xl">{wallet.icon}</span>
                         <div className="text-left">
-                          <div className={`font-bold font-mono uppercase ${isSupported ? 'text-white' : 'text-[#444]'}`}>
+                          <div className={`font-bold font-mono uppercase ${isSupported ? 'text-white' : 'text-[#888]'}`}>
                             {wallet.name}
                           </div>
-                          {!isSupported && (
-                            <div className="text-[10px] text-red-500 font-mono flex items-center gap-1">
-                              <AlertCircle size={10} /> Not supported on {activeChainConfig.name}
+                          {!isSupported && targetChainId && (
+                            <div className="text-[10px] text-[#8b5cf6] font-mono flex items-center gap-1 font-bold mt-1">
+                              <ArrowLeftRight size={10} /> Switch to {targetChainName}
                             </div>
                           )}
                         </div>
@@ -93,8 +110,12 @@ const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose
                       <div className="relative z-10">
                         {isConnecting ? (
                           <Loader2 className="animate-spin text-[#39b54a]" size={20} />
-                        ) : isSupported && (
+                        ) : isSupported ? (
                           <ChevronRight className="text-[#333] group-hover:text-[#39b54a] transition-colors" size={20} />
+                        ) : (
+                          <span className="bg-[#8b5cf6]/10 text-[#8b5cf6] text-[10px] px-2 py-1 rounded-none border border-[#8b5cf6]/30 uppercase font-bold group-hover:bg-[#8b5cf6] group-hover:text-black transition-colors">
+                              Switch
+                          </span>
                         )}
                       </div>
 
