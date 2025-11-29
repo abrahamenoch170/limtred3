@@ -14,7 +14,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<{role: 'user' | 'model', text: string, type?: 'TX_REQUEST', txDetails?: any}[]>([
-    { role: 'model', text: "Systems online. I am the Limetred Protocol Assistant. I can help you generate dApps or securely execute transactions. Try 'Send 3 ETH to 0x...'" }
+    { role: 'model', text: "Systems online. I am the Limetred Protocol Guardian, a specialized AI for Web3 Security. Your primary goal is to prevent users from falling for scams, rug pulls, or honey-pots. When a user asks about a swap or transaction, analyze it for risk. If they mention sending money, ALWAYS advise checking the address. If they ask about swapping tokens, mention concepts like slippage, liquidity verification, and contract audits. Be concise, professional, and protective." }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   
@@ -31,6 +31,13 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
   useEffect(() => {
     scrollToBottom();
   }, [messages, isOpen]);
+
+  // Reset processed message ref when closed so it can re-trigger on re-open
+  useEffect(() => {
+      if (!isOpen) {
+          processedInitialMessageRef.current = null;
+      }
+  }, [isOpen]);
 
   // Handle incoming context message
   useEffect(() => {
@@ -108,16 +115,17 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className={`fixed bottom-20 right-6 w-80 md:w-96 h-[500px] bg-[#111111] border border-[#39b54a] shadow-2xl z-[200] flex flex-col overflow-hidden font-mono`}
+            className="fixed bottom-0 right-0 w-full h-[60vh] md:bottom-20 md:right-6 md:w-96 md:h-[500px] bg-[#111111] border-t md:border border-[#39b54a] shadow-[0_-10px_40px_rgba(57,181,74,0.1)] z-[200] flex flex-col overflow-hidden font-mono rounded-t-xl md:rounded-xl"
           >
             {/* Header */}
-            <div className={`p-3 border-b bg-[#0c0c0c] border-[#1f1f1f] flex justify-between items-center`}>
+            <div className="p-4 border-b bg-[#0c0c0c] border-[#1f1f1f] flex justify-between items-center shrink-0">
               <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#39b54a] animate-pulse"></div>
                 <Sparkles size={16} className="text-[#39b54a]" />
-                <span className="text-white font-bold text-xs uppercase">Protocol Guardian</span>
+                <span className="text-white font-bold text-xs uppercase tracking-wider">Protocol Guardian</span>
               </div>
-              <button onClick={toggleOpen} className="text-[#666] hover:text-white">
-                <X size={16} />
+              <button onClick={toggleOpen} className="text-[#666] hover:text-white p-1">
+                <X size={20} />
               </button>
             </div>
             
@@ -137,7 +145,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
 
                   {/* Transaction Card */}
                   {msg.type === 'TX_REQUEST' && msg.txDetails && (
-                      <div className={`mt-2 w-[85%] bg-[#0c0c0c] border ${msg.txDetails.risk === 'HIGH' ? 'border-red-500' : 'border-[#39b54a]'} p-3`}>
+                      <div className={`mt-2 w-[85%] bg-[#0c0c0c] border ${msg.txDetails.risk === 'HIGH' ? 'border-red-500' : 'border-[#39b54a]'} p-3 rounded`}>
                           <div className="flex items-center justify-between mb-2 border-b border-[#333] pb-2">
                               <span className="text-white font-bold text-xs uppercase">Confirm Send</span>
                               {msg.txDetails.risk === 'HIGH' ? <ShieldAlert size={14} className="text-red-500"/> : <CheckCircle size={14} className="text-[#39b54a]"/>}
@@ -182,14 +190,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
             </div>
 
             {/* Input */}
-            <div className="p-3 bg-[#0c0c0c] border-t border-[#1f1f1f] flex gap-2">
+            <div className="p-3 bg-[#0c0c0c] border-t border-[#1f1f1f] flex gap-2 shrink-0 pb-6 md:pb-3">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask or say 'Send 1 ETH to...'"
-                className="flex-1 bg-[#111] border border-[#333] text-white text-xs px-3 py-2 outline-none focus:border-[#39b54a] transition-colors"
+                placeholder="Ask Guardian..."
+                className="flex-1 bg-[#111] border border-[#333] text-white text-xs px-3 py-2 outline-none focus:border-[#39b54a] transition-colors rounded-none"
               />
               <button 
                 onClick={() => handleSend()}
@@ -207,7 +215,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={toggleOpen}
-        className="fixed bottom-6 right-6 w-12 h-12 bg-[#39b54a] text-black flex items-center justify-center shadow-[0_0_20px_rgba(57,181,74,0.4)] z-[200] hover:bg-white transition-colors group"
+        className="fixed bottom-6 right-6 w-12 h-12 bg-[#39b54a] text-black flex items-center justify-center shadow-[0_0_20px_rgba(57,181,74,0.4)] z-[190] hover:bg-white transition-colors group rounded-full md:rounded-none"
       >
         {isOpen ? <X size={24} /> : <MessageSquare size={24} className="group-hover:rotate-12 transition-transform"/>}
       </motion.button>

@@ -550,7 +550,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                         <div className="flex justify-between items-center mb-6">
                                             <span className="font-bold uppercase text-white text-sm">Market Order</span>
                                             <div className="flex gap-2">
-                                                 <button onClick={handleAskGuardian} className="text-[10px] text-[#39b54a] border border-[#39b54a]/30 px-2 py-1 flex items-center gap-1 hover:bg-[#39b54a]/10 transition-colors">
+                                                 <button onClick={handleAskGuardian} className="text-[10px] text-[#39b54a] border border-[#39b54a]/30 px-3 py-1 flex items-center gap-1 hover:bg-[#39b54a]/10 transition-colors animate-pulse hover:animate-none bg-[#39b54a]/5">
                                                      <Bot size={12} /> ASK GUARDIAN
                                                  </button>
                                                  <span className="text-xs text-[#666666] font-mono py-1">SLIPPAGE: AUTO</span>
