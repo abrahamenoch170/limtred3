@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, ExternalLink, LogOut, Wallet, TrendingUp, ChevronDown, Check, ArrowLeftRight } from 'lucide-react';
+import { X, Copy, ExternalLink, LogOut, Wallet, TrendingUp, ChevronDown, Check, ArrowLeftRight, History } from 'lucide-react';
 import { Button, Card, Badge } from './ui/GlintComponents';
 import { WalletBalance, Transaction, ChainId } from '../types';
 import { CHAINS } from '../constants';
@@ -187,16 +188,34 @@ const WalletDrawer: React.FC<WalletDrawerProps> = ({
                    </Button>
               </div>
 
-              {/* Recent Transactions Mini */}
+              {/* Recent Transactions (Top 5) */}
               <div>
-                 <h3 className="text-[#666666] text-xs font-bold uppercase tracking-widest mb-4 mt-8">Recent Activity</h3>
+                 <div className="flex items-center gap-2 mb-4 mt-8">
+                    <History size={14} className="text-[#666]" />
+                    <h3 className="text-[#666666] text-xs font-bold uppercase tracking-widest">Recent Transactions</h3>
+                 </div>
+                 
                  <div className="space-y-2">
-                    {transactions.slice(0, 3).map((tx) => (
-                      <div key={tx.id} className="flex justify-between items-center text-xs border-b border-[#1f1f1f] pb-2 last:border-0">
-                          <span className="text-white font-mono">{tx.type}</span>
-                          <span className={tx.amount.startsWith('+') ? 'text-[#39b54a]' : 'text-white'}>{tx.amount}</span>
-                      </div>
-                    ))}
+                    {transactions.length > 0 ? (
+                        transactions.slice(0, 5).map((tx) => (
+                        <div key={tx.id} className="flex justify-between items-center text-xs border-b border-[#1f1f1f] pb-3 last:border-0 group hover:bg-[#1a1a1a] p-2 transition-colors -mx-2 rounded">
+                             <div className="flex flex-col">
+                                 <span className="text-white font-bold font-mono uppercase mb-1">{tx.type.replace('_', ' ')}</span>
+                                 <span className="text-[10px] text-[#555]">{tx.timestamp}</span>
+                             </div>
+                             <span className={`font-mono font-bold ${
+                                 tx.amount.startsWith('+') ? 'text-[#39b54a]' : 
+                                 tx.amount.startsWith('-') ? 'text-red-400' : 'text-white'
+                             }`}>
+                                {tx.amount}
+                             </span>
+                        </div>
+                        ))
+                    ) : (
+                        <div className="text-[#666] text-xs italic py-4 text-center border border-dashed border-[#333]">
+                            No transactions recorded.
+                        </div>
+                    )}
                  </div>
               </div>
 
