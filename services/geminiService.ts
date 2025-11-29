@@ -9,11 +9,13 @@ const getClient = () => {
     let apiKey = undefined;
     try {
       // Use a safe access pattern for process.env
+      // We check if 'process' exists as a global first
       if (typeof process !== 'undefined' && process && process.env) {
         apiKey = process.env.API_KEY;
       }
     } catch (e) {
       // Ignore process access errors in strict browser environments
+      console.warn("Process env access failed, likely browser environment.", e);
     }
 
     if (!apiKey || apiKey.trim() === '') return null;
