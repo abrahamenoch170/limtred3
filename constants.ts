@@ -94,6 +94,16 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         _mint(msg.sender, TOTAL_SUPPLY);
     }
 
+    // --- Overrides for Reentrancy Protection ---
+
+    function transfer(address to, uint256 value) public override nonReentrant returns (bool) {
+        return super.transfer(to, value);
+    }
+
+    function transferFrom(address from, address to, uint256 value) public override nonReentrant returns (bool) {
+        return super.transferFrom(from, to, value);
+    }
+
     // --- Admin Functions ---
 
     /**
@@ -162,7 +172,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         uint256 _cliffDate, 
         uint256 _endDate, 
         uint256 _amount
-    ) external onlyOwner {
+    ) external onlyOwner nonReentrant {
         if (_recipient == address(0)) revert InvalidWallet();
         if (_endDate <= _startDate || _cliffDate < _startDate) revert InvalidVestingSchedule();
         if (_amount == 0) revert InvalidVestingSchedule();
@@ -185,7 +195,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Create a new task.
      */
-    function createTask(string memory _description, uint256 _dueDate, address _assignee) external onlyOwner {
+    function createTask(string memory _description, uint256 _dueDate, address _assignee) external onlyOwner nonReentrant {
         if (_assignee == address(0)) revert InvalidWallet();
         uint256 taskId = nextTaskId++;
         tasks[taskId] = Task({
@@ -202,7 +212,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Mark a task as completed. Only callable by the assignee.
      */
-    function completeTask(uint256 taskId) external {
+    function completeTask(uint256 taskId) external nonReentrant {
         Task storage t = tasks[taskId];
         if (msg.sender != t.assignee) revert NotTaskAssignee();
         if (t.isCompleted) revert TaskAlreadyCompleted();

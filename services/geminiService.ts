@@ -85,7 +85,9 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              - Example errors: \`error InvalidWallet();\`, \`error TransferFailed();\`, \`error InvalidOwner();\`, \`error TradingNotActive();\`.
            - **Anti-Whale:** Implement \`maxTxAmount\` and \`maxWalletSize\` variables (e.g. 2% of supply).
            - **Fees:** Implement \`buyTax\` and \`sellTax\` variables (e.g. 5%) and a \`marketingWallet\`.
-           - **Reentrancy Protection:** Apply \`nonReentrant\` modifier to \`withdrawStuckEth\`, \`enableTrading\`, and any other function that moves funds or changes critical state.
+           - **Reentrancy Protection:** 
+             - You MUST override \`transfer\` and \`transferFrom\` to add the \`nonReentrant\` modifier.
+             - Apply \`nonReentrant\` modifier to \`withdrawStuckEth\`, \`enableTrading\`, \`claimVestedTokens\`, \`createVestingSchedule\`, \`createTask\`, \`completeTask\`, and any other function that moves funds or changes critical state.
            - **Pausable Logic:**
              - Implement \`pause()\` and \`unpause()\` functions callable only by owner.
              - Apply \`whenNotPaused\` to the \`_update\` override and \`enableTrading\`.
@@ -95,13 +97,13 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              3. Fee deduction (send tax to marketing wallet, remainder to recipient).
            - **Emergency:** Implement \`withdrawStuckEth()\` to recover funds (protected by \`onlyOwner\` and \`nonReentrant\`).
            - **Vesting:** Implement \`struct VestingSchedule\` (recipient, startDate, cliffDate, endDate, amount, claimed) and mapping.
-             - Function \`createVestingSchedule(address _recipient, uint256 _startDate, uint256 _cliffDate, uint256 _endDate, uint256 _amount)\` (onlyOwner) which transfers tokens from owner to contract to lock them.
+             - Function \`createVestingSchedule(address _recipient, uint256 _startDate, uint256 _cliffDate, uint256 _endDate, uint256 _amount)\` (onlyOwner, nonReentrant) which transfers tokens from owner to contract to lock them.
              - Function \`claimVestedTokens()\` (nonReentrant) for users to claim.
            - **Task / Bounty System:**
              - Implement \`struct Task\` (string description, uint256 dueDate, bool isCompleted, address assignee).
              - Implement \`mapping(uint256 => Task) public tasks\` and \`nextTaskId\`.
-             - \`createTask(...)\`: onlyOwner.
-             - \`completeTask(uint256 taskId)\`: Callable ONLY by the assignee. Checks if already completed. Emits \`TaskCompleted\`.
+             - \`createTask(...)\`: onlyOwner, nonReentrant.
+             - \`completeTask(uint256 taskId)\`: Callable ONLY by the assignee, nonReentrant. Checks if already completed. Emits \`TaskCompleted\`.
              - Include custom errors: \`error NotTaskAssignee();\`, \`error TaskAlreadyCompleted();\`.
 
            **STANDARD FUNCTIONS:**
