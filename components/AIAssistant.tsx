@@ -49,7 +49,8 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
 
   const parseTransactionIntent = (text: string) => {
       // Regex to find: "Send [Amount] [Token] to [Address]"
-      const regex = /(?:send|transfer)\s+(\d+(?:\.\d+)?)\s*(\w+)\s+(?:to\s+)?(0x[a-fA-F0-9]{40})/i;
+      // Updated to support EVM (0x...) and Solana (Base58, ~32-44 chars)
+      const regex = /(?:send|transfer)\s+(\d+(?:\.\d+)?)\s*(\w+)\s+(?:to\s+)?(0x[a-fA-F0-9]{40}|[a-zA-Z0-9]{32,44})/i;
       const match = text.match(regex);
       if (match) {
           return {
@@ -140,7 +141,14 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onTog
                         : 'bg-[#1f1f1f] text-[#ccc] rounded-tr-lg rounded-bl-lg rounded-br-lg border border-[#333]'
                     }`}
                   >
-                    {msg.text}
+                    {msg.text.startsWith('[SECURITY_AUDIT_REQUEST]') ? (
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[#39b54a] font-bold border-b border-[#39b54a]/30 pb-1 mb-1">🔍 SECURITY AUDIT REQUEST</span>
+                            <span className="whitespace-pre-wrap font-mono text-[10px] text-[#888]">{msg.text.replace('[SECURITY_AUDIT_REQUEST]', '').trim()}</span>
+                        </div>
+                    ) : (
+                        msg.text
+                    )}
                   </div>
 
                   {/* Transaction Card */}

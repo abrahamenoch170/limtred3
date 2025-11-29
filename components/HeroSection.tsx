@@ -45,11 +45,35 @@ interface Token {
     isNative?: boolean;
 }
 
+const TOKENS_BY_CHAIN: Record<string, Token[]> = {
+    SOL: [
+        { symbol: 'USDC', name: 'USD Coin', address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' },
+        { symbol: 'BONK', name: 'Bonk', address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' },
+        { symbol: 'JUP', name: 'Jupiter', address: 'JUPyiwrYJFskUPiHa7hkeR8VUtkPHCLkh5FTO4g1pQ' },
+        { symbol: 'WIF', name: 'dogwifhat', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm' },
+    ],
+    ETH: [
+        { symbol: 'USDC', name: 'USD Coin', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
+        { symbol: 'USDT', name: 'Tether USD', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' },
+        { symbol: 'PEPE', name: 'Pepe', address: '0x6982508145454Ce325dDbE47a25d4ec3d2311933' },
+        { symbol: 'UNI', name: 'Uniswap', address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' },
+    ],
+    BASE: [
+        { symbol: 'USDC', name: 'USD Coin', address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+        { symbol: 'BRETT', name: 'Brett', address: '0x532f27101965dd16442e59d40670faf5ebb142e4' },
+    ],
+    ARB: [
+        { symbol: 'USDC', name: 'USD Coin', address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831' },
+        { symbol: 'ARB', name: 'Arbitrum', address: '0x912CE59144191C1204E64559FE8253a0e49E6548' },
+    ],
+    TON: [
+        { symbol: 'USDT', name: 'Tether USD', address: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixq7NrQA' },
+        { symbol: 'NOT', name: 'Notcoin', address: 'EQAvlWFDxGF2lDLm67Mi6nmwP43m' },
+    ]
+};
+
 const COMMON_TOKENS: Token[] = [
-    { symbol: 'USDC', name: 'USD Coin', address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },
-    { symbol: 'USDT', name: 'Tether USD', address: '0xdAC17F958D2ee523a2206206994597C13D831ec7' },
     { symbol: 'LMT', name: 'Limetred', address: '0x1234...LMT', isNative: false },
-    { symbol: 'WIF', name: 'dogwifhat', address: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm' },
 ];
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
@@ -85,6 +109,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [tokenSelectorOpen, setTokenSelectorOpen] = useState<'PAY' | 'RECEIVE' | null>(null);
   const [tokenSearch, setTokenSearch] = useState('');
 
+  // Update Pay Token default when chain changes
   useEffect(() => {
       setPayToken({ symbol: activeChain.symbol, name: activeChain.name, address: 'NATIVE', isNative: true });
   }, [currentChain]);
@@ -141,15 +166,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const handleAskGuardian = () => {
     if (onOpenAI) {
-      const context = `I am considering swapping ${swapAmount} ${payToken.symbol} (${payToken.address}) for ${receiveToken.symbol} (${receiveToken.address}) on ${activeChain.name}. 
+      const context = `[SECURITY_AUDIT_REQUEST]
+      I am considering a token swap and need a safety analysis.
       
-      Contract Verification Data:
-      - Chain: ${activeChain.name}
-      - Pay Token: ${payToken.symbol} (Native: ${payToken.isNative})
-      - Receive Token: ${receiveToken.symbol} (Native: ${receiveToken.isNative})
-      - Address: ${receiveToken.address}
+      TRANSACTION DETAILS:
+      • Chain: ${activeChain.name} (${activeChain.id})
+      • Selling: ${swapAmount} ${payToken.symbol} (Addr: ${payToken.address})
+      • Buying: ${receiveToken.symbol} (Addr: ${receiveToken.address})
+      • Native Token: ${payToken.isNative ? 'YES' : 'NO'}
       
-      Can you analyze the safety of this transaction, check for potential honeypots, and verify if the contract address looks suspicious?`;
+      Please analyze:
+      1. Is the "Buying" token address a known honeypot?
+      2. Are there any high tax warnings for this pair?
+      3. Is the liquidity locked?
+      
+      Respond as a Web3 Security Expert.`;
       
       onOpenAI(context);
     }
@@ -164,7 +195,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
 
     if (!isNaN(amountVal) && amountVal > 0) {
-        const received = amountVal * 14020.5; 
+        // Mock swap
+        const received = amountVal * 14020.5; // Mock rate
         const success = onSwap(amountVal, received);
         if (success) {
             setSwapSuccess(true);
@@ -220,7 +252,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setTimeout(() => {
           const element = document.getElementById(id);
           if (element) {
-              const headerOffset = 70;
+              const headerOffset = 70; // Header height
               const elementPosition = element.getBoundingClientRect().top;
               const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
           
@@ -232,6 +264,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       }, 300);
   };
 
+  // --- Token Selector Helper ---
   const handleSelectToken = (token: Token) => {
       if (tokenSelectorOpen === 'PAY') setPayToken(token);
       else setReceiveToken(token);
@@ -239,12 +272,16 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setTokenSearch('');
   };
 
+  const currentTokens = TOKENS_BY_CHAIN[currentChain] || TOKENS_BY_CHAIN['ETH'];
+
   const filteredTokens = [
       { symbol: activeChain.symbol, name: activeChain.name, address: 'NATIVE', isNative: true }, 
-      ...COMMON_TOKENS
+      ...COMMON_TOKENS,
+      ...currentTokens
   ].filter(t => t.symbol.toLowerCase().includes(tokenSearch.toLowerCase()) || t.name.toLowerCase().includes(tokenSearch.toLowerCase()));
 
-  const isAddressSearch = tokenSearch.startsWith('0x') || tokenSearch.length > 20;
+  // Robust address detection (EVM 0x... or Solana Base58)
+  const isAddressSearch = (tokenSearch.startsWith('0x') && tokenSearch.length > 30) || (tokenSearch.length > 30 && !tokenSearch.includes(' '));
 
   return (
     <div className="relative bg-transparent w-full">
@@ -259,6 +296,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 transition={{ type: "tween", duration: 0.2 }}
                 className="fixed inset-0 bg-[#0c0c0c] z-[200] flex flex-col w-full h-full overflow-y-auto"
             >
+                {/* Mobile Menu Header */}
                 <div className="h-16 px-4 flex items-center justify-between border-b border-[#1f1f1f] bg-[#0c0c0c] shrink-0 sticky top-0 z-10">
                     <div className="flex items-center gap-2">
                             <Logo />
@@ -269,6 +307,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     </button>
                 </div>
 
+                {/* Mobile Menu Content */}
                 <div className="flex-1 p-6 flex flex-col gap-4">
                     <button 
                         onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
@@ -381,6 +420,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* -------------------- HERO -------------------- */}
       <div className="flex flex-col relative z-10">
+        {/* Marquee */}
         <div className="w-full bg-[#111111]/90 border-b border-[#1f1f1f] h-8 md:h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
           <div className="animate-marquee flex space-x-8 md:space-x-12 px-4">
             {[...MOCK_TICKER, ...MOCK_TICKER].map((item, i) => (
@@ -398,6 +438,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
              </div>
              
              <div className="flex justify-center w-full overflow-hidden px-2">
+               {/* Fixed Text Size for Mobile responsiveness using Viewport Units */}
                <TextReveal 
                   text="LIMETRED" 
                   className="text-[13vw] md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85] w-full justify-center" 
@@ -571,7 +612,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                         setSwapAmount(e.target.value);
                                                         setScanResult(null);
                                                     }}
-                                                    className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none placeholder-[#333]"
+                                                    className="bg-transparent text-xl md:text-2xl font-bold font-mono text-white w-full outline-none placeholder-[#333]"
                                                     placeholder="0.00"
                                                 />
                                                 <button 
@@ -597,7 +638,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                 <span className="text-xs text-[#666666]">EST: {(parseFloat(swapAmount || '0') * 14020).toLocaleString()} {receiveToken.symbol}</span>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-2xl font-bold font-mono text-[#39b54a]">
+                                                <span className="text-xl md:text-2xl font-bold font-mono text-[#39b54a]">
                                                     {(parseFloat(swapAmount || '0') * 14020.5).toLocaleString(undefined, { maximumFractionDigits: 1 })}
                                                 </span>
                                                 <button 
