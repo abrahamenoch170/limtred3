@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedApp } from "../types";
 import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
@@ -99,13 +97,19 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            - **Vesting:** Implement \`struct VestingSchedule\` (recipient, startDate, cliffDate, endDate, amount, claimed) and mapping.
              - Function \`createVestingSchedule(address _recipient, uint256 _startDate, uint256 _cliffDate, uint256 _endDate, uint256 _amount)\` (onlyOwner) which transfers tokens from owner to contract to lock them.
              - Function \`claimVestedTokens()\` (nonReentrant) for users to claim.
-           
+           - **Task / Bounty System:**
+             - Implement \`struct Task\` (string description, uint256 dueDate, bool isCompleted, address assignee).
+             - Implement \`mapping(uint256 => Task) public tasks\` and \`nextTaskId\`.
+             - \`createTask(...)\`: onlyOwner.
+             - \`completeTask(uint256 taskId)\`: Callable ONLY by the assignee. Checks if already completed. Emits \`TaskCompleted\`.
+             - Include custom errors: \`error NotTaskAssignee();\`, \`error TaskAlreadyCompleted();\`.
+
            **STANDARD FUNCTIONS:**
            - \`enableTrading()\` (onlyOwner, nonReentrant, whenNotPaused).
            - \`setMarketingWallet(address _marketingWallet)\` (onlyOwner).
            - \`transferOwnership(address newOwner)\` (override with zero-address check using custom error).
            - \`calculatedTotalSupply()\` (public view, returns totalSupply).
-           - **Struct Accessors:** If you use structs, provide a \`getDetails\` view function.
+           - **Struct Accessors:** Provide \`getTaskDetails(uint256 taskId)\` and similar accessors for VestingSchedules.
 
         2. **Frontend (React Component)**:
            - Generate a functional React dashboard component.

@@ -1,5 +1,3 @@
-
-
 import { TickerItem, ChainId, ChainConfig, LaunchpadProject, ProjectCategory } from './types';
 
 export const COLORS = {
@@ -48,6 +46,8 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     error InvalidOwner();
     error InvalidVestingSchedule();
     error NothingToClaim();
+    error NotTaskAssignee();
+    error TaskAlreadyCompleted();
 
     // --- Tokenomics ---
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
@@ -182,7 +182,34 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         emit VestingCreated(_recipient, _amount);
     }
 
+    /**
+     * @dev Create a new task.
+     */
+    function createTask(string memory _description, uint256 _dueDate, address _assignee) external onlyOwner {
+        if (_assignee == address(0)) revert InvalidWallet();
+        uint256 taskId = nextTaskId++;
+        tasks[taskId] = Task({
+            description: _description,
+            dueDate: _dueDate,
+            isCompleted: false,
+            assignee: _assignee
+        });
+        emit TaskCreated(taskId, _description, _dueDate);
+    }
+
     // --- User Functions ---
+
+    /**
+     * @dev Mark a task as completed. Only callable by the assignee.
+     */
+    function completeTask(uint256 taskId) external {
+        Task storage t = tasks[taskId];
+        if (msg.sender != t.assignee) revert NotTaskAssignee();
+        if (t.isCompleted) revert TaskAlreadyCompleted();
+        
+        t.isCompleted = true;
+        emit TaskCompleted(taskId, msg.sender);
+    }
 
     /**
      * @dev Claim available vested tokens.
@@ -222,9 +249,9 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Returns the description, due date, and status of a specific task.
      */
-    function getTaskDetails(uint256 taskId) public view returns (string memory description, uint256 dueDate, bool isCompleted) {
+    function getTaskDetails(uint256 taskId) public view returns (string memory description, uint256 dueDate, bool isCompleted, address assignee) {
         Task memory t = tasks[taskId];
-        return (t.description, t.dueDate, t.isCompleted);
+        return (t.description, t.dueDate, t.isCompleted, t.assignee);
     }
 
     // --- Internal Logic ---
@@ -285,49 +312,24 @@ const UTILITY_PROJECTS = [
   { name: "Helion DePIN", ticker: "HELION", cat: "DEPIN", desc: "Solar energy trading marketplace. Connect IoT smart meters to sell excess energy to your neighbors." },
   { name: "Flux Oracle", ticker: "FLUX", cat: "INFRA", desc: "Optimistic oracle solution providing sub-second price feeds for DeFi derivatives on L2 networks." },
   { name: "Aegis Lending", ticker: "AEGIS", cat: "DEFI", desc: "Undercollateralized lending protocol using on-chain reputation scores and zk-Identity verification." },
-  { name: "Synthetix V3", ticker: "SNX3", cat: "DEFI", desc: "Next-gen derivatives liquidity layer. Trade commodities, forex, and equities with zero slippage." },
-  { name: "GridLock", ticker: "GRID", cat: "INFRA", desc: "Cross-chain interoperability messaging protocol. Send tokens and data between any chain instantly." },
-  { name: "Sentient Bots", ticker: "SENT", cat: "AI", desc: "Autonomous AI agents that execute complex DeFi strategies. Non-custodial and permissionless." },
-  { name: "CloudKeep", ticker: "KEEP", cat: "DEPIN", desc: "Decentralized storage network. Store encrypted data fragments across thousands of nodes globally." },
-  { name: "Vanguard Audit", ticker: "GUARD", cat: "SECURITY", desc: "AI-powered smart contract auditor. Automatically detects reentrancy and logic flaws before deployment." },
-  { name: "PixelVerse", ticker: "PIXEL", cat: "GAMING", desc: "Web3 MMORPG with player-owned economy. Items are interoperable NFTs usable across partner games." },
-  { name: "StreamFlow", ticker: "FLOW", cat: "INFRA", desc: "Token vesting and payroll streaming protocol. Automate payments for DAOs and contributors." },
-  { name: "CarbonTrace", ticker: "TRACE", cat: "DEPIN", desc: "On-chain carbon credit verification. IoT sensors mint carbon credits automatically based on real-world data." },
-  { name: "QuantVault", ticker: "QNT", cat: "DEFI", desc: "Delta-neutral yield farming aggregator. Automates hedging strategies to minimize impermanent loss." },
-  { name: "CipherMail", ticker: "CIPHER", cat: "SECURITY", desc: "Wallet-to-wallet encrypted messaging service. Sign in with Ethereum, send messages like email." },
-  { name: "NeuralNet", ticker: "NNET", cat: "AI", desc: "Collaborative machine learning model training. Contributors earn tokens for validating data sets." },
-  { name: "BlockEstate", ticker: "ESTATE", cat: "DEFI", desc: "Fractionalized real estate investing. Buy shares of rental properties represented as RWA tokens." },
-  { name: "HyperScale", ticker: "HYPE", cat: "INFRA", desc: "Layer-3 scaling solution specialized for high-frequency trading applications." },
-  { name: "GameSwift", ticker: "SWIFT", cat: "GAMING", desc: "SDK for integrating crypto wallets into Unity and Unreal Engine games seamlessly." },
-  { name: "TrustID", ticker: "TID", cat: "SECURITY", desc: "Self-sovereign identity protocol. Prove humanity without revealing personal data." }
+  { name: "Pixel Guild", ticker: "PIXEL", cat: "GAMING", desc: "Play-to-earn RPG where NFTs are playable characters. Earn tokens by questing and battling in a retro pixel art world." }
 ];
 
-const COLORS_LIST = ["#39b54a", "#8b5cf6", "#3b82f6", "#f59e0b", "#ec4899", "#6366f1", "#14b8a6", "#ef4444"];
-
-export const generateMockProjects = (): LaunchpadProject[] => {
-  return UTILITY_PROJECTS.map((proj, i) => {
-    const isKing = i === 0;
-    const mcap = isKing ? 58420 : Math.floor(Math.random() * 45000) + 5000;
-    
-    return {
-      id: `proj-util-${i}`,
-      name: proj.name,
-      ticker: proj.ticker,
-      description: proj.desc,
-      rarity: i < 3 ? 'LEGENDARY' : i < 8 ? 'RARE' : 'COMMON',
-      attributes: [proj.cat, "UTILITY", "V1.0"],
-      codeSnippet: PREBUILT_REACT,
-      contractSnippet: PREBUILT_CODE,
-      marketCap: mcap,
-      creator: `@dev_${proj.ticker.toLowerCase()}`,
-      replies: Math.floor(Math.random() * 300) + 50,
-      imageColor: COLORS_LIST[i % COLORS_LIST.length],
-      timestamp: `${Math.floor(Math.random() * 23) + 1}h ago`,
-      isDoxxed: Math.random() > 0.4 || isKing, // 60% chance doxxed, King always doxxed
-      category: proj.cat as ProjectCategory,
-      auditStatus: Math.random() > 0.6 ? 'PASSED' : Math.random() > 0.3 ? 'IN_PROGRESS' : 'NONE'
-    };
-  });
-};
-
-export const MOCK_PROJECTS = generateMockProjects();
+export const MOCK_PROJECTS: LaunchpadProject[] = UTILITY_PROJECTS.map((p, i) => ({
+  id: `proj-${i}`,
+  name: p.name,
+  description: p.desc,
+  codeSnippet: PREBUILT_REACT,
+  contractSnippet: PREBUILT_CODE,
+  rarity: i % 3 === 0 ? 'LEGENDARY' : i % 2 === 0 ? 'RARE' : 'COMMON',
+  attributes: ["VERIFIED", "AUDITED", "KYC"],
+  ticker: p.ticker,
+  marketCap: Math.floor(Math.random() * 50000) + 5000,
+  creator: `@dev_${p.ticker.toLowerCase()}`,
+  replies: Math.floor(Math.random() * 100),
+  imageColor: ['#39b54a', '#8b5cf6', '#ef4444', '#3b82f6', '#f59e0b', '#ec4899'][i % 6],
+  timestamp: `${Math.floor(Math.random() * 24)}h ago`,
+  isDoxxed: Math.random() > 0.5,
+  category: p.cat as ProjectCategory,
+  auditStatus: Math.random() > 0.7 ? 'PASSED' : Math.random() > 0.4 ? 'IN_PROGRESS' : 'NONE'
+}));
