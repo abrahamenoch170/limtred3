@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle } from 'lucide-react';
+import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
 
@@ -24,7 +24,7 @@ const Logo = () => (
 );
 
 // ... (Modal Content Types & Data remain unchanged) ...
-type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | 'WHITEPAPER' | null;
+type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | 'WHITEPAPER' | 'VESTING' | null;
 
 const PROTOCOL_CONTENT = {
   DOCS: {
@@ -152,6 +152,58 @@ const PROTOCOL_CONTENT = {
         <div className="bg-[#0c0c0c] p-4 border border-[#1f1f1f] mt-4">
              <h4 className="text-[#39b54a] text-xs font-bold uppercase mb-2">Automated Safety</h4>
              <p className="text-xs">Every deployment runs through Slither and Mythril static analysis before hitting the mainnet.</p>
+        </div>
+      </div>
+    )
+  },
+  VESTING: {
+    title: "VESTING SCHEDULES",
+    icon: <Clock size={24} className="text-[#39b54a]" />,
+    content: (
+      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
+        <div className="bg-[#111] p-4 border border-[#1f1f1f]">
+            <h4 className="text-white font-bold mb-2 uppercase">Your Allocations</h4>
+            <p className="mb-4 text-xs text-[#666]">Vesting schedules managed by TimeLockController. Tokens are claimable linearly after the cliff period.</p>
+            
+            <div className="border border-[#333] bg-[#0c0c0c]">
+                <div className="grid grid-cols-12 bg-[#1a1a1a] p-2 text-[10px] uppercase font-bold text-[#666] border-b border-[#333]">
+                    <div className="col-span-4">Role</div>
+                    <div className="col-span-3 text-right">Amount</div>
+                    <div className="col-span-3 text-right">Unlock</div>
+                    <div className="col-span-2 text-center">Action</div>
+                </div>
+                {[
+                    { role: 'Marketing Fund', amount: '250,000 LMT', unlock: 'Now', status: 'CLAIMABLE' },
+                    { role: 'Advisor (Tier 1)', amount: '500,000 LMT', unlock: '30 Days', status: 'LOCKED' },
+                    { role: 'Team Allocation', amount: '1,000,000 LMT', unlock: '365 Days', status: 'LOCKED' },
+                ].map((item, i) => (
+                    <div key={i} className="grid grid-cols-12 p-3 text-xs items-center border-b border-[#1f1f1f] last:border-0 hover:bg-[#111]">
+                        <div className="col-span-4 font-bold text-white">{item.role}</div>
+                        <div className="col-span-3 text-right font-mono text-[#39b54a]">{item.amount}</div>
+                        <div className="col-span-3 text-right text-[#666]">{item.unlock}</div>
+                        <div className="col-span-2 flex justify-center">
+                            <Button 
+                                variant={item.status === 'CLAIMABLE' ? 'primary' : 'outline'} 
+                                className={`text-[10px] py-1 px-2 h-auto min-w-[60px] ${item.status === 'LOCKED' ? 'opacity-40 border-[#333] text-[#666]' : ''}`}
+                                disabled={item.status === 'LOCKED'}
+                            >
+                                {item.status === 'CLAIMABLE' ? 'CLAIM' : 'LOCK'}
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+             <div className="bg-[#111] p-3 border border-[#1f1f1f]">
+                <div className="text-[10px] text-[#666] uppercase font-bold">Total Vested</div>
+                <div className="text-white font-mono text-lg font-bold">1,750,000 LMT</div>
+             </div>
+             <div className="bg-[#111] p-3 border border-[#1f1f1f]">
+                <div className="text-[10px] text-[#666] uppercase font-bold">Next Unlock</div>
+                <div className="text-white font-mono text-lg font-bold">Oct 24, 2024</div>
+             </div>
         </div>
       </div>
     )
@@ -805,6 +857,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         <FooterLink label="Tokenomics" onClick={(e) => openModal(e, 'TOKENOMICS')} />
                         <FooterLink label="Bug Bounty" onClick={(e) => openModal(e, 'BOUNTY')} />
                         <FooterLink label="Audits" onClick={(e) => openModal(e, 'AUDITS')} />
+                        <FooterLink label="Vesting" onClick={(e) => openModal(e, 'VESTING')} />
                     </div>
                  </div>
                  <div>

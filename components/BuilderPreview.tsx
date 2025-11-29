@@ -95,6 +95,18 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   
   const activeChain = CHAINS[currentChain];
 
+  // Mock Gas Fees
+  const getGasEstimate = () => {
+      switch(currentChain) {
+          case 'SOL': return '0.02 SOL';
+          case 'ETH': return '0.004 ETH';
+          case 'BASE': return '0.0002 ETH';
+          case 'TON': return '0.05 TON';
+          case 'ARB': return '0.0002 ETH';
+          default: return '0.01 ETH';
+      }
+  };
+
   const handleRefresh = () => {
       setIsRefreshing(true);
       setTimeout(() => setIsRefreshing(false), 800);
@@ -563,11 +575,32 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                         <div className="w-16 h-16 bg-[#39b54a]/10 border border-[#39b54a] rounded-full flex items-center justify-center mx-auto mb-6">
                             <Rocket size={32} className="text-[#39b54a]" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2 uppercase">Ready to Launch?</h3>
-                        <p className="text-[#666666] mb-6 text-sm leading-relaxed">This will deploy your smart contracts on <span className="text-white font-bold">{activeChain.name}</span>, initialize the bonding curve, and list on the Limetred dashboard.</p>
+                        <h3 className="text-2xl font-bold text-white mb-2 uppercase">Confirm Deployment</h3>
+                        <p className="text-[#666666] mb-6 text-sm leading-relaxed">
+                            You are about to launch <span className="text-white font-bold">{appData.name}</span>.
+                        </p>
+                        
+                        <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 mb-6 space-y-3">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-[#666] uppercase font-bold">Network</span>
+                                <div className="flex items-center gap-2">
+                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: activeChain.color }}></div>
+                                     <span className="text-white font-mono">{activeChain.name}</span>
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-[#666] uppercase font-bold">Est. Gas Fee</span>
+                                <span className="text-white font-mono">{getGasEstimate()}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs border-t border-[#333] pt-2">
+                                <span className="text-[#666] uppercase font-bold">Total Cost</span>
+                                <span className="text-[#39b54a] font-mono font-bold">~${currentChain === 'SOL' ? '3.50' : currentChain === 'TON' ? '1.20' : '8.20'}</span>
+                            </div>
+                        </div>
+
                         <div className="flex flex-col gap-3">
                             <Button onClick={handleConfirmDeploy} disabled={isDeploying} className="w-full">
-                                {isDeploying ? <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin" size={16} /> DEPLOYING...</span> : "CONFIRM DEPLOYMENT"}
+                                {isDeploying ? <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin" size={16} /> DEPLOYING...</span> : "CONFIRM & SIGN"}
                             </Button>
                             <Button variant="ghost" onClick={() => setShowDeployModal(false)} disabled={isDeploying} className="w-full">CANCEL</Button>
                         </div>
