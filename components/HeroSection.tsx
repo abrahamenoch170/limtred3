@@ -260,6 +260,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   
   const activeChain = CHAINS[currentChain];
 
+  // Logic calculation variables
+  const amountVal = parseFloat(swapAmount) || 0;
+  const hasInsufficientFunds = isConnected && amountVal > walletBalance.native;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (prompt.trim() || selectedImage) {
@@ -279,17 +283,15 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   const handleSwapClick = () => {
-    if (!isConnected) {
-        onConnectWallet();
-        return;
-    }
-    const amount = parseFloat(swapAmount);
-    if (!isNaN(amount) && amount > 0) {
+    if (!isConnected || hasInsufficientFunds || amountVal <= 0) return;
+
+    if (!isNaN(amountVal) && amountVal > 0) {
         // Exchange Rate Mock: 1 Native = 14020 LMT
-        const received = amount * 14020.5;
-        const success = onSwap(amount, received);
+        const received = amountVal * 14020.5;
+        const success = onSwap(amountVal, received);
         if (success) {
             setSwapSuccess(true);
+            // setSwapAmount('0'); // Optional: reset amount
             setTimeout(() => setSwapSuccess(false), 2000);
         }
     }
@@ -574,8 +576,14 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             </div>
                         </div>
 
-                        <Button fullWidth variant={swapSuccess ? 'primary' : 'secondary'} onClick={handleSwapClick}>
-                            {swapSuccess ? 'SWAP SUCCESSFUL' : isConnected ? 'SWAP TOKENS' : 'CONNECT WALLET TO SWAP'}
+                        <Button 
+                            fullWidth 
+                            variant={swapSuccess ? 'primary' : hasInsufficientFunds ? 'outline' : 'secondary'} 
+                            onClick={handleSwapClick}
+                            disabled={!isConnected || hasInsufficientFunds || amountVal <= 0 || swapSuccess}
+                            className={hasInsufficientFunds ? "border-red-500 text-red-500 hover:bg-red-500/10" : ""}
+                        >
+                            {swapSuccess ? 'SWAP SUCCESSFUL' : !isConnected ? 'CONNECT WALLET TO SWAP' : hasInsufficientFunds ? 'INSUFFICIENT FUNDS' : 'SWAP TOKENS'}
                         </Button>
                     </Card>
                 </div>
