@@ -1,9 +1,10 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedApp } from "../types";
 import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
 
 const getClient = () => {
-  const apiKey = process.env.API_KEY;
+  // Safety check: process might be undefined in some browser environments
+  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
   if (!apiKey || apiKey.trim() === '') return null;
   return new GoogleGenAI({ apiKey });
 };
