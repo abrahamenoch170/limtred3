@@ -3,15 +3,29 @@ import { GeneratedApp } from "../types";
 import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
 
 const getClient = () => {
-  // Safety check: process might be undefined in some browser environments
-  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
-  if (!apiKey || apiKey.trim() === '') return null;
-  return new GoogleGenAI({ apiKey });
+  try {
+    // Robust Safety check: Handle cases where process is undefined (browser) vs defined (Node)
+    // This prevents "ReferenceError: process is not defined" crashes on Vercel/Vite
+    let apiKey = undefined;
+    try {
+      if (typeof process !== 'undefined' && process.env) {
+        apiKey = process.env.API_KEY;
+      }
+    } catch (e) {
+      // Ignore process access errors in strict browser environments
+    }
+
+    if (!apiKey || apiKey.trim() === '') return null;
+    return new GoogleGenAI({ apiKey });
+  } catch (e) {
+    console.warn("Environment variable access failed, falling back to mock mode.");
+    return null;
+  }
 };
 
-// High-fidelity mock data for fallback scenarios (missing key or API error)
+// High-fidelity mock data for fallback scenarios
 const MOCK_APP_DATA: GeneratedApp = {
-  name: "NeoMarket V1",
+  name: "NeoMarket V1 (Beta)",
   description: "A decentralized marketplace for trading fractionalized attention spans. Users stake attention tokens to boost content visibility.",
   codeSnippet: PREBUILT_REACT,
   contractSnippet: PREBUILT_CODE,
@@ -35,7 +49,6 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
     
     // Add image part if provided (Image Analysis)
     if (imageBase64) {
-      // Strip header if present (e.g. data:image/png;base64,)
       const base64Data = imageBase64.split(',')[1] || imageBase64;
       parts.push({
         inlineData: {
@@ -47,26 +60,41 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
     }
 
     parts.push({ text: `
-        You are a legendary Web3 Solutions Architect.
-        User Prompt: "${prompt}"
+        You are a Senior Solidity Engineer and Web3 Solutions Architect.
+        User Request: "${prompt}"
 
-        Generate a complete dApp specification in JSON format.
-        1. Name: A short, viral, crypto-native name.
-        2. Description: A compelling 2-sentence pitch.
-        3. Rarity: "COMMON", "RARE", or "LEGENDARY".
-        4. Attributes: 3 short, technical tags.
-        5. Contract Snippet: Solidity (v0.8.20) Logic. Under 40 lines.
-        6. Code Snippet: React (Tailwind) Dashboard UI.
-        7. Market Cap: A realistic starting market cap number (integer) between 1000 and 50000.
+        Your task is to generate a PRODUCTION-READY (Beta Quality) dApp specification.
 
-        Strictly output valid JSON.
+        1. **Smart Contract (Solidity 0.8.20)**: 
+           - Write a COMPLETE, COMPILABLE contract.
+           - **CRITICAL: You MUST include these exact imports at the top:**
+             \`import "@openzeppelin/contracts/token/ERC20/ERC20.sol";\`
+             \`import "@openzeppelin/contracts/access/Ownable.sol";\`
+             \`import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";\`
+           - **CRITICAL: The contract MUST inherit from ERC20 and Ownable (and ReentrancyGuard if needed).**
+             Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard { ... }\`
+           - Implement specific logic requested by the user (e.g., Staking, DAO, Lending, Marketplace).
+           - If generic, implement a Bonding Curve token with Anti-Rug mechanics.
+           - Include detailed comments explaining the logic.
+           
+        2. **Frontend (React Component)**:
+           - Generate a functional React dashboard component.
+           - Use 'lucide-react' for icons.
+           - Use Tailwind CSS for styling (dark mode, sharp corners).
+           
+        3. **Metadata**:
+           - Name: Creative, viral crypto-native name.
+           - Rarity: LEGENDARY (Complex), RARE (Utility), or COMMON (Meme).
+           - Market Cap: Integer between 10000 and 1000000.
+
+        Strictly output valid JSON matching the schema.
     `});
 
     const response = await client.models.generateContent({
-      model: 'gemini-3-pro-preview', // Use Pro for complex reasoning
+      model: 'gemini-3-pro-preview', 
       contents: { parts },
       config: {
-        thinkingConfig: { thinkingBudget: 32768 }, // High thinking budget for complex architecture
+        thinkingConfig: { thinkingBudget: 32768 }, 
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -99,8 +127,6 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
     throw new Error("Empty response");
   } catch (error) {
     console.error("Gemini generation failed:", error);
-    // Fallback to high-quality mock data on ANY error (including 403 Permission Denied)
-    // This ensures the app remains usable for demo purposes even with invalid keys.
     return MOCK_APP_DATA;
   }
 };
@@ -146,7 +172,6 @@ export const generateProjectAsset = async (prompt: string, aspectRatio: string =
       }
     });
 
-    // Check for image in response
     if (response.candidates?.[0]?.content?.parts?.[0]?.inlineData) {
         const base64 = response.candidates[0].content.parts[0].inlineData.data;
         const mimeType = response.candidates[0].content.parts[0].inlineData.mimeType || "image/png";
