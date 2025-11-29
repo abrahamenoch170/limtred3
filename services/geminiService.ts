@@ -75,44 +75,41 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              \`import "@openzeppelin/contracts/access/Ownable.sol";\`
              \`import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";\`
              \`import "@openzeppelin/contracts/utils/Pausable.sol";\`
+             \`import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";\`
            - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20, Ownable, ReentrancyGuard, and Pausable.
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard, Pausable { ... }\`
            - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
            
-           **SECURITY & LOGIC REQUIREMENTS (BETA STANDARD):**
-           - **Custom Errors:** Use \`error\` definitions instead of string require statements for gas optimization.
-             - Replace ALL \`require(condition, "message")\` with \`if (!condition) revert ErrorName();\`.
-             - Example errors: \`error InvalidWallet();\`, \`error TransferFailed();\`, \`error InvalidOwner();\`, \`error TradingNotActive();\`.
-           - **Anti-Whale:** Implement \`maxTxAmount\` and \`maxWalletSize\` variables (e.g. 2% of supply).
-           - **Fees:** Implement \`buyTax\` and \`sellTax\` variables (e.g. 5%) and a \`marketingWallet\`.
+           **SECURITY & SCALABILITY REQUIREMENTS (BETA STANDARD):**
+           - **Gas Optimization:** Use \`error\` definitions instead of string require statements.
+             - Example: \`error InvalidWallet();\`, \`error LimitTooLow();\`.
+           - **Anti-Honeypot:** 
+             - Ensure \`updateFees\` checks that taxes <= 10%.
+             - Ensure \`updateLimits\` prevents setting limits < 0.5% of totalSupply.
+             - Override \`transferOwnership\` to prevent renouncing ownership to 0x0 if trading is disabled.
+           - **Asset Safety:**
+             - Implement \`recoverForeignTokens(address _tokenAddr, address _to)\` to rescue stuck tokens (excluding native LMT if trading active).
+           - **Anti-Whale:** Implement \`maxTxAmount\` and \`maxWalletSize\`.
+           - **Fees:** Implement \`buyTax\` and \`sellTax\` variables and a \`marketingWallet\`.
            - **Reentrancy Protection:** 
-             - You MUST override \`transfer\` and \`transferFrom\` to add the \`nonReentrant\` modifier.
-             - Apply \`nonReentrant\` modifier to \`withdrawStuckEth\`, \`enableTrading\`, \`claimVestedTokens\`, \`createVestingSchedule\`, \`createTask\`, \`completeTask\`, and any other function that moves funds or changes critical state.
+             - Override \`transfer\` and \`transferFrom\` with \`nonReentrant\`.
+             - Apply \`nonReentrant\` to ALL state-changing functions.
            - **Pausable Logic:**
              - Implement \`pause()\` and \`unpause()\` functions callable only by owner.
              - Apply \`whenNotPaused\` to the \`_update\` override and \`enableTrading\`.
            - **_update Override:** You MUST override the \`_update\` function to handle:
              1. Trading Active check (using \`whenNotPaused\`).
              2. Max Tx / Max Wallet limits.
-             3. Fee deduction (send tax to marketing wallet, remainder to recipient).
-           - **Emergency:** Implement \`withdrawStuckEth()\` to recover funds (protected by \`onlyOwner\` and \`nonReentrant\`).
-           - **Vesting:** Implement \`struct VestingSchedule\` (recipient, startDate, cliffDate, endDate, amount, claimed) and mapping.
-             - Function \`createVestingSchedule(address _recipient, uint256 _startDate, uint256 _cliffDate, uint256 _endDate, uint256 _amount)\` (onlyOwner, nonReentrant) which transfers tokens from owner to contract to lock them.
-             - Function \`claimVestedTokens()\` (nonReentrant) for users to claim.
+             3. Fee deduction (send tax to marketing wallet).
+           - **Vesting:** Implement \`struct VestingSchedule\` and secure \`createVestingSchedule\` and \`claimVestedTokens\` functions.
            - **Task / Bounty System:**
-             - Implement \`struct Task\` (string description, uint256 dueDate, bool isCompleted, address assignee).
-             - Implement \`mapping(uint256 => Task) public tasks\` and \`nextTaskId\`.
-             - **Events:** \`event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate, address indexed assignee);\`.
-             - \`createTask(...)\`: onlyOwner, nonReentrant. Emits TaskCreated with assignee.
-             - \`completeTask(uint256 taskId)\`: Callable ONLY by the assignee, nonReentrant. Checks if already completed. Emits \`TaskCompleted\`.
-             - Include custom errors: \`error NotTaskAssignee();\`, \`error TaskAlreadyCompleted();\`.
+             - Implement \`struct Task\` with \`batchCreateTasks\` for scalability.
+             - Events: \`TaskCreated\`, \`TaskCompleted\`.
 
            **STANDARD FUNCTIONS:**
            - \`enableTrading()\` (onlyOwner, nonReentrant, whenNotPaused).
            - \`setMarketingWallet(address _marketingWallet)\` (onlyOwner).
-           - \`transferOwnership(address newOwner)\` (override with zero-address check using custom error).
            - \`calculatedTotalSupply()\` (public view, returns totalSupply).
-           - **Struct Accessors:** Provide \`getTaskDetails(uint256 taskId)\` and similar accessors for VestingSchedules.
 
         2. **Frontend (React Component)**:
            - Generate a functional React dashboard component.
@@ -180,7 +177,7 @@ export const generateTokenApp = async (name: string, symbol: string, supply: str
     - Total Supply: ${supply} (Adjusted for ${decimals} decimals)
     - Decimals: ${decimals}
 
-    Include all the standard security features (Anti-Whale, Fees, Pausable, ReentrancyGuard) specified in the standard prompt.
+    Include all the standard security features (Anti-Whale, Fees, Pausable, ReentrancyGuard, Foreign Token Recovery) specified in the standard prompt.
     The Frontend (React) should be a "Token Control Panel" for managing this specific token.
   `;
 

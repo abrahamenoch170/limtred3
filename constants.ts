@@ -33,8 +33,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
+    using SafeERC20 for IERC20;
+
     // --- Custom Errors (Gas Optimization) ---
     error TradingNotActive();
     error MaxTxAmountExceeded();
@@ -48,6 +51,8 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     error NothingToClaim();
     error NotTaskAssignee();
     error TaskAlreadyCompleted();
+    error LimitTooLow(); // Anti-Honeypot
+    error CannotRenounceWhileDisabled(); // Safety
 
     // --- Tokenomics ---
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
@@ -146,6 +151,16 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     }
 
     /**
+     * @dev Updates transaction limits. 
+     * IMPORTANT: Cannot set limits lower than 0.5% of supply to prevent honeypots.
+     */
+    function updateLimits(uint256 _maxTx, uint256 _maxWallet) external onlyOwner {
+        if (_maxTx < (TOTAL_SUPPLY * 5 / 1000) || _maxWallet < (TOTAL_SUPPLY * 5 / 1000)) revert LimitTooLow();
+        maxTxAmount = _maxTx;
+        maxWalletSize = _maxWallet;
+    }
+
+    /**
      * @dev Updates the marketing wallet address.
      */
     function setMarketingWallet(address _marketingWallet) external onlyOwner {
@@ -155,11 +170,20 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     /**
      * @dev Emergency withdraw of stuck ETH.
-     * Protected against reentrancy.
      */
     function withdrawStuckEth() external onlyOwner nonReentrant {
         (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
         if (!success) revert TransferFailed();
+    }
+
+    /**
+     * @dev Recover any ERC20 token sent to the contract by mistake.
+     * Cannot withdraw the native token if trading is active (liquidity protection).
+     */
+    function recoverForeignTokens(address _tokenAddr, address _to) external onlyOwner nonReentrant {
+        if (_tokenAddr == address(this) && tradingActive) revert InvalidWallet(); // Cannot rug native token
+        uint256 _amount = IERC20(_tokenAddr).balanceOf(address(this));
+        IERC20(_tokenAddr).safeTransfer(_to, _amount);
     }
 
     /**
@@ -205,6 +229,25 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
             assignee: _assignee
         });
         emit TaskCreated(taskId, _description, _dueDate, _assignee);
+    }
+
+    /**
+     * @dev Batch create tasks for gas efficiency.
+     */
+    function batchCreateTasks(string[] memory _descriptions, uint256[] memory _dueDates, address[] memory _assignees) external onlyOwner nonReentrant {
+        require(_descriptions.length == _dueDates.length && _descriptions.length == _assignees.length, "Length mismatch");
+        
+        for(uint i = 0; i < _descriptions.length; i++) {
+            if (_assignees[i] == address(0)) continue;
+            uint256 taskId = nextTaskId++;
+            tasks[taskId] = Task({
+                description: _descriptions[i],
+                dueDate: _dueDates[i],
+                isCompleted: false,
+                assignee: _assignees[i]
+            });
+            emit TaskCreated(taskId, _descriptions[i], _dueDates[i], _assignees[i]);
+        }
     }
 
     // --- User Functions ---
@@ -295,8 +338,15 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         }
     }
 
+    /**
+     * @dev Override to prevent accidental renouncement while contract is disabled.
+     * Safety feature to prevent dead/locked contracts.
+     */
     function transferOwnership(address newOwner) public override onlyOwner {
-        if (newOwner == address(0)) revert InvalidOwner();
+        if (newOwner == address(0)) {
+             // If renouncing ownership, ensure trading is active to prevent getting stuck
+             if (!tradingActive) revert CannotRenounceWhileDisabled();
+        }
         super.transferOwnership(newOwner);
     }
 }`;
