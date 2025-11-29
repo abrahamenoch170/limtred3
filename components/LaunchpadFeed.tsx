@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LaunchpadProject, ProjectCategory } from '../types';
-import { MOCK_PROJECTS, COLORS } from '../constants';
-import { Search, TrendingUp, MessageSquare, Clock, User, Crown, ArrowRight, ShieldCheck, FileCode, Cpu, Brain, Banknote, Globe, Gamepad2, Server, Lock } from 'lucide-react';
-import { Input, Badge, Button, Card } from './ui/GlintComponents';
+import { MOCK_PROJECTS } from '../constants';
+import { Search, TrendingUp, Clock, User, Crown, ShieldCheck, FileCode, Cpu, Brain, Banknote, Globe, Gamepad2, Server, Lock, Zap, ArrowUpRight } from 'lucide-react';
+import { Badge, Button } from './ui/GlintComponents';
 
 interface LaunchpadFeedProps {
   onSelectProject: (project: LaunchpadProject) => void;
@@ -22,61 +22,54 @@ const CategoryIcon: React.FC<{ category: ProjectCategory; size?: number }> = ({ 
   }
 };
 
-const CategoryBadge: React.FC<{ category: ProjectCategory }> = ({ category }) => {
-  let colorClass = "text-white border-white";
-  switch (category) {
-    case 'AI': colorClass = "text-purple-400 border-purple-400"; break;
-    case 'DEFI': colorClass = "text-green-400 border-green-400"; break;
-    case 'DEPIN': colorClass = "text-blue-400 border-blue-400"; break;
-    case 'SECURITY': colorClass = "text-red-400 border-red-400"; break;
-  }
-  
-  return (
-    <div className={`flex items-center gap-1 px-2 py-0.5 border text-[10px] font-bold uppercase ${colorClass}`}>
-      <CategoryIcon category={category} size={10} />
-      {category}
-    </div>
-  );
-};
-
 const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'LATEST' | 'HOT'>('LATEST');
   
-  // Filter logic
   const filteredProjects = MOCK_PROJECTS.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.ticker?.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => {
     if (filter === 'HOT') return (b.marketCap || 0) - (a.marketCap || 0);
-    return 0; // Default is mock generated order (roughly random/latest)
+    return 0;
   });
 
   const kingOfTheHill = MOCK_PROJECTS[0]; 
 
   return (
-    <div className="min-h-screen bg-[#0c0c0c] text-white flex flex-col">
+    <div className="min-h-screen bg-[#0c0c0c] text-white flex flex-col font-sans">
       
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#0c0c0c]/90 backdrop-blur-md border-b border-[#1f1f1f] p-4 flex items-center justify-between">
-         <div className="flex items-center gap-3">
-             <Button variant="ghost" onClick={onBack} className="px-2 py-1 text-xs">
+      <header className="sticky top-0 z-40 bg-[#0c0c0c]/90 backdrop-blur-xl border-b border-[#1f1f1f] p-4 flex items-center justify-between">
+         <div className="flex items-center gap-4">
+             <Button variant="ghost" onClick={onBack} className="px-3 py-1 text-xs border border-[#333] hover:border-white transition-colors">
                  ← BACK
              </Button>
-             <h1 className="text-xl font-bold uppercase tracking-wider">Limetred <span className="text-[#39b54a]">Launchpad</span></h1>
+             <h1 className="text-xl font-black uppercase tracking-tighter">Limetred <span className="text-[#39b54a]">Launchpad</span></h1>
          </div>
-         <div className="flex items-center gap-2">
+         <div className="flex items-center gap-2 bg-[#111] px-3 py-1 border border-[#333] rounded-full">
              <div className="w-2 h-2 bg-[#39b54a] rounded-full animate-pulse"></div>
-             <span className="text-xs font-mono text-[#39b54a]">{MOCK_PROJECTS.length} PROTOCOLS LIVE</span>
+             <span className="text-[10px] font-mono font-bold text-[#fff] tracking-wider">LIVE FEED</span>
          </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-8">
+      {/* Live Ticker */}
+      <div className="bg-[#111] border-b border-[#1f1f1f] py-2 overflow-hidden whitespace-nowrap">
+          <div className="animate-marquee inline-block">
+              {MOCK_PROJECTS.map((p, i) => (
+                  <span key={i} className="mx-6 text-xs font-mono text-[#666]">
+                      <span className="text-white font-bold">{p.ticker}</span> just launched • <span className="text-[#39b54a]">Mcap: ${p.marketCap?.toLocaleString()}</span>
+                  </span>
+              ))}
+          </div>
+      </div>
+
+      <main className="flex-1 max-w-7xl mx-auto w-full p-4 md:p-8 space-y-12">
         
-        {/* King of the Hill Section */}
+        {/* Featured / King of the Hill */}
         <section>
-            <div className="flex items-center gap-2 mb-4">
-                <Crown className="text-yellow-500" size={20} />
+            <div className="flex items-center gap-2 mb-6">
+                <Crown className="text-yellow-500 fill-yellow-500" size={20} />
                 <h2 className="text-sm font-bold uppercase tracking-widest text-yellow-500">King of the Hill</h2>
             </div>
             
@@ -84,47 +77,63 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 onClick={() => onSelectProject(kingOfTheHill)}
-                className="relative bg-[#111111] border border-yellow-500/50 p-6 cursor-pointer group overflow-hidden"
+                className="relative bg-gradient-to-r from-[#111] to-[#0c0c0c] border border-yellow-500/30 p-1 cursor-pointer group overflow-hidden hover:border-yellow-500 transition-colors"
             >
-                <div className="absolute inset-0 bg-yellow-500/5 group-hover:bg-yellow-500/10 transition-colors" />
-                <div className="flex flex-col md:flex-row gap-6 relative z-10">
-                    <div className="w-32 h-32 shrink-0 bg-[#000] border border-[#333] flex items-center justify-center font-bold text-4xl" style={{ color: kingOfTheHill.imageColor }}>
-                         <CategoryIcon category={kingOfTheHill.category} size={48} />
-                    </div>
-                    <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <h3 className="text-3xl font-black uppercase text-white group-hover:text-yellow-500 transition-colors">
-                                        {kingOfTheHill.name}
-                                    </h3>
-                                    <CategoryBadge category={kingOfTheHill.category} />
-                                </div>
-                                <div className="flex items-center gap-4 text-xs font-mono text-[#666666] mb-4">
-                                    <span className="flex items-center gap-1"><User size={12}/> {kingOfTheHill.creator}</span>
-                                    {kingOfTheHill.isDoxxed && (
-                                        <span className="flex items-center gap-1 text-[#39b54a] font-bold"><ShieldCheck size={12}/> DOXXED DEV</span>
-                                    )}
-                                    {kingOfTheHill.auditStatus === 'PASSED' && (
-                                        <span className="flex items-center gap-1 text-blue-400 font-bold"><FileCode size={12}/> AUDITED</span>
-                                    )}
-                                </div>
-                            </div>
-                            <Badge color="text-yellow-500 border-yellow-500">#1 RANKED</Badge>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 blur-[50px] pointer-events-none"></div>
+                
+                <div className="bg-[#0c0c0c] p-6 md:p-8 relative z-10 h-full">
+                    <div className="flex flex-col md:flex-row gap-8">
+                        {/* Image */}
+                        <div className="w-full md:w-48 h-48 shrink-0 bg-[#000] border border-[#333] flex items-center justify-center relative overflow-hidden group-hover:border-yellow-500 transition-colors">
+                             <div className="absolute inset-0 opacity-20" style={{ backgroundColor: kingOfTheHill.imageColor }}></div>
+                             <CategoryIcon category={kingOfTheHill.category} size={64} />
+                             <div className="absolute bottom-2 right-2 bg-yellow-500 text-black text-[10px] font-bold px-2 py-1 uppercase">
+                                 Top 1
+                             </div>
                         </div>
-                        
-                        <p className="text-gray-400 text-sm mb-6 max-w-2xl">{kingOfTheHill.description}</p>
-                        
-                        {/* Progress Bar */}
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-mono font-bold uppercase">
-                                <span className="text-[#39b54a]">Bonding Curve Progress</span>
-                                <span className="text-white">97.4%</span>
+
+                        {/* Content */}
+                        <div className="flex-1 flex flex-col justify-between">
+                            <div>
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="text-4xl font-black uppercase text-white tracking-tighter mb-2 group-hover:text-yellow-500 transition-colors">
+                                            {kingOfTheHill.name}
+                                        </h3>
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-mono text-sm text-yellow-500 font-bold">${kingOfTheHill.ticker}</span>
+                                            <span className="w-1 h-1 bg-[#666] rounded-full"></span>
+                                            <div className="flex items-center gap-1 text-xs text-[#888]">
+                                                <User size={12}/> {kingOfTheHill.creator}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-yellow-500/10 border border-yellow-500 text-yellow-500 px-3 py-1 text-xs font-bold uppercase tracking-wider animate-pulse">
+                                        Active Now
+                                    </div>
+                                </div>
+                                
+                                <p className="text-gray-400 text-sm mb-6 max-w-2xl leading-relaxed">{kingOfTheHill.description}</p>
                             </div>
-                            <div className="h-4 bg-[#1f1f1f] w-full border border-[#333] relative overflow-hidden">
-                                <div className="absolute inset-y-0 left-0 bg-[#39b54a] w-[97.4%] animate-pulse" />
-                                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-black mix-blend-screen">
-                                    GRADUATING TO RAYDIUM SOON
+
+                            {/* Stats Bar */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-[#1f1f1f] pt-4">
+                                <div>
+                                    <div className="text-[10px] text-[#666] uppercase font-bold mb-1">Market Cap</div>
+                                    <div className="text-xl font-mono text-white font-bold">${kingOfTheHill.marketCap?.toLocaleString()}</div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-[#666] uppercase font-bold mb-1">Curve Progress</div>
+                                    <div className="text-xl font-mono text-[#39b54a] font-bold">97.4%</div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] text-[#666] uppercase font-bold mb-1">Holders</div>
+                                    <div className="text-xl font-mono text-white font-bold">1,240</div>
+                                </div>
+                                <div className="flex items-center justify-end">
+                                     <Button className="text-xs h-auto py-2 bg-yellow-500 text-black border-yellow-500 hover:bg-yellow-400 w-full md:w-auto">
+                                         VIEW TERMINAL
+                                     </Button>
                                 </div>
                             </div>
                         </div>
@@ -134,106 +143,114 @@ const LaunchpadFeed: React.FC<LaunchpadFeedProps> = ({ onSelectProject, onBack }
         </section>
 
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 sticky top-20 z-30 bg-[#0c0c0c]/80 backdrop-blur-xl p-2 border-b border-[#1f1f1f] md:border-none">
+        <div className="sticky top-20 z-30 flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666] group-focus-within:text-[#39b54a]" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#666] group-focus-within:text-[#39b54a] transition-colors" size={18} />
                 <input 
                     type="text" 
-                    placeholder="Search protocols..." 
+                    placeholder="Search protocols by name, ticker, or contract..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-[#111111] border border-[#1f1f1f] pl-10 pr-4 py-3 text-sm text-white focus:border-[#39b54a] outline-none font-mono placeholder-[#444]"
+                    className="w-full bg-[#0c0c0c]/80 backdrop-blur-md border border-[#333] pl-12 pr-4 py-4 text-sm text-white focus:border-[#39b54a] outline-none font-mono placeholder-[#444] transition-colors"
                 />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-0 bg-[#111] border border-[#333] p-1">
                 <button 
                     onClick={() => setFilter('LATEST')}
-                    className={`px-4 py-2 text-xs font-bold uppercase border ${filter === 'LATEST' ? 'bg-[#39b54a] text-black border-[#39b54a]' : 'bg-transparent text-[#666666] border-[#333] hover:border-white'}`}
+                    className={`px-6 py-2 text-xs font-bold uppercase transition-all ${filter === 'LATEST' ? 'bg-[#333] text-white shadow-sm' : 'text-[#666] hover:text-[#ccc]'}`}
                 >
                     Latest
                 </button>
                 <button 
                     onClick={() => setFilter('HOT')}
-                    className={`px-4 py-2 text-xs font-bold uppercase border ${filter === 'HOT' ? 'bg-[#39b54a] text-black border-[#39b54a]' : 'bg-transparent text-[#666666] border-[#333] hover:border-white'}`}
+                    className={`px-6 py-2 text-xs font-bold uppercase transition-all ${filter === 'HOT' ? 'bg-[#333] text-white shadow-sm' : 'text-[#666] hover:text-[#ccc]'}`}
                 >
-                    Top Utility
+                    Top Volume
                 </button>
             </div>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProjects.map((project) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProjects.map((project, i) => (
                 <motion.div
                     key={project.id}
-                    layoutId={project.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    whileHover={{ y: -4 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
                     onClick={() => onSelectProject(project)}
-                    className="bg-[#111111] border border-[#1f1f1f] p-4 cursor-pointer hover:border-[#39b54a] group flex flex-col h-full"
+                    className="group relative bg-[#111] border border-[#1f1f1f] hover:border-[#39b54a] transition-all duration-300 cursor-pointer flex flex-col h-full overflow-hidden"
                 >
-                    {/* Card Header */}
-                    <div className="flex gap-3 mb-3">
-                        <div className="w-12 h-12 shrink-0 bg-black border border-[#333] flex items-center justify-center font-bold text-lg" style={{ color: project.imageColor }}>
-                             <CategoryIcon category={project.category} size={24} />
+                    {/* Header Image Area */}
+                    <div className="h-32 bg-[#000] relative border-b border-[#1f1f1f] flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity" style={{ backgroundColor: project.imageColor }}></div>
+                        <CategoryIcon category={project.category} size={48} />
+                        
+                        <div className="absolute top-2 right-2 flex gap-1">
+                            <Badge color="bg-black/50 backdrop-blur text-white border-white/20">{project.category}</Badge>
                         </div>
-                        <div className="overflow-hidden flex-1">
-                            <div className="flex justify-between items-start">
-                                <h4 className="font-bold text-sm text-white uppercase truncate group-hover:text-[#39b54a] transition-colors">
+                    </div>
+
+                    <div className="p-5 flex-1 flex flex-col">
+                        <div className="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 className="font-bold text-lg text-white uppercase leading-none mb-1 group-hover:text-[#39b54a] transition-colors">
                                     {project.name}
                                 </h4>
-                            </div>
-                            <span className="text-xs font-mono text-[#666666] block">${project.ticker}</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                                {project.isDoxxed && (
-                                     <span className="text-[9px] font-bold text-[#39b54a] border border-[#39b54a]/30 px-1">DOXXED</span>
-                                )}
-                                {project.auditStatus === 'PASSED' && (
-                                     <span className="text-[9px] font-bold text-blue-400 border border-blue-400/30 px-1">AUDIT</span>
-                                )}
+                                <span className="text-xs font-mono text-[#666]">${project.ticker}</span>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div className="mb-2">
-                        <CategoryBadge category={project.category} />
-                    </div>
 
-                    {/* Desc */}
-                    <p className="text-xs text-[#888] mb-4 line-clamp-3 flex-1 font-mono leading-relaxed">
-                        {project.description}
-                    </p>
-
-                    {/* Stats */}
-                    <div className="mt-auto space-y-3">
-                        <div className="flex justify-between items-end">
-                            <div>
-                                <div className="text-[10px] text-[#666666] uppercase font-bold">Market Cap</div>
-                                <div className="text-[#39b54a] font-mono font-bold text-sm">
-                                    ${project.marketCap?.toLocaleString()}
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-[10px] text-[#666666] uppercase font-bold">Age</div>
-                                <div className="text-white font-mono text-xs flex items-center justify-end gap-1">
-                                    <Clock size={10} /> {project.timestamp}
-                                </div>
-                            </div>
-                        </div>
+                        <p className="text-xs text-[#888] mb-6 line-clamp-2 leading-relaxed">
+                            {project.description}
+                        </p>
                         
-                        {/* Mini Bar */}
-                        <div className="h-1 bg-[#1f1f1f] w-full">
-                            <div 
-                                className="h-full bg-[#39b54a]" 
-                                style={{ width: `${Math.min(100, (project.marketCap || 0) / 60000 * 100)}%` }}
-                            />
+                        {/* Verification Badges */}
+                        <div className="flex gap-2 mb-4">
+                             {project.isDoxxed && (
+                                <div className="text-[9px] font-bold text-[#39b54a] bg-[#39b54a]/10 px-2 py-0.5 border border-[#39b54a]/30 flex items-center gap-1">
+                                    <ShieldCheck size={10} /> DOXXED
+                                </div>
+                             )}
+                             {project.auditStatus === 'PASSED' && (
+                                <div className="text-[9px] font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 border border-blue-400/30 flex items-center gap-1">
+                                    <FileCode size={10} /> AUDITED
+                                </div>
+                             )}
+                        </div>
+
+                        <div className="mt-auto pt-4 border-t border-[#1f1f1f]">
+                            <div className="flex justify-between items-end mb-2">
+                                <div>
+                                    <div className="text-[9px] text-[#666] uppercase font-bold mb-0.5">Mkt Cap</div>
+                                    <div className="text-white font-mono font-bold text-sm">${project.marketCap?.toLocaleString()}</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-[9px] text-[#666] uppercase font-bold mb-0.5">Created</div>
+                                    <div className="text-[#888] font-mono text-xs flex items-center justify-end gap-1">
+                                        <Clock size={10} /> {project.timestamp}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="w-full h-1.5 bg-[#1f1f1f] rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-[#39b54a] to-[#2ea03f]" 
+                                    style={{ width: `${Math.min(100, (project.marketCap || 0) / 60000 * 100)}%` }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </motion.div>
             ))}
         </div>
       </main>
+
+      <style>{`
+        .animate-marquee { animation: marquee 30s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+      `}</style>
     </div>
   );
 };

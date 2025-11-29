@@ -55,6 +55,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     error TaskAlreadyCancelled();
     error LimitTooLow(); // Anti-Honeypot
     error CannotRenounceWhileDisabled(); // Safety
+    error BatchLengthMismatch(); // Gas efficient array check
 
     // --- Tokenomics ---
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
@@ -244,7 +245,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     }
 
     function batchCreateTasks(string[] memory _descriptions, uint256[] memory _dueDates, address[] memory _assignees) external onlyOwner nonReentrant {
-        require(_descriptions.length == _dueDates.length && _descriptions.length == _assignees.length, "Length mismatch");
+        if (_descriptions.length != _dueDates.length || _descriptions.length != _assignees.length) revert BatchLengthMismatch();
         for(uint i = 0; i < _descriptions.length; i++) {
             if (_assignees[i] == address(0)) continue;
             uint256 taskId = nextTaskId++;

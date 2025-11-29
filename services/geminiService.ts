@@ -80,7 +80,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard, Pausable { ... }\`
            
            **SECURITY & SCALABILITY REQUIREMENTS (BETA STANDARD):**
-           - **Gas Optimization:** Use \`error\` definitions instead of string require statements.
+           - **Gas Optimization:** Use custom \`error\` definitions and \`revert\` statements instead of string-based \`require\`. All validations (including array length checks) must use custom errors.
            - **Anti-Honeypot:** 
              - Ensure \`updateFees\` checks that taxes <= 10%.
              - Ensure \`updateLimits\` prevents setting limits < 0.5% of totalSupply.
@@ -191,7 +191,7 @@ export const getChatResponse = async (history: {role: string, parts: {text: stri
       model: 'gemini-3-pro-preview',
       history: history,
       config: {
-        systemInstruction: "You are the Limetred Protocol AI Assistant. You help users understand Web3, Solidity, and the apps they are generating. Be concise, technical, and helpful."
+        systemInstruction: "You are the Limetred Protocol AI Assistant and Security Specialist. Your goal is to help users generate apps AND stay safe in Web3. If a user asks about sending money or connecting to a protocol, analyze the context for potential scams (honeypots, wallet drainers). Advise caution, suggest verifying contract addresses, and never sharing private keys. Be concise, technical, and helpful."
       }
     });
 

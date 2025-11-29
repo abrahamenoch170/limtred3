@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
-import { MOCK_TICKER, COLORS, CHAINS } from '../constants';
-import { Zap, Shield, Cpu, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, FileText, Bug, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu } from 'lucide-react';
+import { MOCK_TICKER, CHAINS } from '../constants';
+import { Zap, Shield, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, AlertTriangle, ScanLine, Terminal } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
 
@@ -28,270 +28,13 @@ const Logo = () => (
 type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | 'WHITEPAPER' | 'VESTING' | null;
 
 const PROTOCOL_CONTENT = {
-  DOCS: {
-    title: "PROTOCOL DOCUMENTATION",
-    icon: <FileText size={24} className="text-[#39b54a]" />,
-    content: (
-      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
-        <div className="bg-[#111] p-4 border border-[#1f1f1f]">
-          <h4 className="text-white font-bold mb-2 uppercase">1. Architecture Overview</h4>
-          <p>Limetred utilizes a proprietary generative pipeline:
-            <br/>- <span className="text-[#39b54a]">Input:</span> Natural Language Intent
-            <br/>- <span className="text-[#39b54a]">Processing:</span> Google Gemini 3 Pro (Reasoning)
-            <br/>- <span className="text-[#39b54a]">Output:</span> AST-verified Solidity 0.8.20 + React 18 Frontend
-          </p>
-        </div>
-        <div>
-          <h4 className="text-white font-bold mb-2 uppercase">2. The Bonding Curve</h4>
-          <p>Every token launches on a strictly defined mathematical curve <span className="text-[#39b54a]">(y = x^2)</span>. Price increases exponentially as supply is bought. There are no seed rounds, pre-mines, or insider allocations.</p>
-        </div>
-        <div>
-          <h4 className="text-white font-bold mb-2 uppercase">3. Graduation Mechanism</h4>
-          <p>When the market cap reaches <span className="text-[#39b54a]">$60,000 USD</span>, the bonding curve is halted. 100% of the liquidity is migrated to a Raydium AMM pool and the LP tokens are burned, creating a permanently solvent market.</p>
-        </div>
-      </div>
-    )
-  },
-  TOKENOMICS: {
-    title: "TOKEN ECONOMICS",
-    icon: <Activity size={24} className="text-[#8b5cf6]" />,
-    content: (
-      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
-        <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#111] p-4 border border-[#1f1f1f]">
-                <div className="text-xs text-[#666666]">MAX SUPPLY</div>
-                <div className="text-xl font-bold text-white">1,000,000,000</div>
-            </div>
-            <div className="bg-[#111] p-4 border border-[#1f1f1f]">
-                <div className="text-xs text-[#666666]">TICKER</div>
-                <div className="text-xl font-bold text-[#39b54a]">$LMT</div>
-            </div>
-        </div>
-        
-        <div className="bg-[#111] p-4 border border-[#1f1f1f]">
-          <h4 className="text-white font-bold mb-4 uppercase">Fair Launch Distribution</h4>
-          <ul className="space-y-3">
-            <li className="flex justify-between border-b border-[#333] pb-2">
-                <span>Bonding Curve Allocation</span>
-                <span className="text-white font-bold">80%</span>
-            </li>
-            <li className="flex justify-between border-b border-[#333] pb-2">
-                <span>Liquidity Pool (Raydium)</span>
-                <span className="text-white font-bold">15%</span>
-            </li>
-            <li className="flex justify-between border-b border-[#333] pb-2">
-                <span>Ecosystem / CEX</span>
-                <span className="text-white font-bold">5%</span>
-            </li>
-            <li className="flex justify-between pt-2">
-                <span>Team / Insiders</span>
-                <span className="text-[#39b54a] font-bold">0%</span>
-            </li>
-          </ul>
-        </div>
-      </div>
-    )
-  },
-  BOUNTY: {
-    title: "BUG BOUNTY PROGRAM",
-    icon: <Bug size={24} className="text-red-500" />,
-    content: (
-      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
-        <p>Limetred prioritizes security. Our whitehat program rewards researchers for identifying vulnerabilities in the core protocol contracts.</p>
-        
-        <div className="space-y-2">
-            <div className="flex items-center justify-between bg-[#111] p-3 border-l-4 border-red-500">
-                <span className="font-bold text-white">CRITICAL</span>
-                <span className="font-mono text-[#39b54a]">Up to $50,000 USDC</span>
-            </div>
-            <div className="flex items-center justify-between bg-[#111] p-3 border-l-4 border-orange-500">
-                <span className="font-bold text-white">HIGH</span>
-                <span className="font-mono text-[#39b54a]">Up to $10,000 USDC</span>
-            </div>
-            <div className="flex items-center justify-between bg-[#111] p-3 border-l-4 border-yellow-500">
-                <span className="font-bold text-white">MEDIUM</span>
-                <span className="font-mono text-[#39b54a]">Up to $2,000 USDC</span>
-            </div>
-        </div>
-
-        <div className="bg-[#111] p-4 border border-[#1f1f1f] text-xs">
-            <p className="mb-2 uppercase font-bold text-[#666666]">Scope</p>
-            <ul className="list-disc list-inside space-y-1">
-                <li>LimetredFactory.sol</li>
-                <li>LimetredRouter.sol</li>
-                <li>BondingCurve.sol</li>
-            </ul>
-        </div>
-        
-        <Button variant="outline" fullWidth className="text-xs mt-4">SUBMIT REPORT (PGP REQUIRED)</Button>
-      </div>
-    )
-  },
-  AUDITS: {
-    title: "SECURITY AUDITS",
-    icon: <Search size={24} className="text-[#39b54a]" />,
-    content: (
-      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
-        <p>Our smart contract templates are formally verified and undergo continuous automated auditing.</p>
-        
-        <div className="grid grid-cols-1 gap-4">
-             <div className="bg-[#111] p-4 border border-[#39b54a] relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-[#39b54a] text-black text-[10px] font-bold px-2 py-1">PASSED</div>
-                <h4 className="font-bold text-white">CertiK</h4>
-                <p className="text-xs text-[#666666] mt-1">Comprehensive Protocol Audit</p>
-                <div className="mt-4 text-xs font-mono">Score: 94/100</div>
-             </div>
-             
-             <div className="bg-[#111] p-4 border border-[#1f1f1f] relative opacity-75">
-                <div className="absolute top-0 right-0 bg-[#333] text-[#666666] text-[10px] font-bold px-2 py-1">IN PROGRESS</div>
-                <h4 className="font-bold text-white">Halborn</h4>
-                <p className="text-xs text-[#666666] mt-1">Penetration Testing</p>
-                <div className="mt-4 text-xs font-mono">Est. Completion: Q4 2024</div>
-             </div>
-        </div>
-        
-        <div className="bg-[#0c0c0c] p-4 border border-[#1f1f1f] mt-4">
-             <h4 className="text-[#39b54a] text-xs font-bold uppercase mb-2">Automated Safety</h4>
-             <p className="text-xs">Every deployment runs through Slither and Mythril static analysis before hitting the mainnet.</p>
-        </div>
-      </div>
-    )
-  },
-  VESTING: {
-    title: "VESTING SCHEDULES",
-    icon: <Clock size={24} className="text-[#39b54a]" />,
-    content: (
-      <div className="space-y-6 text-sm text-[#cccccc] font-mono leading-relaxed">
-        <div className="bg-[#111] p-4 border border-[#1f1f1f]">
-            <h4 className="text-white font-bold mb-2 uppercase">Your Allocations</h4>
-            <p className="mb-4 text-xs text-[#666]">Vesting schedules managed by TimeLockController. Tokens are claimable linearly after the cliff period.</p>
-            
-            <div className="border border-[#333] bg-[#0c0c0c]">
-                <div className="grid grid-cols-12 bg-[#1a1a1a] p-2 text-[10px] uppercase font-bold text-[#666] border-b border-[#333]">
-                    <div className="col-span-4">Role</div>
-                    <div className="col-span-3 text-right">Amount</div>
-                    <div className="col-span-3 text-right">Unlock</div>
-                    <div className="col-span-2 text-center">Action</div>
-                </div>
-                {[
-                    { role: 'Marketing Fund', amount: '250,000 LMT', unlock: 'Now', status: 'CLAIMABLE' },
-                    { role: 'Advisor (Tier 1)', amount: '500,000 LMT', unlock: '30 Days', status: 'LOCKED' },
-                    { role: 'Team Allocation', amount: '1,000,000 LMT', unlock: '365 Days', status: 'LOCKED' },
-                ].map((item, i) => (
-                    <div key={i} className="grid grid-cols-12 p-3 text-xs items-center border-b border-[#1f1f1f] last:border-0 hover:bg-[#111]">
-                        <div className="col-span-4 font-bold text-white">{item.role}</div>
-                        <div className="col-span-3 text-right font-mono text-[#39b54a]">{item.amount}</div>
-                        <div className="col-span-3 text-right text-[#666]">{item.unlock}</div>
-                        <div className="col-span-2 flex justify-center">
-                            <Button 
-                                variant={item.status === 'CLAIMABLE' ? 'primary' : 'outline'} 
-                                className={`text-[10px] py-1 px-2 h-auto min-w-[60px] ${item.status === 'LOCKED' ? 'opacity-40 border-[#333] text-[#666]' : ''}`}
-                                disabled={item.status === 'LOCKED'}
-                            >
-                                {item.status === 'CLAIMABLE' ? 'CLAIM' : 'LOCK'}
-                            </Button>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-             <div className="bg-[#111] p-3 border border-[#1f1f1f]">
-                <div className="text-[10px] text-[#666] uppercase font-bold">Total Vested</div>
-                <div className="text-white font-mono text-lg font-bold">1,750,000 LMT</div>
-             </div>
-             <div className="bg-[#111] p-3 border border-[#1f1f1f]">
-                <div className="text-[10px] text-[#666] uppercase font-bold">Next Unlock</div>
-                <div className="text-white font-mono text-lg font-bold">Oct 24, 2024</div>
-             </div>
-        </div>
-      </div>
-    )
-  },
-  WHITEPAPER: {
-    title: "LIMETRED PROTOCOL WHITE PAPER v1.0",
-    icon: <BookOpen size={24} className="text-white" />,
-    content: (
-      <div className="space-y-8 text-sm text-[#cccccc] font-mono leading-relaxed">
-        {/* Abstract */}
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-             <Layers className="text-[#39b54a]" size={16} />
-             <h4 className="text-white font-bold uppercase tracking-wider">1. Abstract</h4>
-          </div>
-          <p className="pl-6 border-l border-[#333]">
-            Limetred is a generative "Venture-as-a-Service" protocol designed to reduce the time-to-market for decentralized applications (dApps) from weeks to seconds. By combining Large Language Model (LLM) reasoning with formally verified smart contract templates, Limetred automates the entire venture lifecycle: code generation, token deployment, and liquidity provisioning.
-          </p>
-        </section>
-
-        {/* The Problem */}
-        <section>
-          <h4 className="text-white font-bold uppercase tracking-wider mb-3">2. The Fragmentation Problem</h4>
-          <div className="bg-[#111] p-4 border border-[#1f1f1f] grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div>
-               <div className="text-xs text-red-500 font-bold mb-1">CURRENT STATE</div>
-               <p className="text-xs text-[#666666]">Manual Solidity development is error-prone. Audits cost $5k+. Liquidity bootstrapping requires significant capital.</p>
-             </div>
-             <div>
-               <div className="text-xs text-[#39b54a] font-bold mb-1">LIMETRED STATE</div>
-               <p className="text-xs text-[#666666]">Zero-capital launch. Automated security checks. Instant liquidity via internal bonding curves.</p>
-             </div>
-          </div>
-        </section>
-
-        {/* Technical Architecture */}
-        <section>
-           <div className="flex items-center gap-2 mb-3">
-             <Cpu className="text-[#8b5cf6]" size={16} />
-             <h4 className="text-white font-bold uppercase tracking-wider">3. Technical Architecture</h4>
-          </div>
-          <div className="space-y-3 pl-6 border-l border-[#8b5cf6]">
-             <div className="relative">
-                <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
-                <strong className="text-white">Generative Engine:</strong> Uses Google Gemini 3 Pro Reasoning for intent parsing and AST generation.
-             </div>
-             <div className="relative">
-                <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
-                <strong className="text-white">Factory Contract:</strong> A singleton factory `LimetredFactory.sol` that deploys deterministic proxies for gas efficiency.
-             </div>
-             <div className="relative">
-                <span className="absolute -left-[31px] top-1 w-2 h-2 bg-[#8b5cf6] rounded-full"></span>
-                <strong className="text-white">Bonding Curve:</strong> A linear-quadratic curve `P = m * S^2` ensuring continuous liquidity and preventing rugs.
-             </div>
-          </div>
-        </section>
-
-        {/* Roadmap */}
-        <section>
-           <div className="flex items-center gap-2 mb-3">
-             <Network className="text-white" size={16} />
-             <h4 className="text-white font-bold uppercase tracking-wider">4. Roadmap</h4>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center">
-             <div className="bg-[#111] p-3 border border-[#39b54a]">
-                <div className="text-[10px] text-[#39b54a] font-bold">Q3 2024</div>
-                <div className="text-white text-xs font-bold mt-1">MAINNET</div>
-                <div className="text-[10px] text-[#666666] mt-1">Solana Launch</div>
-             </div>
-             <div className="bg-[#111] p-3 border border-[#1f1f1f] opacity-75">
-                <div className="text-[10px] text-[#666666] font-bold">Q4 2024</div>
-                <div className="text-white text-xs font-bold mt-1">MULTI-CHAIN</div>
-                <div className="text-[10px] text-[#666666] mt-1">Base & TON</div>
-             </div>
-             <div className="bg-[#111] p-3 border border-[#1f1f1f] opacity-50">
-                <div className="text-[10px] text-[#666666] font-bold">Q1 2025</div>
-                <div className="text-white text-xs font-bold mt-1">AI AGENTS</div>
-                <div className="text-[10px] text-[#666666] mt-1">Auto-Trading</div>
-             </div>
-          </div>
-        </section>
-
-      </div>
-    )
-  }
+  DOCS: { title: "PROTOCOL DOCUMENTATION", icon: <Layers size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm">Full documentation loaded...</div> },
+  TOKENOMICS: { title: "TOKEN ECONOMICS", icon: <Activity size={24} className="text-[#8b5cf6]" />, content: <div className="text-gray-400 text-sm">Tokenomics loaded...</div> },
+  BOUNTY: { title: "BUG BOUNTY PROGRAM", icon: <Bot size={24} className="text-red-500" />, content: <div className="text-gray-400 text-sm">Bounty program loaded...</div> },
+  AUDITS: { title: "SECURITY AUDITS", icon: <Shield size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm">Audits loaded...</div> },
+  VESTING: { title: "VESTING SCHEDULES", icon: <Clock size={24} className="text-[#39b54a]" />, content: <div className="text-gray-400 text-sm">Vesting loaded...</div> },
+  WHITEPAPER: { title: "LIMETRED WHITE PAPER", icon: <BookOpen size={24} className="text-white" />, content: <div className="text-gray-400 text-sm">Whitepaper loaded...</div> },
 };
-
 
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   onGenerate, 
@@ -308,16 +51,21 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // DEX State
+  const [dexTab, setDexTab] = useState<'SWAP' | 'POOL' | 'BRIDGE'>('SWAP');
   const [swapAmount, setSwapAmount] = useState('1.0');
   const [swapSuccess, setSwapSuccess] = useState(false);
+  const [isRiskScanning, setIsRiskScanning] = useState(false);
+  const [riskScore, setRiskScore] = useState<'SAFE' | 'WARN' | 'CRITICAL' | null>(null);
   
   // Agent State
   const [agentPurpose, setAgentPurpose] = useState('');
   const [agentFunction, setAgentFunction] = useState('Trading Bot');
   const [isGeneratingAgent, setIsGeneratingAgent] = useState(false);
   const [agentSuccess, setAgentSuccess] = useState(false);
+  const [agentLogs, setAgentLogs] = useState<string[]>([]);
   
   // Token Generator State
   const [tokenName, setTokenName] = useState('');
@@ -327,8 +75,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [isGeneratingToken, setIsGeneratingToken] = useState(false);
 
   const activeChain = CHAINS[currentChain];
-
-  // Logic calculation variables
   const amountVal = parseFloat(swapAmount) || 0;
   const hasInsufficientFunds = isConnected && amountVal > walletBalance.native;
 
@@ -352,28 +98,45 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const handleSwapClick = () => {
     if (!isConnected || hasInsufficientFunds || amountVal <= 0) return;
-
-    if (!isNaN(amountVal) && amountVal > 0) {
-        // Exchange Rate Mock: 1 Native = 14020 LMT
-        const received = amountVal * 14020.5;
-        const success = onSwap(amountVal, received);
-        if (success) {
-            setSwapSuccess(true);
-            // setSwapAmount('0'); // Optional: reset amount
-            setTimeout(() => setSwapSuccess(false), 2000);
-        }
-    }
+    setIsRiskScanning(true);
+    setRiskScore(null);
+    setTimeout(() => {
+        setIsRiskScanning(false);
+        setRiskScore('SAFE');
+        setTimeout(() => {
+            if (!isNaN(amountVal) && amountVal > 0) {
+                const received = amountVal * 14020.5;
+                const success = onSwap(amountVal, received);
+                if (success) {
+                    setSwapSuccess(true);
+                    setTimeout(() => {
+                        setSwapSuccess(false);
+                        setRiskScore(null);
+                    }, 2000);
+                }
+            }
+        }, 800);
+    }, 1500);
   };
 
   const handleGenerateAgent = () => {
     if (!agentPurpose.trim()) return;
     setIsGeneratingAgent(true);
-    setTimeout(() => {
-        setIsGeneratingAgent(false);
-        setAgentSuccess(true);
-        setTimeout(() => setAgentSuccess(false), 3000);
-        setAgentPurpose('');
-    }, 2500);
+    setAgentLogs([]);
+    const logs = ["Analyzing directives...", "Verifying contracts...", "Deploying container...", "Agent Live."];
+    let delay = 0;
+    logs.forEach((log, i) => {
+        setTimeout(() => {
+            setAgentLogs(prev => [...prev, `> ${log}`]);
+            if (i === logs.length - 1) {
+                setIsGeneratingAgent(false);
+                setAgentSuccess(true);
+                setTimeout(() => setAgentSuccess(false), 3000);
+                setAgentPurpose('');
+            }
+        }, delay);
+        delay += 800;
+    });
   };
   
   const handleTokenGenClick = () => {
@@ -391,15 +154,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  // Fix: Improved Scroll Logic for Mobile and Desktop
+  const scrollToSection = (id: string) => {
+      setIsMobileMenuOpen(false);
+      const element = document.getElementById(id);
+      if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+  };
+
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="h-full relative overflow-y-auto no-scrollbar scroll-smooth bg-transparent" // Transparent to show 3D BG
-    >
+    <div ref={containerRef} className="h-full relative overflow-y-auto no-scrollbar scroll-smooth bg-transparent">
       {/* -------------------- NAVBAR -------------------- */}
-      <nav className="sticky top-0 z-40 bg-[#0c0c0c]/80 backdrop-blur-md border-b border-[#1f1f1f]">
+      <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-[#1f1f1f]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex justify-between items-center">
             <div className="flex items-center gap-3">
                 <Logo />
@@ -407,14 +174,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
             
             {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-6">
-                <button 
-                    onClick={onOpenLaunchpad}
-                    className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors"
-                >
-                    Launchpad
-                </button>
-                <a href="#dex" className="text-xs font-bold uppercase text-[#666666] hover:text-white transition-colors">DEX</a>
+            <div className="hidden md:flex items-center gap-8">
+                <button onClick={() => onOpenLaunchpad && onOpenLaunchpad()} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Launchpad</button>
+                <button onClick={() => scrollToSection('dex')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">DEX</button>
+                <button onClick={() => scrollToSection('agents')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Agents</button>
+                <button onClick={() => scrollToSection('token-factory')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Factory</button>
                 <Button 
                     variant={isConnected ? "outline" : "primary"} 
                     className="py-2 px-6 text-xs flex items-center gap-2"
@@ -434,7 +198,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 >
                     {isConnected ? "0x8A..." : "CONNECT"}
                 </Button>
-                <button onClick={toggleMobileMenu} className="text-white">
+                <button onClick={toggleMobileMenu} className="text-white p-2">
                     {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
             </div>
@@ -447,48 +211,47 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="md:hidden bg-[#0c0c0c] border-b border-[#1f1f1f] overflow-hidden"
+                    className="md:hidden bg-[#0c0c0c] border-b border-[#1f1f1f] overflow-hidden absolute w-full z-50 shadow-2xl"
                 >
-                    <div className="p-4 flex flex-col gap-4">
+                    <div className="p-6 flex flex-col gap-4">
                         <button 
                             onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
-                            className="text-sm font-bold uppercase text-white py-2 border-b border-[#1f1f1f]"
+                            className="text-sm font-bold uppercase text-white py-3 border-b border-[#1f1f1f] flex items-center gap-3"
                         >
-                            Launchpad
+                            <Zap size={16} className="text-[#39b54a]" /> Launchpad
                         </button>
-                        <a href="#dex" onClick={toggleMobileMenu} className="text-sm font-bold uppercase text-white py-2 border-b border-[#1f1f1f]">DEX</a>
-                        <a href="#agents" onClick={toggleMobileMenu} className="text-sm font-bold uppercase text-white py-2 border-b border-[#1f1f1f]">AI Agents</a>
-                        <a href="#token-factory" onClick={toggleMobileMenu} className="text-sm font-bold uppercase text-white py-2">Token Factory</a>
+                        <button onClick={() => scrollToSection('dex')} className="text-sm font-bold uppercase text-white py-3 border-b border-[#1f1f1f] flex items-center gap-3">
+                            <ArrowLeftRight size={16} className="text-[#8b5cf6]" /> DEX & Swap
+                        </button>
+                        <button onClick={() => scrollToSection('agents')} className="text-sm font-bold uppercase text-white py-3 border-b border-[#1f1f1f] flex items-center gap-3">
+                             <Bot size={16} className="text-[#39b54a]" /> AI Agents
+                        </button>
+                        <button onClick={() => scrollToSection('token-factory')} className="text-sm font-bold uppercase text-white py-3 flex items-center gap-3">
+                             <Coins size={16} className="text-[#8b5cf6]" /> Token Factory
+                        </button>
                     </div>
                 </motion.div>
             )}
         </AnimatePresence>
       </nav>
 
-      {/* -------------------- HERO (ABOVE THE FOLD) -------------------- */}
+      {/* -------------------- HERO -------------------- */}
       <div className="min-h-[calc(100vh-64px)] flex flex-col relative z-10">
-        
-        {/* Marquee Ticker */}
         <div className="w-full bg-[#111111]/90 border-b border-[#1f1f1f] h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
-          <div className="animate-marquee flex space-x-8 px-4">
-            {[...MOCK_TICKER, ...MOCK_TICKER, ...MOCK_TICKER].map((item, i) => (
-              <span key={i} className="font-mono text-xs text-[#666666]">
-                <span className="text-white font-bold">{item.user}</span> just shipped <span className="text-[#39b54a]">{item.app}</span> ({item.gain})
+          <div className="animate-marquee flex space-x-12 px-4">
+            {[...MOCK_TICKER, ...MOCK_TICKER].map((item, i) => (
+              <span key={i} className="font-mono text-xs text-[#666666] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#39b54a] animate-pulse"></span>
+                <span className="text-white font-bold">{item.user}</span> deployed <span className="text-[#39b54a]">{item.app}</span> ({item.gain})
               </span>
             ))}
           </div>
         </div>
 
-        {/* Main Input Area */}
         <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-12 md:py-20">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="w-full"
-          >
+             {/* ... Hero Content ... */}
              <div className="flex justify-center mb-6">
-                <Badge color="text-[#8b5cf6]">AI VENTURE PROTOCOL V1.0</Badge>
+                <Badge color="text-[#8b5cf6] border-[#8b5cf6] bg-[#8b5cf6]/10">AI VENTURE PROTOCOL V1.0</Badge>
              </div>
              
              <div className="flex justify-center">
@@ -498,17 +261,12 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                />
              </div>
              
-             {/* ENHANCED INTRO TEXT */}
              <ScrollFade delay={0.4} className="max-w-2xl mx-auto text-center mb-12">
-                <p className="text-[#39b54a] font-bold tracking-[0.2em] text-[10px] md:text-xs uppercase mb-4">
+                <p className="text-[#39b54a] font-bold tracking-[0.2em] text-[10px] md:text-xs uppercase mb-4 animate-pulse">
                     Venture-as-a-Service Protocol
                 </p>
                 <p className="text-[#cccccc] text-base md:text-xl font-light leading-relaxed mb-6 px-4">
                     Launch a fully functional dApp, token, and liquidity market from a single text prompt.
-                </p>
-                <p className="text-[#666666] text-xs md:text-sm font-mono leading-relaxed max-w-lg mx-auto px-4">
-                    Limetred replaces weeks of full-stack engineering with 30 seconds of AI generation. 
-                    Architected for Solana, Base, and Ethereum.
                 </p>
             </ScrollFade>
 
@@ -520,44 +278,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     placeholder="Describe your billion-dollar idea..." 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="text-xl md:text-4xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-24 md:h-32 pr-12"
+                    className="text-xl md:text-3xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-24 md:h-32 pr-12 rounded-none"
                   />
-                  
-                  {/* Image Upload Trigger */}
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
-                    <button 
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className={`p-2 rounded-full transition-colors ${selectedImage ? 'text-[#39b54a] bg-[#39b54a]/10' : 'text-[#666] hover:text-white'}`}
-                        title="Analyze Screenshot"
-                    >
-                        <ImageIcon size={20} />
-                    </button>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                    />
+                    <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full text-[#666] hover:text-white transition-colors"><ImageIcon size={20} /></button>
+                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                   </div>
-
-                  <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#39b54a] to-transparent opacity-50" />
                 </div>
                 
-                {/* Image Preview Tag */}
                 <AnimatePresence>
                     {selectedImage && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="mt-2 flex justify-center"
-                        >
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2 flex justify-center">
                             <div className="flex items-center gap-2 bg-[#111] border border-[#39b54a] px-3 py-1 rounded-full text-xs text-[#39b54a]">
-                                <Paperclip size={12} />
-                                <span>Image attached for analysis</span>
-                                <button onClick={() => setSelectedImage(null)} className="ml-2 hover:text-white"><X size={12}/></button>
+                                <Paperclip size={12} /><span>Image attached</span><button onClick={() => setSelectedImage(null)}><X size={12}/></button>
                             </div>
                         </motion.div>
                     )}
@@ -570,52 +303,22 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
               </form>
             </ScrollFade>
-          </motion.div>
         </div>
-
-        {/* Scroll Indicator */}
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ delay: 2, duration: 1 }}
-          className="absolute bottom-8 left-0 right-0 flex flex-col items-center justify-center text-[#666666] gap-2 pointer-events-none"
-        >
-          <span className="font-mono text-[10px] uppercase tracking-widest">Protocol Specs</span>
-          <ChevronDown className="animate-bounce" size={16} />
-        </motion.div>
-
-        {/* Removed static background grid to let Canvas shine */}
       </div>
 
-      {/* -------------------- LAUNCHPAD SECTION -------------------- */}
+      {/* -------------------- LAUNCHPAD -------------------- */}
       <section id="launchpad" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#8b5cf6]">PHASE 1: INCUBATION</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
-                        The Fair Launch <br/> <span className="text-[#39b54a]">Bonding Curve</span>
-                    </h2>
-                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
-                        Every app generated on Limetred starts on a mathematical bonding curve. 
-                        No pre-sale. No insiders. Just pure price discovery.
-                    </p>
-                    <ul className="space-y-4 mb-8">
-                        <ListItem text="Start Market Cap: $1k" />
-                        <ListItem text="Graduation Target: $60k" />
-                        <ListItem text="Trading Fee: 1%" />
-                    </ul>
-                    <Button variant="outline" className="flex items-center gap-2 w-full md:w-auto justify-center" onClick={onOpenLaunchpad}>
-                        VIEW LIVE CURVES <ArrowRight size={16} />
-                    </Button>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">The Fair Launch <br/> <span className="text-[#39b54a]">Bonding Curve</span></h2>
+                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Every app generated on Limetred starts on a mathematical bonding curve. No pre-sale. No insiders. Just pure price discovery.</p>
+                    <Button variant="outline" className="flex items-center gap-2 w-full md:w-auto justify-center" onClick={onOpenLaunchpad}>OPEN LAUNCHPAD APP <ArrowRight size={16} /></Button>
                 </div>
-                
                 <div className="flex-1 w-full relative">
-                     {/* Visual Representation of Curve */}
                      <Card className="h-[300px] md:h-[400px] flex items-center justify-center relative border-l-4 border-l-[#39b54a] bg-[#0c0c0c]">
-                        <div className="absolute inset-0 opacity-20" 
-                             style={{ backgroundImage: 'radial-gradient(#39b54a 1px, transparent 1px)', backgroundSize: '20px 20px' }} 
-                        />
+                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#39b54a 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
                         <div className="w-full h-full p-8 flex items-end">
                             <div className="w-full h-full relative">
                                 <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
@@ -623,9 +326,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                     <circle cx="0" cy="100" r="2" fill="#39b54a" className="animate-ping" />
                                     <circle cx="100" cy="0" r="2" fill="#fff" />
                                 </svg>
-                                <div className="absolute top-0 right-0 bg-[#39b54a] text-black text-xs font-bold px-2 py-1 transform translate-x-1/2 -translate-y-1/2">
-                                    {activeChain.dex.toUpperCase()} MIGRATION
-                                </div>
                             </div>
                         </div>
                      </Card>
@@ -634,165 +334,174 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
-      {/* -------------------- DEX SECTION -------------------- */}
-      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative">
+      {/* -------------------- DEX SECTION (FIXED ID) -------------------- */}
+      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#8b5cf6]/5 to-transparent pointer-events-none"></div>
         <ScrollFade className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
-                <div className="flex-1">
+            <div className="flex flex-col md:flex-row gap-12 items-start">
+                
+                {/* Left: Info */}
+                <div className="flex-1 sticky top-24">
                     <Badge color="text-[#39b54a]">PHASE 2: TRADING</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
-                        Instant Liquidity <br/> <span className="text-[#8b5cf6]">On {activeChain.dex}</span>
-                    </h2>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">Limetred <br/> <span className="text-[#8b5cf6]">Terminal</span></h2>
                     <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
-                        Once a curve completes, liquidity is automatically seeded into a {activeChain.dex} AMM pool and burned.
-                        Limetred apps are composable with the entire {activeChain.name} ecosystem instantly.
+                        A fully integrated aggregation layer. Swap tokens, bridge assets, and provide liquidity directly from the protocol interface.
                     </p>
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
-                            <Repeat size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase text-sm">Auto-Swap</h4>
-                            <p className="text-[#666666] text-xs">Seamless routing through aggregators.</p>
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-4 p-4 border border-[#1f1f1f] bg-[#111]">
+                            <ScanLine className="text-[#39b54a] mt-1" size={20} />
+                            <div>
+                                <h4 className="text-white font-bold text-sm uppercase">AI Safety Layer</h4>
+                                <p className="text-[#666] text-xs mt-1">Every transaction is simulated. The AI warns you of honey-pots, high taxes, or ownership issues.</p>
+                            </div>
                         </div>
-                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
-                            <Lock size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase text-sm">LP Burned</h4>
-                            <p className="text-[#666666] text-xs">Liquidity tokens are sent to a burn address.</p>
+                        <div className="flex items-start gap-4 p-4 border border-[#1f1f1f] bg-[#111]">
+                            <BarChart3 className="text-[#8b5cf6] mt-1" size={20} />
+                            <div>
+                                <h4 className="text-white font-bold text-sm uppercase">Advanced Charting</h4>
+                                <p className="text-[#666] text-xs mt-1">Real-time TradingView integration with on-chain data overlays.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                {/* Right: DEX Interface */}
                 <div className="flex-1 w-full">
-                    {/* Mock DEX Interface */}
-                    <Card className="max-w-md mx-auto relative overflow-hidden group hover:border-[#8b5cf6] transition-colors">
-                        <div className="flex justify-between items-center mb-6">
-                            <span className="font-bold uppercase">Swap</span>
-                            <span className="text-xs text-[#666666] font-mono">SLIPPAGE: 0.5%</span>
+                    <Card className="max-w-md mx-auto relative overflow-hidden group hover:border-[#8b5cf6] transition-colors p-0 bg-[#000]">
+                        <div className="flex border-b border-[#1f1f1f]">
+                            {['SWAP', 'POOL', 'BRIDGE'].map(tab => (
+                                <button 
+                                    key={tab}
+                                    onClick={() => setDexTab(tab as any)}
+                                    className={`flex-1 py-4 text-xs font-bold uppercase tracking-wider transition-colors ${dexTab === tab ? 'text-[#39b54a] bg-[#39b54a]/5 border-b-2 border-[#39b54a]' : 'text-[#666] hover:text-white'}`}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
                         </div>
                         
-                        <div className="bg-[#0c0c0c] p-4 mb-2 border border-[#1f1f1f]">
-                            <div className="flex justify-between mb-2">
-                                <span className="text-xs text-[#666666]">YOU PAY</span>
-                                <span className="text-xs text-[#666666]">BALANCE: {isConnected ? walletBalance.native.toFixed(2) : '--'} {activeChain.symbol}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <input 
-                                    type="number"
-                                    value={swapAmount}
-                                    onChange={(e) => setSwapAmount(e.target.value)}
-                                    className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none"
-                                />
-                                <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">{activeChain.symbol}</span>
-                            </div>
-                        </div>
+                        <div className="p-6">
+                            <AnimatePresence mode="wait">
+                                {dexTab === 'SWAP' && (
+                                    <motion.div key="swap" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <span className="font-bold uppercase text-white">Market Order</span>
+                                            <span className="text-xs text-[#666666] font-mono">SLIPPAGE: AUTO</span>
+                                        </div>
+                                        
+                                        <div className="bg-[#111] p-4 mb-2 border border-[#333] hover:border-[#666] transition-colors relative">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs text-[#666666] font-bold">PAY</span>
+                                                <span className="text-xs text-[#666666]">BAL: {isConnected ? walletBalance.native.toFixed(4) : '--'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <input 
+                                                    type="number"
+                                                    value={swapAmount}
+                                                    onChange={(e) => setSwapAmount(e.target.value)}
+                                                    className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none placeholder-[#333]"
+                                                    placeholder="0.00"
+                                                />
+                                                <button className="bg-[#1f1f1f] px-3 py-1 text-xs font-bold rounded-full flex items-center gap-2 hover:bg-[#333]">
+                                                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: activeChain.color }}></div>
+                                                    {activeChain.symbol} <ChevronDown size={12}/>
+                                                </button>
+                                            </div>
+                                        </div>
 
-                        <div className="flex justify-center -my-3 relative z-10">
-                            <div className="bg-[#111111] p-2 border border-[#1f1f1f] rounded-full">
-                                <ChevronDown size={16} />
-                            </div>
-                        </div>
+                                        <div className="flex justify-center -my-3 relative z-10">
+                                            <div className="bg-[#000] p-2 border border-[#333] rounded-full hover:border-[#39b54a] transition-all cursor-pointer">
+                                                <ArrowLeftRight size={16} className="rotate-90 text-[#39b54a]" />
+                                            </div>
+                                        </div>
 
-                        <div className="bg-[#0c0c0c] p-4 mt-2 mb-6 border border-[#1f1f1f]">
-                            <div className="flex justify-between mb-2">
-                                <span className="text-xs text-[#666666]">YOU RECEIVE</span>
-                                <span className="text-xs text-[#666666]">EST: {(parseFloat(swapAmount || '0') * 14020).toLocaleString()} LMT</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-2xl font-bold font-mono text-[#39b54a]">
-                                    {(parseFloat(swapAmount || '0') * 14020.5).toLocaleString(undefined, { maximumFractionDigits: 1 })}
-                                </span>
-                                <span className="bg-[#1f1f1f] px-2 py-1 text-xs font-bold rounded-none">LMT</span>
-                            </div>
-                        </div>
+                                        <div className="bg-[#111] p-4 mt-2 mb-6 border border-[#333] hover:border-[#666] transition-colors">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs text-[#666666] font-bold">RECEIVE</span>
+                                                <span className="text-xs text-[#666666]">EST: {(parseFloat(swapAmount || '0') * 14020).toLocaleString()} LMT</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-2xl font-bold font-mono text-[#39b54a]">
+                                                    {(parseFloat(swapAmount || '0') * 14020.5).toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                                                </span>
+                                                <button className="bg-[#1f1f1f] px-3 py-1 text-xs font-bold rounded-full flex items-center gap-2 hover:bg-[#333]">
+                                                    <div className="w-4 h-4 rounded-full bg-[#39b54a]"></div>
+                                                    LMT <ChevronDown size={12}/>
+                                                </button>
+                                            </div>
+                                        </div>
 
-                        <Button 
-                            fullWidth 
-                            variant={swapSuccess ? 'primary' : hasInsufficientFunds ? 'outline' : 'secondary'} 
-                            onClick={handleSwapClick}
-                            disabled={!isConnected || hasInsufficientFunds || amountVal <= 0 || swapSuccess}
-                            className={hasInsufficientFunds ? "border-red-500 text-red-500 hover:bg-red-500/10" : ""}
-                        >
-                            {swapSuccess ? 'SWAP SUCCESSFUL' : !isConnected ? 'CONNECT WALLET TO SWAP' : hasInsufficientFunds ? 'INSUFFICIENT FUNDS' : 'SWAP TOKENS'}
-                        </Button>
+                                        <Button 
+                                            fullWidth 
+                                            variant={swapSuccess ? 'primary' : hasInsufficientFunds ? 'outline' : 'secondary'} 
+                                            onClick={handleSwapClick}
+                                            disabled={!isConnected || hasInsufficientFunds || amountVal <= 0 || swapSuccess || isRiskScanning}
+                                            className={hasInsufficientFunds ? "border-red-500 text-red-500 hover:bg-red-500/10" : ""}
+                                        >
+                                            {isRiskScanning ? <><Loader2 className="animate-spin mr-2"/> CHECKING...</> : swapSuccess ? 'SWAP SUCCESSFUL' : !isConnected ? 'CONNECT WALLET' : hasInsufficientFunds ? 'INSUFFICIENT FUNDS' : 'SWAP TOKENS'}
+                                        </Button>
+                                    </motion.div>
+                                )}
+                                {dexTab === 'POOL' && (
+                                     <motion.div key="pool" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-6">
+                                         <Droplets size={32} className="mx-auto text-[#666] mb-4" />
+                                         <p className="text-xs text-[#888] mb-4">Provide liquidity to earn 0.25% fees.</p>
+                                         <Button fullWidth variant="outline">ADD LIQUIDITY</Button>
+                                     </motion.div>
+                                )}
+                                {dexTab === 'BRIDGE' && (
+                                     <motion.div key="bridge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-6">
+                                         <Network size={32} className="mx-auto text-[#666] mb-4" />
+                                         <p className="text-xs text-[#888] mb-4">Transfer assets across chains.</p>
+                                         <Button fullWidth variant="outline">BRIDGE ASSETS</Button>
+                                     </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </Card>
                 </div>
             </div>
         </ScrollFade>
       </section>
 
-      {/* -------------------- AI AGENTS SECTION -------------------- */}
-      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden">
+      {/* -------------------- AGENTS SECTION (FIXED ID) -------------------- */}
+      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden scroll-mt-20">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#39b54a]">PHASE 3: AUTOMATION</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
-                        Deploy Autonomous <br/> <span className="text-[#39b54a]">AI Agents</span>
-                    </h2>
-                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
-                        Spin up specialized AI agents to manage your protocol, optimize yield, or trade on your behalf. 
-                        Fully non-custodial and verifiable on-chain.
-                    </p>
-                    <ul className="space-y-4 mb-8">
-                        <ListItem text="24/7 Market Monitoring" />
-                        <ListItem text="MEV-Protected Execution" />
-                        <ListItem text="Sentiment Analysis Integration" />
-                    </ul>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">Deploy Autonomous <br/> <span className="text-[#39b54a]">AI Agents</span></h2>
+                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Spin up specialized AI agents to manage your protocol, optimize yield, or trade on your behalf.</p>
                 </div>
                 
                 <div className="flex-1 w-full relative">
-                     <Card className="max-w-md mx-auto relative overflow-hidden group border-t-4 border-t-[#39b54a]">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-[#39b54a]/10 border border-[#39b54a] flex items-center justify-center rounded-full">
+                     <Card className="max-w-md mx-auto relative overflow-hidden group border-t-4 border-t-[#39b54a] bg-[#0c0c0c]">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
                                 <Bot size={20} className="text-[#39b54a]" />
-                            </div>
-                            <div>
                                 <h3 className="font-bold text-white uppercase">Agent Constructor</h3>
-                                <p className="text-xs text-[#666666] font-mono">v1.0.2-beta</p>
                             </div>
+                            <span className="text-[10px] text-[#39b54a] font-mono">ONLINE</span>
                         </div>
-
                         <div className="space-y-4">
-                            <div>
-                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Primary Function</label>
-                                <div className="relative">
-                                    <select 
-                                        value={agentFunction}
-                                        onChange={(e) => setAgentFunction(e.target.value)}
-                                        className="w-full bg-[#0c0c0c] border border-[#1f1f1f] text-white p-3 appearance-none outline-none focus:border-[#39b54a] text-sm font-mono uppercase"
-                                    >
-                                        <option>Trading Bot</option>
-                                        <option>Portfolio Manager</option>
-                                        <option>Yield Optimizer</option>
-                                        <option>Sentiment Analyst</option>
-                                        <option>Risk Guardian</option>
-                                    </select>
-                                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] pointer-events-none" />
-                                </div>
-                            </div>
-
                             <div>
                                 <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Agent Directives</label>
                                 <textarea 
                                     value={agentPurpose}
                                     onChange={(e) => setAgentPurpose(e.target.value)}
-                                    placeholder="e.g. Accumulate ETH when RSI < 30, sell when RSI > 70..."
-                                    className="w-full bg-[#0c0c0c] border border-[#1f1f1f] text-white p-3 outline-none focus:border-[#39b54a] text-sm min-h-[100px] resize-none font-mono"
+                                    placeholder="Define agent behavior..."
+                                    className="w-full bg-[#111] border border-[#333] text-white p-3 outline-none focus:border-[#39b54a] text-sm min-h-[100px] font-mono"
                                 />
                             </div>
-
-                            <Button 
-                                fullWidth 
-                                onClick={handleGenerateAgent}
-                                disabled={isGeneratingAgent || !agentPurpose}
-                                className="flex items-center justify-center gap-2"
-                            >
-                                {isGeneratingAgent ? (
-                                    <><Loader2 className="animate-spin" size={16} /> INITIALIZING AGENT...</>
-                                ) : agentSuccess ? (
-                                    <><CheckCircle size={16} /> AGENT DEPLOYED</>
-                                ) : (
-                                    <><Zap size={16} /> GENERATE AGENT</>
+                            <AnimatePresence>
+                                {isGeneratingAgent && (
+                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="bg-black border border-[#333] p-3 font-mono text-[10px] text-[#39b54a] h-24 overflow-y-auto">
+                                        {agentLogs.map((log, i) => <div key={i}>{log}</div>)}
+                                    </motion.div>
                                 )}
+                            </AnimatePresence>
+                            <Button fullWidth onClick={handleGenerateAgent} disabled={isGeneratingAgent || !agentPurpose} className="flex items-center justify-center gap-2">
+                                {isGeneratingAgent ? <><Loader2 className="animate-spin" size={16} /> INITIALIZING...</> : agentSuccess ? <><CheckCircle size={16} /> AGENT DEPLOYED</> : <><Terminal size={16} /> GENERATE AGENT</>}
                             </Button>
                         </div>
                      </Card>
@@ -801,105 +510,29 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
-      {/* -------------------- TOKEN FACTORY SECTION -------------------- */}
-      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative">
+      {/* -------------------- TOKEN FACTORY (FIXED ID) -------------------- */}
+      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
                 <div className="flex-1">
                     <Badge color="text-[#39b54a]">PHASE 4: TOKEN FACTORY</Badge>
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">
-                        Standardized <br/> <span className="text-[#8b5cf6]">Token Generation</span>
-                    </h2>
-                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">
-                        Launch your own custom ERC20 token in seconds. Define your parameters and let Limetred deploy a secure, verified contract to the network of your choice.
-                    </p>
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
-                            <Coins size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase text-sm">Custom Specs</h4>
-                            <p className="text-[#666666] text-xs">Full control over supply and precision.</p>
-                        </div>
-                        <div className="bg-[#111111] p-4 border border-[#1f1f1f]">
-                            <Shield size={24} className="text-[#8b5cf6] mb-2" />
-                            <h4 className="font-bold text-white uppercase text-sm">Verified Code</h4>
-                            <p className="text-[#666666] text-xs">Standard OpenZeppelin implementations.</p>
-                        </div>
-                    </div>
+                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-6 text-white">Standardized <br/> <span className="text-[#8b5cf6]">Token Generation</span></h2>
+                    <p className="text-[#666666] text-base md:text-lg leading-relaxed mb-8">Launch your own custom ERC20 token in seconds.</p>
                 </div>
-
                 <div className="flex-1 w-full">
-                    {/* Token Generator Interface */}
-                    <Card className="max-w-md mx-auto relative overflow-hidden group hover:border-[#8b5cf6] transition-colors border-t-4 border-t-[#8b5cf6]">
+                    <Card className="max-w-md mx-auto relative overflow-hidden group hover:border-[#8b5cf6] transition-colors border-t-4 border-t-[#8b5cf6] bg-[#0c0c0c]">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-[#8b5cf6]/10 border border-[#8b5cf6] flex items-center justify-center rounded-full">
-                                <Coins size={20} className="text-[#8b5cf6]" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-white uppercase">Token Constructor</h3>
-                                <p className="text-xs text-[#666666] font-mono">ERC20 Standard</p>
-                            </div>
+                            <Coins size={20} className="text-[#8b5cf6]" />
+                            <h3 className="font-bold text-white uppercase">Token Constructor</h3>
                         </div>
-                        
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Token Name</label>
-                                    <Input 
-                                        placeholder="e.g. Limetred" 
-                                        value={tokenName}
-                                        onChange={(e) => setTokenName(e.target.value)}
-                                        className="py-2 text-sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Symbol</label>
-                                    <Input 
-                                        placeholder="e.g. LMT" 
-                                        value={tokenSymbol}
-                                        onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
-                                        className="py-2 text-sm uppercase"
-                                        maxLength={5}
-                                    />
-                                </div>
+                                <div><label className="text-xs font-bold text-[#666] block mb-1">Name</label><Input value={tokenName} onChange={e => setTokenName(e.target.value)} placeholder="Bitcoin 2" className="py-2 text-sm"/></div>
+                                <div><label className="text-xs font-bold text-[#666] block mb-1">Symbol</label><Input value={tokenSymbol} onChange={e => setTokenSymbol(e.target.value.toUpperCase())} placeholder="BTC2" className="py-2 text-sm uppercase"/></div>
                             </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Total Supply</label>
-                                <Input 
-                                    type="number"
-                                    placeholder="e.g. 1000000000" 
-                                    value={tokenSupply}
-                                    onChange={(e) => setTokenSupply(e.target.value)}
-                                    className="py-2 text-sm"
-                                    min={0}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Decimals</label>
-                                <Input 
-                                    type="number"
-                                    placeholder="18" 
-                                    value={tokenDecimals}
-                                    onChange={(e) => setTokenDecimals(e.target.value)}
-                                    className="py-2 text-sm"
-                                    min={0}
-                                    max={18}
-                                />
-                            </div>
-
-                            <Button 
-                                fullWidth 
-                                onClick={handleTokenGenClick}
-                                disabled={isGeneratingToken || !tokenName || !tokenSymbol || !tokenSupply}
-                                className="flex items-center justify-center gap-2 mt-2"
-                                variant="secondary"
-                            >
-                                {isGeneratingToken ? (
-                                    <><Loader2 className="animate-spin" size={16} /> GENERATING CONTRACT...</>
-                                ) : (
-                                    <><Zap size={16} /> GENERATE TOKEN</>
-                                )}
+                            <div><label className="text-xs font-bold text-[#666] block mb-1">Supply</label><Input type="number" value={tokenSupply} onChange={e => setTokenSupply(e.target.value)} className="py-2 text-sm"/></div>
+                            <Button fullWidth onClick={handleTokenGenClick} disabled={isGeneratingToken || !tokenName} variant="secondary">
+                                {isGeneratingToken ? <><Loader2 className="animate-spin" size={16} /> DEPLOYING...</> : <><Zap size={16} /> DEPLOY TOKEN</>}
                             </Button>
                         </div>
                     </Card>
@@ -908,237 +541,52 @@ const HeroSection: React.FC<HeroSectionProps> = ({
         </ScrollFade>
       </section>
 
-      {/* -------------------- DOCUMENTATION SECTION -------------------- */}
-      <div className="bg-[#111111]/95 backdrop-blur-md border-t border-[#1f1f1f] relative z-20 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]">
-        {/* Features Grid */}
-        <div className="max-w-7xl mx-auto px-6 py-24">
-            <ScrollFade>
-                <div className="mb-16">
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-4">Core Protocol <br/> <span className="text-[#666666]">Features</span></h2>
-                    <div className="w-24 h-1 bg-[#39b54a]"></div>
-                </div>
-            </ScrollFade>
-
-            <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                <StaggerItem>
-                    <FeatureCard 
-                        icon={<Cpu size={32} className="text-[#8b5cf6]" />}
-                        title="Generative Architecture"
-                        description="Limetred doesn't just write code. It architects full-stack dApps with React frontends and Solidity backends tailored to your exact prompt requirements."
-                        step="01"
-                    />
-                </StaggerItem>
-                <StaggerItem>
-                    <FeatureCard 
-                        icon={<Activity size={32} className="text-[#39b54a]" />}
-                        title="Liquidity Bonding"
-                        description="No initial capital required. We launch your token on an internal bonding curve. At $60k market cap, liquidity migrates to Raydium automatically."
-                        step="02"
-                    />
-                </StaggerItem>
-                <StaggerItem>
-                    <FeatureCard 
-                        icon={<Shield size={32} className="text-white" />}
-                        title="Anti-Rug Standards"
-                        description="All generated contracts include hard-coded safety: Liquidity Locking, Renounced Ownership, and max-wallet caps to prevent sniper dominance."
-                        step="03"
-                    />
-                </StaggerItem>
-            </StaggerContainer>
-            
-            {/* Multi-Chain Support Bar */}
-            <ScrollFade className="border-t border-[#1f1f1f] pt-12">
-                 <h4 className="text-[#666666] text-xs font-bold uppercase tracking-widest mb-8 text-center">Supported Networks</h4>
-                 <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-70 grayscale hover:grayscale-0 transition-all duration-500">
-                    {Object.values(CHAINS).map(chain => (
-                        <div key={chain.id} className="flex items-center gap-2">
-                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: chain.color }}></div>
-                             <span className="font-bold text-white text-lg">{chain.name}</span>
-                        </div>
-                    ))}
-                 </div>
-            </ScrollFade>
-        </div>
-
-        {/* Comparison Section */}
-        <div className="border-t border-[#1f1f1f] bg-[#0c0c0c] py-24">
-            <ScrollFade className="max-w-7xl mx-auto px-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                    <div>
-                        <h3 className="font-mono text-[#39b54a] text-sm mb-2">WHY LIMETRED?</h3>
-                        <h2 className="text-3xl md:text-4xl font-bold uppercase mb-6">Stop wasting weeks <br/> on boilerplate.</h2>
-                        <p className="text-[#666666] mb-8 leading-relaxed max-w-md">
-                            Traditional web3 development is slow, expensive, and fragmented. 
-                            Limetred consolidates the entire venture lifecycle—from IDE to DEX—into a single 30-second workflow.
-                        </p>
-                        <Button 
-                            variant="outline" 
-                            className="flex items-center gap-2"
-                            onClick={(e) => openModal(e, 'WHITEPAPER')}
-                        >
-                            READ THE WHITEPAPER <ArrowRight size={16} />
-                        </Button>
-                    </div>
-
-                    <div className="border border-[#1f1f1f] bg-[#111111]">
-                        <div className="grid grid-cols-3 border-b border-[#1f1f1f] p-4 text-[10px] font-mono uppercase text-[#666666]">
-                            <div className="col-span-1">Feature</div>
-                            <div className="col-span-1 text-center">Manual Dev</div>
-                            <div className="col-span-1 text-center text-[#39b54a]">Limetred</div>
-                        </div>
-                        <ComparisonRow feature="Time to Market" bad="3-4 Weeks" good="30 Seconds" />
-                        <ComparisonRow feature="Audit Cost" bad="$5,000+" good="Built-in Standard" />
-                        <ComparisonRow feature="Liquidity Setup" bad="Complex & Expensive" good="Bonding Curve (Free)" />
-                        <ComparisonRow feature="Frontend Hosting" bad="Vercel / AWS" good="Decentralized Stream" />
-                        <ComparisonRow feature="Revenue Model" bad="0%" good="5% Perpetual Royalties" />
-                    </div>
-                </div>
-            </ScrollFade>
-        </div>
-      </div>
-
-      {/* -------------------- FOOTER -------------------- */}
+      {/* ... Footer ... */}
       <footer className="bg-[#0c0c0c] border-t border-[#1f1f1f] py-16 relative z-20">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
+         {/* Kept existing footer */}
+         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
             <div className="text-left">
                 <div className="flex items-center gap-2 mb-2">
                     <Logo />
                     <h4 className="text-2xl font-black uppercase tracking-tighter text-white">Limetred<span className="text-[#39b54a]">.</span></h4>
                 </div>
                 <p className="text-[#666666] text-xs font-mono max-w-xs leading-relaxed mb-6">
-                    The Venture-as-a-Service protocol for the high-frequency economy. <br/>
-                    Built for speed. Secured by math.
+                    The Venture-as-a-Service protocol. <br/> Built for speed. Secured by math.
                 </p>
-                <div className="flex items-center gap-2">
-                     <div className="w-2 h-2 bg-[#39b54a] rounded-full animate-pulse"></div>
-                     <span className="text-[#39b54a] text-xs font-mono uppercase">System Operational</span>
-                </div>
             </div>
-
-            <div className="flex flex-col md:flex-row gap-8 md:gap-16">
-                 <div>
-                    <h5 className="font-bold uppercase text-white mb-4 text-sm tracking-wider">Protocol</h5>
-                    <div className="flex flex-col gap-3">
-                        <FooterLink label="Documentation" onClick={(e) => openModal(e, 'DOCS')} />
-                        <FooterLink label="Tokenomics" onClick={(e) => openModal(e, 'TOKENOMICS')} />
-                        <FooterLink label="Bug Bounty" onClick={(e) => openModal(e, 'BOUNTY')} />
-                        <FooterLink label="Audits" onClick={(e) => openModal(e, 'AUDITS')} />
-                        <FooterLink label="Vesting" onClick={(e) => openModal(e, 'VESTING')} />
-                    </div>
-                 </div>
-                 <div>
-                    <h5 className="font-bold uppercase text-white mb-4 text-sm tracking-wider">Community</h5>
-                    <div className="flex flex-col gap-3">
-                        <FooterLink label="Twitter / X" icon={<Twitter size={14}/>} />
-                        <FooterLink label="Discord" icon={<Disc size={14}/>} />
-                        <FooterLink label="GitHub" icon={<Github size={14}/>} />
-                    </div>
-                 </div>
+            <div className="flex flex-col gap-3">
+                <button onClick={(e) => openModal(e, 'DOCS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left">Documentation</button>
+                <button onClick={(e) => openModal(e, 'TOKENOMICS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left">Tokenomics</button>
+                <button onClick={(e) => openModal(e, 'AUDITS')} className="text-xs text-[#666] hover:text-white uppercase font-bold text-left">Security Audits</button>
             </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-[#1f1f1f] flex flex-col md:flex-row justify-between items-center text-[10px] text-[#444] font-mono uppercase">
-            <span>© 2024 Limetred Protocol. All rights reserved.</span>
-            <span>v1.0.4-beta</span>
         </div>
       </footer>
-
-      {/* -------------------- INFO MODALS -------------------- */}
+      
+      {/* Modals */}
       <AnimatePresence>
         {activeModal && PROTOCOL_CONTENT[activeModal] && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
             onClick={() => setActiveModal(null)}
           >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-[#111111] border border-[#39b54a] w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-[0_0_50px_rgba(57,181,74,0.2)] flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 border-b border-[#1f1f1f] bg-[#0c0c0c] sticky top-0 z-10">
-                <div className="flex items-center gap-3">
-                  {PROTOCOL_CONTENT[activeModal].icon}
-                  <h3 className="text-xl font-black uppercase tracking-wider text-white">
-                    {PROTOCOL_CONTENT[activeModal].title}
-                  </h3>
+            <motion.div className="bg-[#111111] border border-[#39b54a] w-full max-w-2xl p-8" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-black uppercase text-white">{PROTOCOL_CONTENT[activeModal].title}</h3>
+                    <button onClick={() => setActiveModal(null)}><X className="text-[#666] hover:text-white"/></button>
                 </div>
-                <button 
-                  onClick={() => setActiveModal(null)}
-                  className="text-[#666666] hover:text-white transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              {/* Modal Content */}
-              <div className="p-8">
                 {PROTOCOL_CONTENT[activeModal].content}
-              </div>
-
-              {/* Modal Footer */}
-              <div className="p-4 border-t border-[#1f1f1f] bg-[#0c0c0c] text-center">
-                 <span className="text-[#39b54a] text-xs font-mono uppercase animate-pulse">
-                    Encrypting Connection... Verified.
-                 </span>
-              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <style>{`
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-33.33%); }
-        }
+        .animate-marquee { animation: marquee 30s linear infinite; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
       `}</style>
-    </motion.div>
+    </div>
   );
 };
-
-// Sub-components for cleaner code
-const FeatureCard: React.FC<{ icon: React.ReactNode, title: string, description: string, step: string }> = ({ icon, title, description, step }) => (
-    <div className="border border-[#1f1f1f] bg-[#0c0c0c] p-8 hover:border-[#39b54a] transition-colors group relative overflow-hidden h-full">
-        <div className="absolute top-0 right-0 p-4 font-mono text-4xl font-bold text-[#1f1f1f] group-hover:text-[#1a1a1a] transition-colors select-none">
-            {step}
-        </div>
-        <div className="mb-6 opacity-80 group-hover:opacity-100 transition-opacity">{icon}</div>
-        <h3 className="text-xl font-bold uppercase mb-4 tracking-wide text-white">{title}</h3>
-        <p className="text-[#666666] text-sm leading-relaxed">{description}</p>
-    </div>
-);
-
-const ListItem: React.FC<{ text: string }> = ({ text }) => (
-    <li className="flex items-center gap-3 text-[#666666]">
-        <div className="w-1.5 h-1.5 bg-[#39b54a]"></div>
-        <span className="font-mono text-sm">{text}</span>
-    </li>
-);
-
-const ComparisonRow: React.FC<{ feature: string, bad: string, good: string }> = ({ feature, bad, good }) => (
-    <div className="grid grid-cols-3 border-b border-[#1f1f1f] p-4 text-xs last:border-0 hover:bg-[#1a1a1a] transition-colors items-center">
-        <div className="col-span-1 font-bold text-white">{feature}</div>
-        <div className="col-span-1 text-center text-[#666666] line-through decoration-red-500/30">{bad}</div>
-        <div className="col-span-1 text-center text-[#39b54a] font-mono font-bold">{good}</div>
-    </div>
-);
-
-const FooterLink: React.FC<{ icon?: React.ReactNode, label: string, onClick?: (e: React.MouseEvent) => void }> = ({ icon, label, onClick }) => (
-    <a 
-        href="#" 
-        onClick={onClick}
-        className="flex items-center gap-2 text-[#666666] hover:text-white transition-colors text-xs font-bold uppercase tracking-wide group"
-    >
-        {icon} <span className="group-hover:translate-x-1 transition-transform">{label}</span>
-    </a>
-);
 
 export default HeroSection;

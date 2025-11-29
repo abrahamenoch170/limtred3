@@ -5,7 +5,7 @@ import { generateProjectAsset, analyzeImage } from '../services/geminiService';
 import { 
   Rocket, Smartphone, CheckCircle, Loader2, Monitor, Tablet, 
   RefreshCw, Maximize2, X, ChevronDown, Image as ImageIcon, Download, Copy, Check, Terminal, Box,
-  RotateCcw, Minus, Plus, Upload, FileJson, ScrollText, AppWindow, RotateCw, Settings, AlertCircle
+  RotateCcw, Minus, Plus, Upload, FileJson, ScrollText, AppWindow, RotateCw, Settings, AlertCircle, ExternalLink
 } from 'lucide-react';
 import { CHAINS } from '../constants';
 
@@ -125,6 +125,14 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
       }
   };
 
+  const handleOpenRemix = () => {
+    if (!appData.contractSnippet) return;
+    const base64Code = btoa(appData.contractSnippet);
+    // Open Remix with the code pre-loaded via the hash parameter
+    const url = `https://remix.ethereum.org/#code=${base64Code}&autoCompile=true`;
+    window.open(url, '_blank');
+  };
+
   const handleConfirmDeploy = async () => {
     setIsDeploying(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -229,6 +237,15 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                   <Box size={12} />
                   SANDBOX ENV: <span className="text-[#39b54a]">ACTIVE</span>
               </div>
+              
+              <button 
+                onClick={handleOpenRemix} 
+                className="bg-[#1f1f1f] text-[#ccc] border border-[#333] px-3 py-1 text-xs font-bold uppercase hover:bg-[#333] hover:text-white flex items-center gap-2 transition-colors"
+                title="Open Smart Contract in Remix IDE"
+              >
+                  <ExternalLink size={12} /> Open in Remix
+              </button>
+
               <button 
                 onClick={() => setShowDeployModal(true)} 
                 className="bg-[#39b54a] text-black px-4 py-1 text-xs font-bold uppercase hover:bg-[#2ea03f] flex items-center gap-2 transition-colors"
