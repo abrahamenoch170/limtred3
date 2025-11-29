@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedApp } from "../types";
 import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
@@ -95,6 +96,9 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              2. Max Tx / Max Wallet limits.
              3. Fee deduction (send tax to marketing wallet, remainder to recipient).
            - **Emergency:** Implement \`withdrawStuckEth()\` to recover funds (protected by \`onlyOwner\` and \`nonReentrant\`).
+           - **Vesting:** Implement \`struct VestingSchedule\` (recipient, startDate, cliffDate, endDate, amount, claimed) and mapping.
+             - Function \`createVestingSchedule(address _recipient, uint256 _startDate, uint256 _cliffDate, uint256 _endDate, uint256 _amount)\` (onlyOwner) which transfers tokens from owner to contract to lock them.
+             - Function \`claimVestedTokens()\` (nonReentrant) for users to claim.
            
            **STANDARD FUNCTIONS:**
            - \`enableTrading()\` (onlyOwner, nonReentrant, whenNotPaused).

@@ -46,6 +46,8 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     error InvalidWallet();
     error TransferFailed();
     error InvalidOwner();
+    error InvalidVestingSchedule();
+    error NothingToClaim();
 
     // --- Tokenomics ---
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
@@ -73,6 +75,19 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate);
     event TaskCompleted(uint256 indexed taskId, address indexed completer);
+
+    // --- Vesting Logic ---
+    struct VestingSchedule {
+        address recipient;
+        uint256 startDate;
+        uint256 cliffDate;
+        uint256 endDate;
+        uint256 amount;
+        uint256 claimed;
+    }
+    mapping(address => VestingSchedule) public vestingSchedules;
+    event VestingCreated(address indexed recipient, uint256 amount);
+    event VestedTokensClaimed(address indexed recipient, uint256 amount);
 
     constructor() ERC20("LimetredGenerated", "LMT") Ownable(msg.sender) {
         marketingWallet = msg.sender;
@@ -135,6 +150,63 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     function withdrawStuckEth() external onlyOwner nonReentrant {
         (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
         if (!success) revert TransferFailed();
+    }
+
+    /**
+     * @dev Create a vesting schedule for a recipient. 
+     * Transfers tokens from Owner to Contract to lock them.
+     */
+    function createVestingSchedule(
+        address _recipient, 
+        uint256 _startDate, 
+        uint256 _cliffDate, 
+        uint256 _endDate, 
+        uint256 _amount
+    ) external onlyOwner {
+        if (_recipient == address(0)) revert InvalidWallet();
+        if (_endDate <= _startDate || _cliffDate < _startDate) revert InvalidVestingSchedule();
+        if (_amount == 0) revert InvalidVestingSchedule();
+
+        // Lock tokens by transferring from owner to this contract
+        _transfer(msg.sender, address(this), _amount);
+
+        vestingSchedules[_recipient] = VestingSchedule({
+            recipient: _recipient,
+            startDate: _startDate,
+            cliffDate: _cliffDate,
+            endDate: _endDate,
+            amount: _amount,
+            claimed: 0
+        });
+
+        emit VestingCreated(_recipient, _amount);
+    }
+
+    // --- User Functions ---
+
+    /**
+     * @dev Claim available vested tokens.
+     */
+    function claimVestedTokens() external nonReentrant {
+        VestingSchedule storage schedule = vestingSchedules[msg.sender];
+        if (schedule.amount == 0) revert InvalidVestingSchedule();
+
+        uint256 vested = 0;
+        if (block.timestamp >= schedule.endDate) {
+            vested = schedule.amount;
+        } else if (block.timestamp >= schedule.cliffDate) {
+            uint256 duration = schedule.endDate - schedule.startDate;
+            uint256 elapsed = block.timestamp - schedule.startDate;
+            vested = (schedule.amount * elapsed) / duration;
+        }
+
+        uint256 claimable = vested - schedule.claimed;
+        if (claimable == 0) revert NothingToClaim();
+
+        schedule.claimed += claimable;
+        _transfer(address(this), msg.sender, claimable);
+
+        emit VestedTokensClaimed(msg.sender, claimable);
     }
 
     // --- View Functions ---
