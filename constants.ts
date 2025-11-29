@@ -35,6 +35,16 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+interface IUniswapV2Router02 {
+    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable;
+    function WETH() external pure returns (address);
+}
+
 contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
 
@@ -56,6 +66,9 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     error LimitTooLow(); // Anti-Honeypot
     error CannotRenounceWhileDisabled(); // Safety
     error BatchLengthMismatch(); // Gas efficient array check
+    error BuybackDisabled();
+    error InsufficientEthForBuyback();
+    error InvalidBuybackPercentage();
 
     // --- Tokenomics ---
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
@@ -71,6 +84,11 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     uint256 public sellTax = 5; // 5%
     address public marketingWallet;
 
+    // --- Buyback System ---
+    IUniswapV2Router02 public immutable router;
+    bool public buybackEnabled;
+    uint256 public buybackPercentage;
+
     // --- Task / Bounty Logic ---
     struct Task {
         string description;
@@ -85,6 +103,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate, address indexed assignee);
     event TaskCompleted(uint256 indexed taskId, address indexed completer);
     event TaskCancelled(uint256 indexed taskId);
+    event BuybackExecuted(uint256 amountEth, uint256 timestamp);
 
     // --- Vesting Logic (Scalable) ---
     struct VestingSchedule {
@@ -104,8 +123,12 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     constructor() ERC20("LimetredGenerated", "LMT") Ownable(msg.sender) {
         marketingWallet = msg.sender;
+        // Placeholder router address (Uniswap V2 Mainnet), allows compilation
+        router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         _mint(msg.sender, TOTAL_SUPPLY);
     }
+
+    receive() external payable {}
 
     // --- Overrides for Reentrancy Protection ---
 
@@ -161,6 +184,36 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
         if (_tokenAddr == address(this) && tradingActive) revert InvalidWallet(); 
         uint256 _amount = IERC20(_tokenAddr).balanceOf(address(this));
         IERC20(_tokenAddr).safeTransfer(_to, _amount);
+    }
+
+    // --- Buyback Logic ---
+
+    function enableBuyback(uint256 _percentage) external onlyOwner {
+        if (_percentage > 100) revert InvalidBuybackPercentage();
+        buybackEnabled = true;
+        buybackPercentage = _percentage;
+    }
+
+    function executeBuyback() external onlyOwner nonReentrant {
+        if (!buybackEnabled) revert BuybackDisabled();
+        uint256 balance = address(this).balance;
+        if (balance == 0) revert InsufficientEthForBuyback();
+
+        uint256 buybackAmount = (balance * buybackPercentage) / 100;
+        
+        address[] memory path = new address[](2);
+        path[0] = router.WETH();
+        path[1] = address(this);
+
+        // Swap ETH for Tokens and burn them (send to dead)
+        router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: buybackAmount}(
+            0,
+            path,
+            address(0xdead),
+            block.timestamp
+        );
+        
+        emit BuybackExecuted(buybackAmount, block.timestamp);
     }
 
     // --- Vesting Management ---

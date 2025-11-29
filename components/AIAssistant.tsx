@@ -3,13 +3,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, Loader2, Sparkles, ShieldAlert, Lock, CheckCircle, ArrowRight, AlertTriangle } from 'lucide-react';
 import { getChatResponse } from '../services/geminiService';
 
-const AIAssistant: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface AIAssistantProps {
+    isOpen?: boolean;
+    onToggle?: () => void;
+}
+
+const AIAssistant: React.FC<AIAssistantProps> = ({ isOpen: externalIsOpen, onToggle }) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<{role: 'user' | 'model', text: string, type?: 'TX_REQUEST', txDetails?: any}[]>([
     { role: 'model', text: "Systems online. I am the Limetred Protocol Assistant. I can help you generate dApps or securely execute transactions. Try 'Send 3 ETH to 0x...'" }
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const toggleOpen = onToggle || (() => setInternalIsOpen(!internalIsOpen));
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -97,7 +105,7 @@ const AIAssistant: React.FC = () => {
                 <Sparkles size={16} className="text-[#39b54a]" />
                 <span className="text-white font-bold text-xs uppercase">Protocol Guardian</span>
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-[#666] hover:text-white">
+              <button onClick={toggleOpen} className="text-[#666] hover:text-white">
                 <X size={16} />
               </button>
             </div>
@@ -187,7 +195,7 @@ const AIAssistant: React.FC = () => {
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         className="fixed bottom-6 right-6 w-12 h-12 bg-[#39b54a] text-black flex items-center justify-center shadow-[0_0_20px_rgba(57,181,74,0.4)] z-[200] hover:bg-white transition-colors group"
       >
         {isOpen ? <X size={24} /> : <MessageSquare size={24} className="group-hover:rotate-12 transition-transform"/>}

@@ -40,6 +40,9 @@ export default function App() {
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [showConnectModal, setShowConnectModal] = useState(false);
   
+  // AI Assistant State
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  
   const [walletBalance, setWalletBalance] = useState<WalletBalance>({
     native: 12.5, // Generic 'native' token amount (SOL, ETH, etc)
     lmt: 0,
@@ -186,12 +189,13 @@ export default function App() {
   };
 
   return (
-    <main className="h-screen w-screen overflow-hidden bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans relative">
+    // Changed: Removed h-screen/overflow-hidden to allow natural scrolling which fixes navigation anchors
+    <main className="min-h-screen w-full bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans relative overflow-x-hidden">
       
-      {/* 3D Background - Always rendered, optimized */}
+      {/* 3D Background - Fixed position */}
       <Background3D />
 
-      <div className="relative z-10 h-full w-full overflow-y-auto no-scrollbar">
+      <div className="relative z-10 w-full">
         <AnimatePresence mode="wait">
           
           {phase === AppPhase.HOME && (
@@ -205,20 +209,25 @@ export default function App() {
               currentChain={currentChain}
               onOpenLaunchpad={handleOpenLaunchpad}
               onGenerateToken={handleGenerateToken}
+              onOpenAI={() => setIsAIOpen(true)}
             />
           )}
 
           {phase === AppPhase.LOADING && (
-            <GenerationTheater key="loading" onComplete={handleTheaterComplete} />
+            <div className="h-screen w-full">
+               <GenerationTheater key="loading" onComplete={handleTheaterComplete} />
+            </div>
           )}
 
           {phase === AppPhase.PREVIEW && appData && (
-            <BuilderPreview 
-              key="preview" 
-              appData={appData} 
-              onDeploy={handleDeploy} 
-              currentChain={currentChain}
-            />
+            <div className="h-screen w-full">
+              <BuilderPreview 
+                key="preview" 
+                appData={appData} 
+                onDeploy={handleDeploy} 
+                currentChain={currentChain}
+              />
+            </div>
           )}
           
           {phase === AppPhase.LAUNCHPAD && (
@@ -230,23 +239,25 @@ export default function App() {
           )}
 
           {phase === AppPhase.DASHBOARD && appData && (
-            <Dashboard 
-              key="dashboard" 
-              appData={appData} 
-              isConnected={walletConnected}
-              onConnect={initiateWalletConnection}
-              onBack={handleBack}
-              walletBalance={walletBalance}
-              transactions={transactions}
-              currentChain={currentChain}
-              onTradeKeys={handleTradeKeys}
-            />
+             <div className="min-h-screen w-full">
+                <Dashboard 
+                  key="dashboard" 
+                  appData={appData} 
+                  isConnected={walletConnected}
+                  onConnect={initiateWalletConnection}
+                  onBack={handleBack}
+                  walletBalance={walletBalance}
+                  transactions={transactions}
+                  currentChain={currentChain}
+                  onTradeKeys={handleTradeKeys}
+                />
+            </div>
           )}
 
         </AnimatePresence>
       </div>
 
-      <AIAssistant />
+      <AIAssistant isOpen={isAIOpen} onToggle={() => setIsAIOpen(!isAIOpen)} />
 
       <WalletDrawer 
         isOpen={isWalletOpen}

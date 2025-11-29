@@ -95,6 +95,9 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              - Apply \`whenNotPaused\` to the \`_update\` override and \`enableTrading\`.
            
            **ADVANCED FEATURES (REQUIRED):**
+           - **Buyback Mechanism:**
+             - Include \`enableBuyback(uint256 _percentage)\` (onlyOwner).
+             - Include \`executeBuyback()\` (onlyOwner, nonReentrant) which swaps ETH for tokens (using a Router interface) and burns them.
            - **Scalable Vesting:** 
              - Use \`mapping(address => VestingSchedule[]) public vestingSchedules;\` to allow multiple schedules per user.
              - Implement \`createVestingSchedule\`, \`revokeVestingSchedule\`, and \`claimVesting(uint256 index)\`.

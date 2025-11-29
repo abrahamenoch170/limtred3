@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, CHAINS } from '../constants';
-import { Zap, Shield, ChevronDown, ArrowRight, Activity, Repeat, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe } from 'lucide-react';
+import { Zap, Shield, ChevronDown, ArrowRight, Activity, Repeat, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe, Search, ShieldCheck } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
 import { TextReveal, ScrollFade } from './ui/MotionComponents';
 
@@ -16,6 +16,7 @@ interface HeroSectionProps {
   currentChain: ChainId;
   onOpenLaunchpad?: () => void;
   onGenerateToken?: (name: string, symbol: string, supply: string, decimals: string) => void;
+  onOpenAI?: () => void;
 }
 
 const Logo = () => (
@@ -44,7 +45,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onSwap,
   currentChain,
   onOpenLaunchpad,
-  onGenerateToken
+  onGenerateToken,
+  onOpenAI
 }) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -57,6 +59,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [swapAmount, setSwapAmount] = useState('1.0');
   const [swapSuccess, setSwapSuccess] = useState(false);
   const [isRiskScanning, setIsRiskScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<'SAFE' | 'RISKY' | null>(null);
   const [poolSuccess, setPoolSuccess] = useState(false);
   const [bridgeSuccess, setBridgeSuccess] = useState(false);
   
@@ -94,22 +97,34 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   };
 
+  const handleScanRisk = () => {
+      setIsRiskScanning(true);
+      setScanResult(null);
+      setTimeout(() => {
+          setIsRiskScanning(false);
+          setScanResult('SAFE');
+      }, 2000);
+  };
+
   const handleSwapClick = () => {
     if (!isConnected || hasInsufficientFunds || amountVal <= 0) return;
-    setIsRiskScanning(true);
-    setTimeout(() => {
-        setIsRiskScanning(false);
-        setTimeout(() => {
-            if (!isNaN(amountVal) && amountVal > 0) {
-                const received = amountVal * 14020.5;
-                const success = onSwap(amountVal, received);
-                if (success) {
-                    setSwapSuccess(true);
-                    setTimeout(() => setSwapSuccess(false), 2000);
-                }
-            }
-        }, 800);
-    }, 1500);
+    
+    if (!scanResult) {
+        handleScanRisk();
+        return;
+    }
+
+    if (!isNaN(amountVal) && amountVal > 0) {
+        const received = amountVal * 14020.5;
+        const success = onSwap(amountVal, received);
+        if (success) {
+            setSwapSuccess(true);
+            setTimeout(() => {
+                setSwapSuccess(false);
+                setScanResult(null);
+            }, 2000);
+        }
+    }
   };
 
   const handlePoolClick = () => {
@@ -158,17 +173,24 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setIsMobileMenuOpen(false);
       const element = document.getElementById(id);
       if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Manual offset calculation for reliability
+          const headerOffset = 80;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      
+          window.scrollTo({
+              top: offsetPosition,
+              behavior: "smooth"
+          });
       }
   };
 
   return (
-    // Changed to min-h-screen to allow parent to handle scrolling
-    <div className="min-h-screen relative bg-transparent">
+    <div className="relative bg-transparent w-full">
       {/* -------------------- NAVBAR -------------------- */}
       <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-[#1f1f1f]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex justify-between items-center">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} role="button">
                 <Logo />
                 <span className="font-bold uppercase tracking-wider text-white hidden md:block text-lg">Limetred</span>
             </div>
@@ -222,37 +244,58 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         0x8A...
                     </Button>
                  )}
-                <button onClick={toggleMobileMenu} className="text-white p-2">
+                <button onClick={toggleMobileMenu} className="text-white p-2 z-50">
                     {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
             </div>
         </div>
 
-        {/* Mobile Menu Overlay */}
+        {/* Mobile Menu Overlay - FIXED POSITIONING */}
         <AnimatePresence>
             {isMobileMenuOpen && (
                 <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="md:hidden bg-[#0c0c0c] border-b border-[#1f1f1f] overflow-hidden absolute w-full z-50 shadow-2xl"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="md:hidden fixed inset-0 top-16 bg-[#0c0c0c] z-40 flex flex-col p-6 overflow-y-auto"
                 >
-                    <div className="p-6 flex flex-col gap-4">
+                    <div className="flex flex-col gap-6">
                         <button 
                             onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
-                            className="text-sm font-bold uppercase text-white py-3 border-b border-[#1f1f1f] flex items-center gap-3"
+                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
                         >
-                            <Zap size={16} className="text-[#39b54a]" /> Launchpad
+                            <Zap size={24} className="text-[#39b54a]" /> Launchpad
                         </button>
-                        <button onClick={() => scrollToSection('dex')} className="text-sm font-bold uppercase text-white py-3 border-b border-[#1f1f1f] flex items-center gap-3">
-                            <ArrowLeftRight size={16} className="text-[#8b5cf6]" /> DEX & Swap
+                        <button 
+                            onClick={() => scrollToSection('dex')} 
+                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                        >
+                            <ArrowLeftRight size={24} className="text-[#8b5cf6]" /> DEX & Swap
                         </button>
-                        <button onClick={() => scrollToSection('agents')} className="text-sm font-bold uppercase text-white py-3 border-b border-[#1f1f1f] flex items-center gap-3">
-                             <Bot size={16} className="text-[#39b54a]" /> AI Agents
+                        <button 
+                            onClick={() => scrollToSection('agents')} 
+                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                        >
+                             <Bot size={24} className="text-[#39b54a]" /> AI Agents
                         </button>
-                        <button onClick={() => scrollToSection('token-factory')} className="text-sm font-bold uppercase text-white py-3 flex items-center gap-3">
-                             <Coins size={16} className="text-[#8b5cf6]" /> Token Factory
+                        <button 
+                            onClick={() => scrollToSection('token-factory')} 
+                            className="text-xl font-bold uppercase text-white py-4 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                        >
+                             <Coins size={24} className="text-[#8b5cf6]" /> Token Factory
                         </button>
+                        
+                        <div className="mt-8 p-4 bg-[#111] border border-[#1f1f1f] rounded-none">
+                            <h4 className="text-xs text-[#666] font-bold uppercase mb-2">Protocol Stats</h4>
+                            <div className="flex justify-between text-sm text-white font-mono mb-1">
+                                <span>TVL</span>
+                                <span className="text-[#39b54a]">$14.2M</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-white font-mono">
+                                <span>Volume</span>
+                                <span className="text-[#8b5cf6]">$2.4M</span>
+                            </div>
+                        </div>
                     </div>
                 </motion.div>
             )}
@@ -359,7 +402,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </section>
 
       {/* -------------------- DEX SECTION (FIXED ID) -------------------- */}
-      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20">
+      <section id="dex" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20 z-10">
         <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-[#8b5cf6]/5 to-transparent pointer-events-none"></div>
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-start">
@@ -404,13 +447,38 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             ))}
                         </div>
                         
-                        <div className="p-6">
+                        <div className="p-6 relative">
+                             {/* AI RISK SCAN OVERLAY */}
+                             <AnimatePresence>
+                                {isRiskScanning && (
+                                    <motion.div 
+                                        initial={{ opacity: 0 }} 
+                                        animate={{ opacity: 1 }} 
+                                        exit={{ opacity: 0 }}
+                                        className="absolute inset-0 z-20 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+                                    >
+                                        <Loader2 size={48} className="text-[#39b54a] animate-spin mb-4" />
+                                        <h3 className="text-white font-bold uppercase mb-2">Analyzing Contract...</h3>
+                                        <div className="text-xs text-[#666] font-mono space-y-1">
+                                            <p className="flex items-center gap-2"><CheckCircle size={10} className="text-[#39b54a]" /> Simulating Transaction</p>
+                                            <p className="flex items-center gap-2"><CheckCircle size={10} className="text-[#39b54a]" /> Checking Honeypot</p>
+                                            <p className="flex items-center gap-2"><CheckCircle size={10} className="text-[#39b54a]" /> Verifying Liquidity Lock</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                             </AnimatePresence>
+
                             <AnimatePresence mode="wait">
                                 {dexTab === 'SWAP' && (
                                     <motion.div key="swap" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                                         <div className="flex justify-between items-center mb-6">
                                             <span className="font-bold uppercase text-white">Market Order</span>
-                                            <span className="text-xs text-[#666666] font-mono">SLIPPAGE: AUTO</span>
+                                            <div className="flex gap-2">
+                                                 <button onClick={() => onOpenAI && onOpenAI()} className="text-[10px] text-[#39b54a] border border-[#39b54a]/30 px-2 py-1 flex items-center gap-1 hover:bg-[#39b54a]/10 transition-colors">
+                                                     <Bot size={12} /> ASK GUARDIAN
+                                                 </button>
+                                                 <span className="text-xs text-[#666666] font-mono py-1">SLIPPAGE: AUTO</span>
+                                            </div>
                                         </div>
                                         
                                         <div className="bg-[#111] p-4 mb-2 border border-[#333] hover:border-[#666] transition-colors relative">
@@ -422,7 +490,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                                 <input 
                                                     type="number"
                                                     value={swapAmount}
-                                                    onChange={(e) => setSwapAmount(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setSwapAmount(e.target.value);
+                                                        setScanResult(null); // Reset scan on input change
+                                                    }}
                                                     className="bg-transparent text-2xl font-bold font-mono text-white w-full outline-none placeholder-[#333]"
                                                     placeholder="0.00"
                                                 />
@@ -455,15 +526,37 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                             </div>
                                         </div>
 
-                                        <Button 
-                                            fullWidth 
-                                            variant={swapSuccess ? 'primary' : hasInsufficientFunds ? 'outline' : 'secondary'} 
-                                            onClick={handleSwapClick}
-                                            disabled={!isConnected || hasInsufficientFunds || amountVal <= 0 || swapSuccess || isRiskScanning}
-                                            className={hasInsufficientFunds ? "border-red-500 text-red-500 hover:bg-red-500/10" : ""}
-                                        >
-                                            {isRiskScanning ? <><Loader2 className="animate-spin mr-2"/> CHECKING...</> : swapSuccess ? 'SWAP SUCCESSFUL' : !isConnected ? 'CONNECT WALLET' : hasInsufficientFunds ? 'INSUFFICIENT FUNDS' : 'SWAP TOKENS'}
-                                        </Button>
+                                        {scanResult === 'SAFE' && (
+                                            <div className="mb-4 bg-[#39b54a]/10 border border-[#39b54a] p-2 flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                                                <div className="flex items-center gap-2 text-[#39b54a] text-xs font-bold uppercase">
+                                                    <ShieldCheck size={16} /> Audit Passed
+                                                </div>
+                                                <span className="text-[10px] text-[#39b54a]">Risk Score: 98/100</span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex gap-2">
+                                             {!scanResult && !swapSuccess && isConnected && !hasInsufficientFunds && amountVal > 0 && (
+                                                 <Button 
+                                                    variant="secondary" 
+                                                    className="flex-1 text-xs"
+                                                    onClick={handleScanRisk}
+                                                    disabled={isRiskScanning}
+                                                 >
+                                                     {isRiskScanning ? 'SCANNING...' : '🛡️ SCAN RISK'}
+                                                 </Button>
+                                             )}
+                                             
+                                            <Button 
+                                                fullWidth 
+                                                variant={swapSuccess ? 'primary' : hasInsufficientFunds ? 'outline' : 'primary'} 
+                                                onClick={handleSwapClick}
+                                                disabled={!isConnected || hasInsufficientFunds || amountVal <= 0 || swapSuccess || isRiskScanning}
+                                                className={`${hasInsufficientFunds ? "border-red-500 text-red-500 hover:bg-red-500/10" : ""} flex-[2]`}
+                                            >
+                                                {swapSuccess ? 'SWAP SUCCESSFUL' : !isConnected ? 'CONNECT WALLET' : hasInsufficientFunds ? 'INSUFFICIENT FUNDS' : 'SWAP TOKENS'}
+                                            </Button>
+                                        </div>
                                     </motion.div>
                                 )}
                                 {dexTab === 'POOL' && (
@@ -519,7 +612,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </section>
 
       {/* -------------------- AGENTS SECTION (FIXED ID) -------------------- */}
-      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden scroll-mt-20">
+      <section id="agents" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden scroll-mt-20 z-10">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-12 items-center">
                 <div className="flex-1">
@@ -572,7 +665,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </section>
 
       {/* -------------------- TOKEN FACTORY (FIXED ID) -------------------- */}
-      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20">
+      <section id="token-factory" className="bg-[#0c0c0c]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative scroll-mt-20 z-10">
         <ScrollFade className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row-reverse gap-12 items-center">
                 <div className="flex-1">
