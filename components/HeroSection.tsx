@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
 import { MOCK_TICKER, CHAINS } from '../constants';
-import { Zap, Shield, ChevronDown, Twitter, Github, Disc, ArrowRight, Lock, Activity, Repeat, X, Search, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, AlertTriangle, ScanLine, Terminal } from 'lucide-react';
+import { Zap, Shield, ChevronDown, ArrowRight, Activity, Repeat, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe } from 'lucide-react';
 import { WalletBalance, ChainId } from '../types';
-import { TextReveal, ScrollFade, StaggerContainer, StaggerItem } from './ui/MotionComponents';
+import { TextReveal, ScrollFade } from './ui/MotionComponents';
 
 interface HeroSectionProps {
   onGenerate: (prompt: string, imageBase64?: string) => void;
@@ -24,7 +24,6 @@ const Logo = () => (
   </svg>
 );
 
-// ... (Modal Content Types & Data remain unchanged) ...
 type ModalType = 'DOCS' | 'TOKENOMICS' | 'BOUNTY' | 'AUDITS' | 'WHITEPAPER' | 'VESTING' | null;
 
 const PROTOCOL_CONTENT = {
@@ -51,21 +50,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   
   // DEX State
   const [dexTab, setDexTab] = useState<'SWAP' | 'POOL' | 'BRIDGE'>('SWAP');
   const [swapAmount, setSwapAmount] = useState('1.0');
   const [swapSuccess, setSwapSuccess] = useState(false);
   const [isRiskScanning, setIsRiskScanning] = useState(false);
-  const [riskScore, setRiskScore] = useState<'SAFE' | 'WARN' | 'CRITICAL' | null>(null);
+  const [poolSuccess, setPoolSuccess] = useState(false);
+  const [bridgeSuccess, setBridgeSuccess] = useState(false);
   
   // Agent State
   const [agentPurpose, setAgentPurpose] = useState('');
   const [agentFunction, setAgentFunction] = useState('Trading Bot');
   const [isGeneratingAgent, setIsGeneratingAgent] = useState(false);
-  const [agentSuccess, setAgentSuccess] = useState(false);
-  const [agentLogs, setAgentLogs] = useState<string[]>([]);
   
   // Token Generator State
   const [tokenName, setTokenName] = useState('');
@@ -99,44 +96,46 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const handleSwapClick = () => {
     if (!isConnected || hasInsufficientFunds || amountVal <= 0) return;
     setIsRiskScanning(true);
-    setRiskScore(null);
     setTimeout(() => {
         setIsRiskScanning(false);
-        setRiskScore('SAFE');
         setTimeout(() => {
             if (!isNaN(amountVal) && amountVal > 0) {
                 const received = amountVal * 14020.5;
                 const success = onSwap(amountVal, received);
                 if (success) {
                     setSwapSuccess(true);
-                    setTimeout(() => {
-                        setSwapSuccess(false);
-                        setRiskScore(null);
-                    }, 2000);
+                    setTimeout(() => setSwapSuccess(false), 2000);
                 }
             }
         }, 800);
     }, 1500);
   };
 
+  const handlePoolClick = () => {
+    setPoolSuccess(true);
+    setTimeout(() => setPoolSuccess(false), 2000);
+  };
+
+  const handleBridgeClick = () => {
+    setBridgeSuccess(true);
+    setTimeout(() => setBridgeSuccess(false), 2000);
+  };
+
   const handleGenerateAgent = () => {
     if (!agentPurpose.trim()) return;
     setIsGeneratingAgent(true);
-    setAgentLogs([]);
-    const logs = ["Analyzing directives...", "Verifying contracts...", "Deploying container...", "Agent Live."];
-    let delay = 0;
-    logs.forEach((log, i) => {
-        setTimeout(() => {
-            setAgentLogs(prev => [...prev, `> ${log}`]);
-            if (i === logs.length - 1) {
-                setIsGeneratingAgent(false);
-                setAgentSuccess(true);
-                setTimeout(() => setAgentSuccess(false), 3000);
-                setAgentPurpose('');
-            }
-        }, delay);
-        delay += 800;
-    });
+    
+    // Construct a comprehensive prompt for the AI to build an Agent Dashboard
+    const engineeredPrompt = `Create a sophisticated AI Agent Dashboard for a "${agentFunction}". 
+    Primary Directive: ${agentPurpose}.
+    Features: Real-time activity logs, performance metrics (APY/Success Rate), and a configuration panel for risk parameters.
+    The UI should look like a sci-fi command center.`;
+
+    // Trigger the main generation flow
+    setTimeout(() => {
+        onGenerate(engineeredPrompt);
+        setIsGeneratingAgent(false);
+    }, 1500);
   };
   
   const handleTokenGenClick = () => {
@@ -154,7 +153,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
-  // Fix: Improved Scroll Logic for Mobile and Desktop
   const scrollToSection = (id: string) => {
       setIsMobileMenuOpen(false);
       const element = document.getElementById(id);
@@ -164,7 +162,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <div ref={containerRef} className="h-full relative overflow-y-auto no-scrollbar scroll-smooth bg-transparent">
+    // Changed to min-h-screen to allow parent to handle scrolling
+    <div className="min-h-screen relative bg-transparent">
       {/* -------------------- NAVBAR -------------------- */}
       <nav className="sticky top-0 z-50 bg-[#0c0c0c]/80 backdrop-blur-xl border-b border-[#1f1f1f]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex justify-between items-center">
@@ -443,17 +442,47 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                                     </motion.div>
                                 )}
                                 {dexTab === 'POOL' && (
-                                     <motion.div key="pool" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-6">
-                                         <Droplets size={32} className="mx-auto text-[#666] mb-4" />
-                                         <p className="text-xs text-[#888] mb-4">Provide liquidity to earn 0.25% fees.</p>
-                                         <Button fullWidth variant="outline">ADD LIQUIDITY</Button>
+                                     <motion.div key="pool" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6">
+                                         <div className="text-center mb-6">
+                                             <Droplets size={32} className="mx-auto text-[#666] mb-4" />
+                                             <p className="text-xs text-[#888] mb-1">Provide liquidity to earn 0.25% fees.</p>
+                                             <p className="text-xl font-bold text-white font-mono">APR: 14.5%</p>
+                                         </div>
+                                         <div className="space-y-4 mb-6">
+                                             <div className="flex justify-between bg-[#111] p-3 border border-[#333]">
+                                                 <span className="text-xs text-white">LMT</span>
+                                                 <span className="text-xs text-[#39b54a] font-bold">50%</span>
+                                             </div>
+                                             <div className="flex justify-between bg-[#111] p-3 border border-[#333]">
+                                                 <span className="text-xs text-white">{activeChain.symbol}</span>
+                                                 <span className="text-xs text-[#39b54a] font-bold">50%</span>
+                                             </div>
+                                         </div>
+                                         <Button fullWidth onClick={handlePoolClick} disabled={!isConnected || poolSuccess} variant="outline">
+                                             {poolSuccess ? <><CheckCircle size={14} className="mr-2" /> LIQUIDITY ADDED</> : <><Plus size={14} className="mr-2" /> ADD LIQUIDITY</>}
+                                         </Button>
                                      </motion.div>
                                 )}
                                 {dexTab === 'BRIDGE' && (
-                                     <motion.div key="bridge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-6">
-                                         <Network size={32} className="mx-auto text-[#666] mb-4" />
-                                         <p className="text-xs text-[#888] mb-4">Transfer assets across chains.</p>
-                                         <Button fullWidth variant="outline">BRIDGE ASSETS</Button>
+                                     <motion.div key="bridge" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-6">
+                                         <div className="text-center mb-6">
+                                             <Network size={32} className="mx-auto text-[#666] mb-4" />
+                                             <p className="text-xs text-[#888] mb-4">Transfer assets across chains securely.</p>
+                                         </div>
+                                         <div className="flex items-center justify-between gap-2 mb-6">
+                                             <div className="flex-1 bg-[#111] p-3 border border-[#333] text-center">
+                                                 <div className="text-[10px] text-[#666] uppercase mb-1">From</div>
+                                                 <div className="text-sm font-bold text-white">{activeChain.name}</div>
+                                             </div>
+                                             <ArrowRight size={16} className="text-[#666]" />
+                                             <div className="flex-1 bg-[#111] p-3 border border-[#333] text-center">
+                                                 <div className="text-[10px] text-[#666] uppercase mb-1">To</div>
+                                                 <div className="text-sm font-bold text-white">Base</div>
+                                             </div>
+                                         </div>
+                                         <Button fullWidth onClick={handleBridgeClick} disabled={!isConnected || bridgeSuccess} variant="outline">
+                                             {bridgeSuccess ? <><CheckCircle size={14} className="mr-2" /> BRIDGE INITIATED</> : <><Globe size={14} className="mr-2" /> BRIDGE ASSETS</>}
+                                         </Button>
                                      </motion.div>
                                 )}
                             </AnimatePresence>
@@ -485,23 +514,30 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Agent Directives</label>
+                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Agent Function</label>
+                                <div className="grid grid-cols-3 gap-2 mb-3">
+                                    {['Trading Bot', 'Yield Optimizer', 'Community Mod'].map(func => (
+                                        <button 
+                                            key={func}
+                                            onClick={() => setAgentFunction(func)}
+                                            className={`text-[10px] font-bold py-2 border ${agentFunction === func ? 'bg-[#39b54a]/20 border-[#39b54a] text-[#39b54a]' : 'bg-[#111] border-[#333] text-[#666] hover:border-[#666]'}`}
+                                        >
+                                            {func}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-[#666666] uppercase mb-1 block">Primary Directive</label>
                                 <textarea 
                                     value={agentPurpose}
                                     onChange={(e) => setAgentPurpose(e.target.value)}
-                                    placeholder="Define agent behavior..."
-                                    className="w-full bg-[#111] border border-[#333] text-white p-3 outline-none focus:border-[#39b54a] text-sm min-h-[100px] font-mono"
+                                    placeholder="E.g., Monitor ETH pools and execute arb trades..."
+                                    className="w-full bg-[#111] border border-[#333] text-white p-3 outline-none focus:border-[#39b54a] text-sm min-h-[100px] font-mono resize-none"
                                 />
                             </div>
-                            <AnimatePresence>
-                                {isGeneratingAgent && (
-                                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="bg-black border border-[#333] p-3 font-mono text-[10px] text-[#39b54a] h-24 overflow-y-auto">
-                                        {agentLogs.map((log, i) => <div key={i}>{log}</div>)}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
                             <Button fullWidth onClick={handleGenerateAgent} disabled={isGeneratingAgent || !agentPurpose} className="flex items-center justify-center gap-2">
-                                {isGeneratingAgent ? <><Loader2 className="animate-spin" size={16} /> INITIALIZING...</> : agentSuccess ? <><CheckCircle size={16} /> AGENT DEPLOYED</> : <><Terminal size={16} /> GENERATE AGENT</>}
+                                {isGeneratingAgent ? <><Loader2 className="animate-spin" size={16} /> INITIALIZING ARCHITECTURE...</> : <><Terminal size={16} /> GENERATE AGENT</>}
                             </Button>
                         </div>
                      </Card>
