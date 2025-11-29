@@ -83,6 +83,8 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            - **CRITICAL REQUIREMENT:** Apply the \`whenNotPaused\` modifier to critical functions (like deposits, withdrawals, or trading).
            - **CRITICAL REQUIREMENT:** You MUST implement an explicit \`transferOwnership(address newOwner)\` function that overrides Ownable logic to explicitly check \`require(newOwner != address(0), "New owner cannot be zero address");\`.
            - **CRITICAL REQUIREMENT:** You MUST implement a public view function \`calculatedTotalSupply() returns (uint256)\` that returns the current total supply (reflecting initial mint and subsequent burns).
+           - **CRITICAL REQUIREMENT:** If your logic uses structs (like Task, Item, Bet, etc.), you MUST implement a helper view function to return its details. 
+             Example: \`function getTaskDetails(uint256 taskId) public view returns (string memory, uint256, bool) { ... }\`.
            - Implement specific logic requested by the user (e.g., Staking, DAO, Lending, Marketplace).
            - If generic, implement a Bonding Curve token with Anti-Rug mechanics.
            - Include detailed comments explaining the logic.
