@@ -55,13 +55,13 @@ const COMMON_TOKENS: Token[] = [
 const HeroSection: React.FC<HeroSectionProps> = ({ 
   onGenerate, 
   onConnectWallet, 
-  isConnected,
-  walletBalance,
-  onSwap,
-  currentChain,
-  onOpenLaunchpad,
+  isConnected, 
+  walletBalance, 
+  onSwap, 
+  currentChain, 
+  onOpenLaunchpad, 
   onGenerateToken,
-  onOpenAI
+  onOpenAI 
 }) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -85,7 +85,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const [tokenSelectorOpen, setTokenSelectorOpen] = useState<'PAY' | 'RECEIVE' | null>(null);
   const [tokenSearch, setTokenSearch] = useState('');
 
-  // Update Pay Token default when chain changes
   useEffect(() => {
       setPayToken({ symbol: activeChain.symbol, name: activeChain.name, address: 'NATIVE', isNative: true });
   }, [currentChain]);
@@ -105,7 +104,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   const amountVal = parseFloat(swapAmount) || 0;
   const hasInsufficientFunds = isConnected && amountVal > walletBalance.native && payToken.isNative;
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -166,8 +164,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
 
     if (!isNaN(amountVal) && amountVal > 0) {
-        // Mock swap
-        const received = amountVal * 14020.5; // Mock rate
+        const received = amountVal * 14020.5; 
         const success = onSwap(amountVal, received);
         if (success) {
             setSwapSuccess(true);
@@ -193,7 +190,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     if (!agentPurpose.trim()) return;
     setIsGeneratingAgent(true);
     
-    // Trigger main flow
     setTimeout(() => {
         const engineeredPrompt = `Create a sophisticated AI Agent Dashboard for a "${agentFunction}". 
         Primary Directive: ${agentPurpose}.
@@ -224,7 +220,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       setTimeout(() => {
           const element = document.getElementById(id);
           if (element) {
-              const headerOffset = 70; // Header height
+              const headerOffset = 70;
               const elementPosition = element.getBoundingClientRect().top;
               const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
           
@@ -236,7 +232,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       }, 300);
   };
 
-  // --- Token Selector Helper ---
   const handleSelectToken = (token: Token) => {
       if (tokenSelectorOpen === 'PAY') setPayToken(token);
       else setReceiveToken(token);
@@ -249,9 +244,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       ...COMMON_TOKENS
   ].filter(t => t.symbol.toLowerCase().includes(tokenSearch.toLowerCase()) || t.name.toLowerCase().includes(tokenSearch.toLowerCase()));
 
-  // Check if search might be an address
   const isAddressSearch = tokenSearch.startsWith('0x') || tokenSearch.length > 20;
-
 
   return (
     <div className="relative bg-transparent w-full">
@@ -266,7 +259,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 transition={{ type: "tween", duration: 0.2 }}
                 className="fixed inset-0 bg-[#0c0c0c] z-[200] flex flex-col w-full h-full overflow-y-auto"
             >
-                {/* Mobile Menu Header */}
                 <div className="h-16 px-4 flex items-center justify-between border-b border-[#1f1f1f] bg-[#0c0c0c] shrink-0 sticky top-0 z-10">
                     <div className="flex items-center gap-2">
                             <Logo />
@@ -277,7 +269,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     </button>
                 </div>
 
-                {/* Mobile Menu Content */}
                 <div className="flex-1 p-6 flex flex-col gap-4">
                     <button 
                         onClick={() => { onOpenLaunchpad && onOpenLaunchpad(); toggleMobileMenu(); }}
@@ -287,7 +278,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     </button>
                     <button 
                         onClick={() => scrollToSection('dex')} 
-                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#8b5cf6]"
                     >
                         <ArrowLeftRight size={24} className="text-[#8b5cf6]" /> DEX & Swap
                     </button>
@@ -299,7 +290,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     </button>
                     <button 
                         onClick={() => scrollToSection('token-factory')} 
-                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
+                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#8b5cf6]"
                     >
                             <Coins size={24} className="text-[#8b5cf6]" /> Token Factory
                     </button>
@@ -390,7 +381,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* -------------------- HERO -------------------- */}
       <div className="flex flex-col relative z-10">
-        {/* Marquee */}
         <div className="w-full bg-[#111111]/90 border-b border-[#1f1f1f] h-8 md:h-10 flex items-center overflow-hidden whitespace-nowrap z-20 shrink-0">
           <div className="animate-marquee flex space-x-8 md:space-x-12 px-4">
             {[...MOCK_TICKER, ...MOCK_TICKER].map((item, i) => (
@@ -402,24 +392,23 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-16 md:py-24">
+        <div className="flex-1 flex flex-col justify-center items-center px-4 max-w-5xl mx-auto w-full py-12 md:py-24">
              <div className="flex justify-center mb-6">
                 <Badge color="text-[#8b5cf6] border-[#8b5cf6] bg-[#8b5cf6]/10 text-[10px] md:text-xs">AI VENTURE PROTOCOL V1.0</Badge>
              </div>
              
-             <div className="flex justify-center w-full overflow-hidden">
-               {/* Fixed Text Size for Mobile responsiveness */}
+             <div className="flex justify-center w-full overflow-hidden px-2">
                <TextReveal 
                   text="LIMETRED" 
-                  className="text-5xl sm:text-7xl md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85] w-full justify-center" 
+                  className="text-[13vw] md:text-9xl font-black text-center mb-6 tracking-tighter uppercase text-white select-none leading-[0.85] w-full justify-center" 
                />
              </div>
              
-             <ScrollFade delay={0.4} className="max-w-2xl mx-auto text-center mb-12">
+             <ScrollFade delay={0.4} className="max-w-2xl mx-auto text-center mb-10 md:mb-12">
                 <p className="text-[#39b54a] font-bold tracking-[0.2em] text-[10px] md:text-xs uppercase mb-4 animate-pulse">
                     Venture-as-a-Service Protocol
                 </p>
-                <p className="text-[#cccccc] text-sm md:text-xl font-light leading-relaxed mb-6 px-4">
+                <p className="text-[#cccccc] text-base sm:text-lg md:text-xl font-light leading-relaxed mb-6 px-4 max-w-lg mx-auto md:max-w-2xl">
                     Launch a fully functional dApp, token, and liquidity market from a single text prompt.
                 </p>
             </ScrollFade>
@@ -432,7 +421,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     placeholder="Describe your billion-dollar idea..." 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="text-base md:text-3xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-20 md:h-32 pr-12 rounded-none"
+                    className="text-sm md:text-3xl text-center placeholder:text-[#333] border-[#39b54a] bg-black/60 backdrop-blur-md focus:bg-black/90 h-16 md:h-32 pr-12 rounded-none"
                   />
                   <div className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 flex gap-2">
                     <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 rounded-full text-[#666] hover:text-white transition-colors"><ImageIcon size={18} /></button>
@@ -450,8 +439,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                     )}
                 </AnimatePresence>
                 
-                <div className="mt-8 md:mt-12 flex justify-center">
-                  <Button type="submit" variant="primary" className="w-full md:w-auto min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-base md:text-lg py-4">
+                <div className="mt-6 md:mt-12 flex justify-center">
+                  <Button type="submit" variant="primary" className="w-full md:w-auto min-w-[240px] flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(57,181,74,0.4)] text-base md:text-lg py-3 md:py-4">
                     <Zap size={20} /> INITIALIZE PROTOCOL
                   </Button>
                 </div>
@@ -896,7 +885,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           >
             <motion.div 
                 initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-                className="bg-[#111111] border border-[#39b54a] w-full max-w-2xl max-h-[80vh] overflow-y-auto" 
+                className="bg-[#111] border border-[#39b54a] w-full max-w-2xl max-h-[80vh] overflow-y-auto" 
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center p-6 border-b border-[#1f1f1f] bg-[#0c0c0c] sticky top-0">
