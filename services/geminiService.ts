@@ -79,7 +79,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              Example: \`contract MyApp is ERC20, Ownable, ReentrancyGuard, Pausable { ... }\`
            - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
            - **CRITICAL REQUIREMENT:** Implement \`pause()\` and \`unpause()\` functions, restricted to \`onlyOwner\`.
-           - **CRITICAL REQUIREMENT:** Implement a function \`enableTrading()\` that sets \`tradingActive = true\`. It MUST use modifiers \`external onlyOwner nonReentrant whenNotPaused\`.
+           - **CRITICAL REQUIREMENT:** Implement a function \`enableTrading()\` that sets \`tradingActive = true\`. It MUST be callable only by the owner and MUST use the \`whenNotPaused\` modifier.
            - **CRITICAL REQUIREMENT:** Apply the \`nonReentrant\` modifier to all external/public functions that change state or transfer assets.
            - **CRITICAL REQUIREMENT:** Apply the \`whenNotPaused\` modifier to critical functions (like deposits, withdrawals, or trading).
            - **CRITICAL REQUIREMENT:** You MUST implement an explicit \`transferOwnership(address newOwner)\` function that overrides Ownable logic to explicitly check \`require(newOwner != address(0), "New owner cannot be zero address");\`.

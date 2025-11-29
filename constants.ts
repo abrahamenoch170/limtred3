@@ -73,7 +73,9 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Enables trading. Protected against reentrancy and pause state.
+     * @dev Enables trading. Callable only by owner.
+     * Sets tradingActive to true.
+     * Protected by whenNotPaused modifier.
      */
     function enableTrading() external onlyOwner nonReentrant whenNotPaused {
         tradingActive = true;
