@@ -360,29 +360,45 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
                                     <div className="w-1 h-1 bg-white rounded-full"></div>
                                 </div>
                             </div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 overflow-y-auto">
-                                {isRefreshing ? (
-                                    <Loader2 className="animate-spin text-[#39b54a]" size={32} />
-                                ) : (
-                                    <>
-                                        <div className="w-16 h-16 border border-[#39b54a] flex items-center justify-center mb-4 rounded-full">
-                                            <Rocket size={24} className="text-[#39b54a]" />
-                                        </div>
-                                        <h3 className="text-xl font-bold mb-2">Welcome to {appData.name}</h3>
-                                        <p className="text-xs text-gray-500 mb-6 max-w-[80%]">{appData.description}</p>
-                                        <button className="bg-[#39b54a] text-black w-full py-3 font-bold uppercase text-xs hover:bg-[#2ea03f] transition-colors mb-4">
-                                            Connect Wallet
-                                        </button>
-                                        <div className="flex gap-2 text-[10px] text-[#666]">
-                                                {appData.attributes.map((attr, i) => (
-                                                    <span key={i} className="border border-[#333] px-2 py-1 rounded-full">{attr}</span>
-                                                ))}
-                                        </div>
-                                        <div className="mt-8 text-[10px] text-[#444] font-mono">
-                                            Powered by Limetred Beta Protocol
-                                        </div>
-                                    </>
-                                )}
+                            <div className="flex-1 relative overflow-hidden">
+                                <AnimatePresence mode="wait">
+                                    {isRefreshing ? (
+                                        <motion.div
+                                            key="loader"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="absolute inset-0 flex items-center justify-center bg-[#111111] z-10"
+                                        >
+                                            <Loader2 className="animate-spin text-[#39b54a]" size={32} />
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            key="content"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="flex flex-col items-center justify-center text-center p-6 h-full overflow-y-auto"
+                                        >
+                                            <div className="w-16 h-16 border border-[#39b54a] flex items-center justify-center mb-4 rounded-full">
+                                                <Rocket size={24} className="text-[#39b54a]" />
+                                            </div>
+                                            <h3 className="text-xl font-bold mb-2">Welcome to {appData.name}</h3>
+                                            <p className="text-xs text-gray-500 mb-6 max-w-[80%]">{appData.description}</p>
+                                            <button className="bg-[#39b54a] text-black w-full py-3 font-bold uppercase text-xs hover:bg-[#2ea03f] transition-colors mb-4">
+                                                Connect Wallet
+                                            </button>
+                                            <div className="flex gap-2 text-[10px] text-[#666]">
+                                                    {appData.attributes.map((attr, i) => (
+                                                        <span key={i} className="border border-[#333] px-2 py-1 rounded-full">{attr}</span>
+                                                    ))}
+                                            </div>
+                                            <div className="mt-8 text-[10px] text-[#444] font-mono">
+                                                Powered by Limetred Beta Protocol
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         </div>
                     </motion.div>
