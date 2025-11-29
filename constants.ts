@@ -1,4 +1,5 @@
 
+
 import { TickerItem, ChainId, ChainConfig, LaunchpadProject, ProjectCategory } from './types';
 
 export const COLORS = {
@@ -97,7 +98,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     /**
      * @dev Enables trading. Callable only by owner.
      * Sets tradingActive to true.
-     * Protected by whenNotPaused modifier.
+     * Protected by whenNotPaused and nonReentrant modifiers.
      */
     function enableTrading() external onlyOwner nonReentrant whenNotPaused {
         tradingActive = true;
@@ -129,8 +130,9 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
 
     /**
      * @dev Emergency withdraw of stuck ETH.
+     * Protected against reentrancy.
      */
-    function withdrawStuckEth() external onlyOwner {
+    function withdrawStuckEth() external onlyOwner nonReentrant {
         (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
         if (!success) revert TransferFailed();
     }

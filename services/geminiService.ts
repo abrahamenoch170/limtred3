@@ -86,15 +86,18 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
              - Example errors: \`error InvalidWallet();\`, \`error TransferFailed();\`, \`error InvalidOwner();\`, \`error TradingNotActive();\`.
            - **Anti-Whale:** Implement \`maxTxAmount\` and \`maxWalletSize\` variables (e.g. 2% of supply).
            - **Fees:** Implement \`buyTax\` and \`sellTax\` variables (e.g. 5%) and a \`marketingWallet\`.
+           - **Reentrancy Protection:** Apply \`nonReentrant\` modifier to \`withdrawStuckEth\`, \`enableTrading\`, and any other function that moves funds or changes critical state.
+           - **Pausable Logic:**
+             - Implement \`pause()\` and \`unpause()\` functions callable only by owner.
+             - Apply \`whenNotPaused\` to the \`_update\` override and \`enableTrading\`.
            - **_update Override:** You MUST override the \`_update\` function to handle:
              1. Trading Active check (using \`whenNotPaused\`).
              2. Max Tx / Max Wallet limits.
              3. Fee deduction (send tax to marketing wallet, remainder to recipient).
-           - **Emergency:** Implement \`withdrawStuckEth()\` to recover funds.
+           - **Emergency:** Implement \`withdrawStuckEth()\` to recover funds (protected by \`onlyOwner\` and \`nonReentrant\`).
            
            **STANDARD FUNCTIONS:**
-           - \`pause()\` and \`unpause()\` (onlyOwner).
-           - \`enableTrading()\` (onlyOwner, whenNotPaused).
+           - \`enableTrading()\` (onlyOwner, nonReentrant, whenNotPaused).
            - \`setMarketingWallet(address _marketingWallet)\` (onlyOwner).
            - \`transferOwnership(address newOwner)\` (override with zero-address check using custom error).
            - \`calculatedTotalSupply()\` (public view, returns totalSupply).
