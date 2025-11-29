@@ -42,6 +42,9 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     error MaxWalletExceeded();
     error InvalidTax();
     error CannotRemoveLimits();
+    error InvalidWallet();
+    error TransferFailed();
+    error InvalidOwner();
 
     // --- Tokenomics ---
     uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
@@ -120,7 +123,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
      * @dev Updates the marketing wallet address.
      */
     function setMarketingWallet(address _marketingWallet) external onlyOwner {
-        require(_marketingWallet != address(0), "Wallet cannot be zero");
+        if (_marketingWallet == address(0)) revert InvalidWallet();
         marketingWallet = _marketingWallet;
     }
 
@@ -129,7 +132,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
      */
     function withdrawStuckEth() external onlyOwner {
         (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
-        require(success, "Transfer failed");
+        if (!success) revert TransferFailed();
     }
 
     // --- View Functions ---
@@ -182,7 +185,7 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     }
 
     function transferOwnership(address newOwner) public override onlyOwner {
-        require(newOwner != address(0), "Limetred: New owner cannot be zero address");
+        if (newOwner == address(0)) revert InvalidOwner();
         super.transferOwnership(newOwner);
     }
 }`;

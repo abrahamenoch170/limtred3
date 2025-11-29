@@ -81,7 +81,9 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            - The constructor MUST initialize ERC20 with name and symbol, and Ownable with msg.sender.
            
            **SECURITY & LOGIC REQUIREMENTS (BETA STANDARD):**
-           - **Custom Errors:** Use \`error\` definitions instead of string require statements for gas optimization. (e.g. \`error TradingNotActive();\`)
+           - **Custom Errors:** Use \`error\` definitions instead of string require statements for gas optimization.
+             - Replace ALL \`require(condition, "message")\` with \`if (!condition) revert ErrorName();\`.
+             - Example errors: \`error InvalidWallet();\`, \`error TransferFailed();\`, \`error InvalidOwner();\`, \`error TradingNotActive();\`.
            - **Anti-Whale:** Implement \`maxTxAmount\` and \`maxWalletSize\` variables (e.g. 2% of supply).
            - **Fees:** Implement \`buyTax\` and \`sellTax\` variables (e.g. 5%) and a \`marketingWallet\`.
            - **_update Override:** You MUST override the \`_update\` function to handle:
@@ -94,7 +96,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            - \`pause()\` and \`unpause()\` (onlyOwner).
            - \`enableTrading()\` (onlyOwner, whenNotPaused).
            - \`setMarketingWallet(address _marketingWallet)\` (onlyOwner).
-           - \`transferOwnership(address newOwner)\` (override with zero-address check).
+           - \`transferOwnership(address newOwner)\` (override with zero-address check using custom error).
            - \`calculatedTotalSupply()\` (public view, returns totalSupply).
            - **Struct Accessors:** If you use structs, provide a \`getDetails\` view function.
 
