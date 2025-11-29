@@ -117,6 +117,14 @@ contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
     }
 
     /**
+     * @dev Updates the marketing wallet address.
+     */
+    function setMarketingWallet(address _marketingWallet) external onlyOwner {
+        require(_marketingWallet != address(0), "Wallet cannot be zero");
+        marketingWallet = _marketingWallet;
+    }
+
+    /**
      * @dev Emergency withdraw of stuck ETH.
      */
     function withdrawStuckEth() external onlyOwner {

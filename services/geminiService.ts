@@ -93,6 +93,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
            **STANDARD FUNCTIONS:**
            - \`pause()\` and \`unpause()\` (onlyOwner).
            - \`enableTrading()\` (onlyOwner, whenNotPaused).
+           - \`setMarketingWallet(address _marketingWallet)\` (onlyOwner).
            - \`transferOwnership(address newOwner)\` (override with zero-address check).
            - \`calculatedTotalSupply()\` (public view, returns totalSupply).
            - **Struct Accessors:** If you use structs, provide a \`getDetails\` view function.
