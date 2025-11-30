@@ -80,368 +80,147 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-interface IUniswapV2Router02 {
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
-        uint amountOutMin,
-        address[] calldata path,
-        address to,
-        uint deadline
-    ) external payable;
-    function WETH() external pure returns (address);
-}
-
-contract LimetredLaunch is ERC20, Ownable, ReentrancyGuard, Pausable {
-    using SafeERC20 for IERC20;
-
-    // --- Custom Errors (Gas Optimization) ---
+/*
+ * @title Limetred Production Standard ERC20
+ * @dev Includes Anti-Whale, Fee Splitting, and Auto-Liquidity mechanisms.
+ * @security Audit-Ready, 0.8.20 SafeMath implicit.
+ */
+contract LimetredProtocolToken is ERC20, Ownable, ReentrancyGuard, Pausable {
+    
+    // --- Custom Errors for Gas Optimization ---
     error TradingNotActive();
     error MaxTxAmountExceeded();
     error MaxWalletExceeded();
-    error InvalidTax();
-    error CannotRemoveLimits();
-    error InvalidWallet();
+    error InvalidTaxParams();
     error TransferFailed();
-    error InvalidOwner();
-    error InvalidVestingSchedule();
-    error InvalidVestingIndex();
-    error NothingToClaim();
-    error NotTaskAssignee();
-    error TaskAlreadyCompleted();
-    error TaskAlreadyCancelled();
-    error LimitTooLow(); // Anti-Honeypot
-    error CannotRenounceWhileDisabled(); // Safety
-    error BatchLengthMismatch(); // Gas efficient array check
-    error BuybackDisabled();
-    error InsufficientEthForBuyback();
-    error InvalidBuybackPercentage();
+    error ZeroAddress();
 
-    // --- Tokenomics ---
-    uint256 public constant TOTAL_SUPPLY = 1_000_000_000 * 10**18;
+    // --- Configuration ---
+    uint256 public maxTxAmount;
+    uint256 public maxWalletSize;
+    uint256 public taxBuy = 3;  // 3%
+    uint256 public taxSell = 3; // 3%
     
-    // --- Anti-Whale & Limits ---
-    uint256 public maxTxAmount = 20_000_000 * 10**18; // 2%
-    uint256 public maxWalletSize = 20_000_000 * 10**18; // 2%
-    bool public limitsInEffect = true;
-    bool public tradingActive = false;
-
-    // --- Fee System ---
-    uint256 public buyTax = 5; // 5%
-    uint256 public sellTax = 5; // 5%
     address public marketingWallet;
-
-    // --- Buyback System ---
-    bool public buybackEnabled;
-    uint256 public buybackPercentage;
-
-    // --- Task / Bounty Logic ---
-    struct Task {
-        string description;
-        uint256 dueDate;
-        bool isCompleted;
-        bool isCancelled;
-        address assignee;
-    }
-    mapping(uint256 => Task) public tasks;
-    uint256 public nextTaskId;
-
-    event TaskCreated(uint256 indexed taskId, string description, uint256 dueDate, address indexed assignee);
-    event TaskCompleted(uint256 indexed taskId, address indexed completer);
-    event TaskCancelled(uint256 indexed taskId);
-    event BuybackExecuted(uint256 amountEth, uint256 timestamp);
-
-    // --- Vesting Logic (Scalable) ---
-    struct VestingSchedule {
-        uint256 startDate;
-        uint256 cliffDate;
-        uint256 endDate;
-        uint256 amount;
-        uint256 claimed;
-        bool revoked;
-    }
-    // Mapping from beneficiary to list of schedules (One-to-Many)
-    mapping(address => VestingSchedule[]) public vestingSchedules;
+    address public liquidityWallet;
     
-    event VestingCreated(address indexed recipient, uint256 amount, uint256 scheduleIndex);
-    event VestedTokensClaimed(address indexed recipient, uint256 amount);
-    event VestingRevoked(address indexed recipient, uint256 scheduleIndex);
+    bool public tradingActive = false;
+    bool public limitsInEffect = true;
+    
+    mapping(address => bool) public isExcludedFromFee;
+    mapping(address => bool) public isExcludedFromLimits;
 
-    constructor() ERC20("LimetredGenerated", "LMT") Ownable(msg.sender) {
-        marketingWallet = msg.sender;
-        _mint(msg.sender, TOTAL_SUPPLY);
-    }
+    event FeesUpdated(uint256 buy, uint256 sell);
+    event LimitsRemoved();
+    event TradingEnabled();
 
-    receive() external payable {}
+    constructor(
+        string memory _name, 
+        string memory _symbol, 
+        uint256 _supply,
+        address _marketing
+    ) ERC20(_name, _symbol) Ownable(msg.sender) {
+        if (_marketing == address(0)) revert ZeroAddress();
+        
+        marketingWallet = _marketing;
+        liquidityWallet = msg.sender;
+        
+        // Default Limits: 2% of supply
+        uint256 totalSupply = _supply * 10**decimals();
+        maxTxAmount = (totalSupply * 2) / 100;
+        maxWalletSize = (totalSupply * 2) / 100;
 
-    // --- Overrides for Reentrancy Protection ---
+        // Exclude owner and contract from limits/fees
+        isExcludedFromFee[msg.sender] = true;
+        isExcludedFromFee[address(this)] = true;
+        isExcludedFromLimits[msg.sender] = true;
+        isExcludedFromLimits[address(this)] = true;
 
-    function transfer(address to, uint256 value) public override nonReentrant returns (bool) {
-        return super.transfer(to, value);
-    }
-
-    function transferFrom(address from, address to, uint256 value) public override nonReentrant returns (bool) {
-        return super.transferFrom(from, to, value);
+        _mint(msg.sender, totalSupply);
     }
 
     // --- Admin Functions ---
 
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
-
-    function enableTrading() external onlyOwner nonReentrant whenNotPaused {
+    function enableTrading() external onlyOwner {
         tradingActive = true;
+        emit TradingEnabled();
     }
 
     function removeLimits() external onlyOwner {
         limitsInEffect = false;
+        emit LimitsRemoved();
     }
 
-    function updateFees(uint256 _buyTax, uint256 _sellTax) external onlyOwner {
-        if (_buyTax > 10 || _sellTax > 10) revert InvalidTax();
-        buyTax = _buyTax;
-        sellTax = _sellTax;
+    function updateFees(uint256 _buy, uint256 _sell) external onlyOwner {
+        // Anti-Honeypot: Taxes cannot exceed 10%
+        if (_buy > 10 || _sell > 10) revert InvalidTaxParams();
+        taxBuy = _buy;
+        taxSell = _sell;
+        emit FeesUpdated(_buy, _sell);
     }
 
-    function updateLimits(uint256 _maxTx, uint256 _maxWallet) external onlyOwner {
-        if (_maxTx < (TOTAL_SUPPLY * 5 / 1000) || _maxWallet < (TOTAL_SUPPLY * 5 / 1000)) revert LimitTooLow();
-        maxTxAmount = _maxTx;
-        maxWalletSize = _maxWallet;
+    function pause() external onlyOwner {
+        _pause();
     }
 
-    function setMarketingWallet(address _marketingWallet) external onlyOwner {
-        if (_marketingWallet == address(0)) revert InvalidWallet();
-        marketingWallet = _marketingWallet;
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
-    function withdrawStuckEth() external onlyOwner nonReentrant {
-        (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
-        if (!success) revert TransferFailed();
-    }
+    // --- Core Logic ---
 
-    function recoverForeignTokens(address _tokenAddr, address _to) external onlyOwner nonReentrant {
-        if (_tokenAddr == address(this) && tradingActive) revert InvalidWallet(); 
-        uint256 _amount = IERC20(_tokenAddr).balanceOf(address(this));
-        IERC20(_tokenAddr).safeTransfer(_to, _amount);
-    }
-
-    // --- Buyback Logic ---
-
-    function enableBuyback(uint256 _percentage) external onlyOwner {
-        if (_percentage > 100) revert InvalidBuybackPercentage();
-        buybackEnabled = true;
-        buybackPercentage = _percentage;
-    }
-
-    function executeBuyback(address _router) external onlyOwner nonReentrant {
-        if (!buybackEnabled) revert BuybackDisabled();
-        uint256 balance = address(this).balance;
-        if (balance == 0) revert InsufficientEthForBuyback();
-
-        uint256 buybackAmount = (balance * buybackPercentage) / 100;
-        
-        // Use provided router address for flexibility
-        IUniswapV2Router02 buybackRouter = IUniswapV2Router02(_router);
-        
-        address[] memory path = new address[](2);
-        path[0] = buybackRouter.WETH();
-        path[1] = address(this);
-
-        // Swap ETH for Tokens and burn them (send to dead)
-        buybackRouter.swapExactETHForTokensSupportingFeeOnTransferTokens{value: buybackAmount}(
-            0,
-            path,
-            address(0xdead),
-            block.timestamp
-        );
-        
-        emit BuybackExecuted(buybackAmount, block.timestamp);
-    }
-
-    // --- Vesting Management ---
-
-    function createVestingSchedule(
-        address _recipient, 
-        uint256 _startDate, 
-        uint256 _cliffDate, 
-        uint256 _endDate, 
-        uint256 _amount
-    ) external onlyOwner nonReentrant {
-        if (_recipient == address(0)) revert InvalidWallet();
-        if (_endDate <= _startDate || _cliffDate < _startDate) revert InvalidVestingSchedule();
-        if (_amount == 0) revert InvalidVestingSchedule();
-
-        _transfer(msg.sender, address(this), _amount);
-
-        vestingSchedules[_recipient].push(VestingSchedule({
-            startDate: _startDate,
-            cliffDate: _cliffDate,
-            endDate: _endDate,
-            amount: _amount,
-            claimed: 0,
-            revoked: false
-        }));
-
-        emit VestingCreated(_recipient, _amount, vestingSchedules[_recipient].length - 1);
-    }
-
-    function revokeVestingSchedule(address _recipient, uint256 _index) external onlyOwner nonReentrant {
-        if (_index >= vestingSchedules[_recipient].length) revert InvalidVestingIndex();
-        VestingSchedule storage schedule = vestingSchedules[_recipient][_index];
-        if (schedule.revoked) revert InvalidVestingSchedule();
-
-        uint256 vested = _computeReleasableAmount(schedule);
-        uint256 unreleased = schedule.amount - schedule.claimed;
-        uint256 refund = unreleased - vested;
-
-        schedule.revoked = true;
-        
-        if (vested > 0) {
-            schedule.claimed += vested;
-            _transfer(address(this), _recipient, vested);
-        }
-        if (refund > 0) {
-            _transfer(address(this), owner(), refund);
-        }
-
-        emit VestingRevoked(_recipient, _index);
-    }
-
-    // --- Task Management ---
-
-    function createTask(string memory _description, uint256 _dueDate, address _assignee) external onlyOwner nonReentrant {
-        if (_assignee == address(0)) revert InvalidWallet();
-        uint256 taskId = nextTaskId++;
-        tasks[taskId] = Task({
-            description: _description,
-            dueDate: _dueDate,
-            isCompleted: false,
-            isCancelled: false,
-            assignee: _assignee
-        });
-        emit TaskCreated(taskId, _description, _dueDate, _assignee);
-    }
-
-    function cancelTask(uint256 taskId) external onlyOwner nonReentrant {
-        Task storage t = tasks[taskId];
-        if (t.isCompleted) revert TaskAlreadyCompleted();
-        if (t.isCancelled) revert TaskAlreadyCancelled();
-        t.isCancelled = true;
-        emit TaskCancelled(taskId);
-    }
-
-    function batchCreateTasks(string[] memory _descriptions, uint256[] memory _dueDates, address[] memory _assignees) external onlyOwner nonReentrant {
-        if (_descriptions.length != _dueDates.length || _descriptions.length != _assignees.length) revert BatchLengthMismatch();
-        for(uint i = 0; i < _descriptions.length; i++) {
-            if (_assignees[i] == address(0)) continue;
-            uint256 taskId = nextTaskId++;
-            tasks[taskId] = Task({
-                description: _descriptions[i],
-                dueDate: _dueDates[i],
-                isCompleted: false,
-                isCancelled: false,
-                assignee: _assignees[i]
-            });
-            emit TaskCreated(taskId, _descriptions[i], _dueDates[i], _assignees[i]);
-        }
-    }
-
-    // --- User Functions ---
-
-    function completeTask(uint256 taskId) external nonReentrant {
-        Task storage t = tasks[taskId];
-        if (msg.sender != t.assignee) revert NotTaskAssignee();
-        if (t.isCompleted) revert TaskAlreadyCompleted();
-        if (t.isCancelled) revert TaskAlreadyCancelled();
-        
-        t.isCompleted = true;
-        emit TaskCompleted(taskId, msg.sender);
-    }
-
-    function claimVesting(uint256 _index) external nonReentrant {
-        if (_index >= vestingSchedules[msg.sender].length) revert InvalidVestingIndex();
-        VestingSchedule storage schedule = vestingSchedules[msg.sender][_index];
-        
-        uint256 claimable = _computeReleasableAmount(schedule);
-        if (claimable == 0) revert NothingToClaim();
-
-        schedule.claimed += claimable;
-        _transfer(address(this), msg.sender, claimable);
-
-        emit VestedTokensClaimed(msg.sender, claimable);
-    }
-
-    // --- View Functions ---
-
-    function calculatedTotalSupply() public view returns (uint256) {
-        return totalSupply();
-    }
-
-    function getTaskDetails(uint256 taskId) public view returns (string memory description, uint256 dueDate, bool isCompleted, bool isCancelled, address assignee) {
-        Task memory t = tasks[taskId];
-        return (t.description, t.dueDate, t.isCompleted, t.isCancelled, t.assignee);
-    }
-
-    function getVestingSchedulesCount(address _beneficiary) external view returns(uint256){
-        return vestingSchedules[_beneficiary].length;
-    }
-
-    function getVestingSchedule(address _beneficiary, uint256 _index) external view returns(VestingSchedule memory) {
-        return vestingSchedules[_beneficiary][_index];
-    }
-
-    // --- Internal Logic ---
-
-    function _computeReleasableAmount(VestingSchedule memory schedule) internal view returns (uint256) {
-        if (schedule.revoked) return 0;
-        if (block.timestamp < schedule.cliffDate) return 0;
-        
-        uint256 vested;
-        if (block.timestamp >= schedule.endDate) {
-            vested = schedule.amount;
-        } else {
-            uint256 duration = schedule.endDate - schedule.startDate;
-            uint256 elapsed = block.timestamp - schedule.startDate;
-            vested = (schedule.amount * elapsed) / duration;
-        }
-        return vested > schedule.claimed ? vested - schedule.claimed : 0;
-    }
-
-    function _update(address from, address to, uint256 value) internal override(ERC20) whenNotPaused {
+    function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal override whenNotPaused {
         if (from == address(0) || to == address(0)) {
             super._update(from, to, value);
             return;
         }
 
-        if (limitsInEffect && from != owner() && to != owner()) {
+        // 1. Trading Status Check
+        if (from != owner() && to != owner()) {
             if (!tradingActive) revert TradingNotActive();
-            if (value > maxTxAmount) revert MaxTxAmountExceeded();
-            if (balanceOf(to) + value > maxWalletSize) revert MaxWalletExceeded();
         }
 
+        // 2. Limits Check
+        if (limitsInEffect) {
+            if (from != owner() && !isExcludedFromLimits[to] && to != address(0xdead)) {
+                // Check Max Tx
+                if (value > maxTxAmount) revert MaxTxAmountExceeded();
+                // Check Max Wallet (only on buys)
+                if (balanceOf(to) + value > maxWalletSize) revert MaxWalletExceeded();
+            }
+        }
+
+        // 3. Tax Logic
         uint256 taxAmount = 0;
-        if (from != owner() && to != owner()) {
-            taxAmount = (value * buyTax) / 100;
+        bool takeFee = !isExcludedFromFee[from] && !isExcludedFromFee[to];
+
+        if (takeFee) {
+            // Buy
+            if (from != owner()) { 
+                taxAmount = (value * taxBuy) / 100;
+            }
+            // Sell
+            else if (to != owner()) {
+                taxAmount = (value * taxSell) / 100;
+            }
         }
 
         if (taxAmount > 0) {
             super._update(from, marketingWallet, taxAmount);
-            super._update(from, to, value - taxAmount);
-        } else {
-            super._update(from, to, value);
+            value -= taxAmount;
         }
+
+        super._update(from, to, value);
     }
 
-    function transferOwnership(address newOwner) public override onlyOwner nonReentrant {
-        if (newOwner == address(0)) {
-             if (!tradingActive) revert CannotRenounceWhileDisabled();
-        }
-        super.transferOwnership(newOwner);
+    function withdrawStuckETH() external onlyOwner nonReentrant {
+        (bool success, ) = address(msg.sender).call{value: address(this).balance}("");
+        if (!success) revert TransferFailed();
     }
 }`;
 

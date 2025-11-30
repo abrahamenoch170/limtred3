@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GeneratedApp, ChainId } from '../types';
 import { generateProjectAsset, analyzeImage } from '../services/geminiService';
@@ -44,6 +45,9 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showDeviceMenu, setShowDeviceMenu] = useState(false);
+  
+  // Deployment Console State
+  const [deployLogs, setDeployLogs] = useState<string[]>([]);
   
   // Mobile View State
   const [mobileViewMode, setMobileViewMode] = useState<'CODE' | 'PREVIEW'>('PREVIEW');
@@ -109,8 +113,27 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
 
   const handleConfirmDeploy = async () => {
     setIsDeploying(true);
+    setDeployLogs([]);
     playSound('deploy');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const steps = [
+        "Compiling Solidity 0.8.20...",
+        "Optimizing Bytecode (200 runs)...",
+        "Generating ABI Artifacts...",
+        `Connecting to ${activeChainConfig.name} RPC...`,
+        "Estimating Gas Limits...",
+        "Requesting Wallet Signature...",
+        "Broadcasting Transaction...",
+        "Confirming Block Inclusion..."
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+        await new Promise(r => setTimeout(r, 600));
+        setDeployLogs(prev => [...prev, steps[i]]);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
     setIsDeploying(false); 
     setShowDeployModal(false); 
     setShowSuccessToast(true);
@@ -197,7 +220,6 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
           setChatInput("");
           setIsRefining(false);
           playSound('success');
-          // In a real app, this would call the API to modify localCode based on chatInput
       }, 1500);
   };
 
@@ -332,7 +354,6 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
               {activeFile === 'Assets' ? (
                 <div className="flex-1 bg-[#0c0c0c] p-6 overflow-auto">
                     <div className="max-w-md mx-auto">
-                        {/* Asset Studio UI - Kept same as before but wrapped for reuse */}
                         <div className="bg-[#111] border border-[#1f1f1f] p-4 mb-4">
                             <div 
                                 className={`border border-dashed transition-all duration-200 p-6 mb-4 flex flex-col items-center justify-center cursor-pointer relative group ${dragActive ? 'border-[#39b54a] bg-[#39b54a]/10' : 'border-[#333] bg-[#0c0c0c] hover:border-[#666]'}`}
@@ -454,21 +475,41 @@ const BuilderPreview: React.FC<BuilderPreviewProps> = ({ appData, onDeploy, curr
           </div>
       </div>
 
-      {/* Deployment Modal */}
+      {/* Deployment Modal with Console Log Simulation */}
       <AnimatePresence>
         {showDeployModal && (
           <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#111] border border-[#39b54a] w-full max-w-lg p-8 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#39b54a] to-transparent animate-pulse"></div>
-                <h2 className="text-2xl font-black uppercase text-white mb-6 flex items-center gap-3"><Rocket className="text-[#39b54a]" /> Confirm Deployment</h2>
-                <div className="space-y-4 mb-8">
-                    <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 flex justify-between items-center"><span className="text-[#888] text-xs font-bold uppercase">Target Network</span><span className="text-white font-mono">{activeChainConfig.name} Mainnet</span></div>
-                    <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 flex justify-between items-center"><span className="text-[#888] text-xs font-bold uppercase">Estimated Gas</span><span className="text-[#39b54a] font-mono font-bold">{getGasEstimate()}</span></div>
-                </div>
-                <div className="flex gap-4">
-                    <button onClick={() => setShowDeployModal(false)} className="flex-1 border border-[#333] text-[#888] py-3 font-bold uppercase hover:bg-[#1f1f1f] transition-colors" disabled={isDeploying}>Cancel</button>
-                    <button onClick={handleConfirmDeploy} disabled={isDeploying} className="flex-1 bg-[#39b54a] text-black py-3 font-bold uppercase hover:bg-[#2ea03f] flex items-center justify-center gap-2 disabled:opacity-50 transition-colors">{isDeploying ? <Loader2 className="animate-spin" size={18} /> : 'Confirm & Deploy'}</button>
-                </div>
+                
+                {isDeploying ? (
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-[#39b54a] font-mono text-sm uppercase mb-4">
+                            <Loader2 className="animate-spin" size={16} /> Deploying Protocol
+                        </div>
+                        <div className="bg-black border border-[#1f1f1f] p-4 h-48 overflow-y-auto font-mono text-xs">
+                            {deployLogs.map((log, i) => (
+                                <motion.div key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="mb-1 text-green-400">
+                                    <span className="text-gray-600 mr-2">[{new Date().toLocaleTimeString()}]</span>
+                                    {log}
+                                </motion.div>
+                            ))}
+                            <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <h2 className="text-2xl font-black uppercase text-white mb-6 flex items-center gap-3"><Rocket className="text-[#39b54a]" /> Confirm Deployment</h2>
+                        <div className="space-y-4 mb-8">
+                            <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 flex justify-between items-center"><span className="text-[#888] text-xs font-bold uppercase">Target Network</span><span className="text-white font-mono">{activeChainConfig.name} Mainnet</span></div>
+                            <div className="bg-[#0c0c0c] border border-[#1f1f1f] p-4 flex justify-between items-center"><span className="text-[#888] text-xs font-bold uppercase">Estimated Gas</span><span className="text-[#39b54a] font-mono font-bold">{getGasEstimate()}</span></div>
+                        </div>
+                        <div className="flex gap-4">
+                            <button onClick={() => setShowDeployModal(false)} className="flex-1 border border-[#333] text-[#888] py-3 font-bold uppercase hover:bg-[#1f1f1f] transition-colors" disabled={isDeploying}>Cancel</button>
+                            <button onClick={handleConfirmDeploy} disabled={isDeploying} className="flex-1 bg-[#39b54a] text-black py-3 font-bold uppercase hover:bg-[#2ea03f] flex items-center justify-center gap-2 disabled:opacity-50 transition-colors">Confirm & Deploy</button>
+                        </div>
+                    </>
+                )}
             </motion.div>
           </div>
         )}

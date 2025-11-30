@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -15,6 +15,7 @@ interface ErrorBoundaryState {
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   // Explicitly define state property
   state: ErrorBoundaryState = { hasError: false, error: null };
+  props!: Readonly<ErrorBoundaryProps>;
 
   // FIXED: Used standard constructor to initialize state. 
   // This resolves "property has no initializer" TS errors that stop builds in strict mode.

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedApp } from "../types";
 import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
@@ -59,62 +60,44 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
     }
 
     parts.push({ text: `
-        You are a Senior Solidity Engineer and Web3 Solutions Architect.
+        You are a **Senior Smart Contract Auditor & Architect** at a top-tier security firm (OpenZeppelin/CertiK).
+        
         User Request: "${prompt}"
 
-        Your task is to generate a PRODUCTION-READY (Beta Quality) dApp specification.
+        **MISSION:** 
+        Generate a PRODUCTION-READY, MAINNET-SAFE dApp specification. The code must be compile-ready for Remix without errors.
 
-        1. **Smart Contract (Solidity 0.8.20)**: 
-           - Write a COMPLETE, COMPILABLE contract.
-           - **CRITICAL REQUIREMENT:** You MUST include these imports at the top:
+        **1. Smart Contract Strategy (Solidity 0.8.20):**
+           - **Standard:** Use OpenZeppelin 5.x contracts.
+           - **Security:** Implement 'Custom Errors' (e.g., \`error Unauthorized();\`) instead of require strings for gas efficiency.
+           - **Guardrails:** Add \`nonReentrant\` to all external/public functions that handle value.
+           - **Management:** Include \`pause()\` and \`unpause()\` for emergency stops.
+           - **Imports:** STRICTLY use these imports:
              \`import "@openzeppelin/contracts/token/ERC20/ERC20.sol";\`
              \`import "@openzeppelin/contracts/access/Ownable.sol";\`
              \`import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";\`
              \`import "@openzeppelin/contracts/utils/Pausable.sol";\`
-             \`import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";\`
-           - **CRITICAL REQUIREMENT:** The contract MUST inherit from ERC20, Ownable, ReentrancyGuard, and Pausable.
-           
-           **SECURITY & SCALABILITY REQUIREMENTS (BETA STANDARD):**
-           - **Gas Optimization:** Use custom \`error\` definitions instead of string-based \`require\`.
-           - **Anti-Honeypot:** 
-             - Ensure \`updateFees\` checks that taxes <= 10%.
-             - Ensure \`updateLimits\` prevents setting limits < 0.5% of totalSupply.
-             - Override \`transferOwnership\` to prevent renouncing to 0x0 if trading is disabled.
-           - **Asset Safety:**
-             - Implement \`recoverForeignTokens\`.
-           - **Reentrancy Protection:** 
-             - Override \`transfer\` and \`transferFrom\` with \`nonReentrant\`.
-             - Apply \`nonReentrant\` to ALL state-changing functions.
-           - **Pausable Logic:**
-             - Implement \`pause()\` and \`unpause()\`.
-             - Apply \`whenNotPaused\` to \`_update\` and \`enableTrading\`.
-           
-           **ADVANCED FEATURES (REQUIRED):**
-           - **Buyback Mechanism:**
-             - Include \`enableBuyback(uint256 _percentage)\`.
-             - Include \`executeBuyback(address _router)\` which swaps ETH for tokens and burns them. Use the passed router address for flexibility.
-           - **Scalable Vesting:** 
-             - Use \`mapping(address => VestingSchedule[]) public vestingSchedules;\`.
-             - Implement \`createVestingSchedule\`, \`revokeVestingSchedule\`, and \`claimVesting(uint256 index)\`.
-           - **Task / Bounty System:**
-             - Implement \`struct Task\` with \`batchCreateTasks\`.
-             - Implement \`cancelTask\` and \`completeTask\`.
-             - Event \`TaskCreated\` must index assignee.
 
-           **STANDARD FUNCTIONS:**
-           - \`enableTrading()\` (onlyOwner, nonReentrant, whenNotPaused).
-           - \`setMarketingWallet(address _marketingWallet)\`.
-           - \`calculatedTotalSupply()\`.
-
-        2. **Frontend (React Component)**:
-           - Generate a functional React dashboard component.
+        **2. Frontend Strategy (React + Tailwind):**
+           - Generate a sleek, dark-mode 'Cyberpunk' dashboard.
            - Use 'lucide-react' for icons.
-           - Use Tailwind CSS for styling (dark mode, sharp corners).
-           
-        3. **Metadata**:
-           - Name, Rarity, Market Cap.
+           - Include a 'Connect Wallet' button placeholder.
+           - Ensure responsive layout (mobile-first).
 
-        Strictly output valid JSON matching the schema.
+        **3. Metadata:**
+           - Name, Description, Rarity, and 3-5 key Attributes (e.g., "Audited", "Liquidity Locked").
+
+        **OUTPUT FORMAT:**
+        Return ONLY valid JSON matching this schema:
+        {
+          "name": "string",
+          "description": "string",
+          "codeSnippet": "string (React Code)",
+          "contractSnippet": "string (Solidity Code)",
+          "rarity": "COMMON" | "RARE" | "LEGENDARY",
+          "attributes": ["string"],
+          "marketCap": number
+        }
     `});
 
     const response = await client.models.generateContent({
@@ -144,6 +127,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
 
     if (response.text) {
       let cleanedText = response.text.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Ensure we only parse the JSON object part
       const firstBrace = cleanedText.indexOf('{');
       const lastBrace = cleanedText.lastIndexOf('}');
       if (firstBrace !== -1 && lastBrace !== -1) {
@@ -151,7 +135,7 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
       }
       return JSON.parse(cleanedText) as GeneratedApp;
     }
-    throw new Error("Empty response");
+    throw new Error("Empty response from AI");
   } catch (error) {
     console.error("Gemini generation failed:", error);
     return MOCK_APP_DATA;
@@ -159,20 +143,14 @@ export const generateAppConcept = async (prompt: string, imageBase64?: string): 
 };
 
 export const generateTokenApp = async (name: string, symbol: string, supply: string, decimals: string): Promise<GeneratedApp> => {
-  const client = getClient();
-  if (!client) return MOCK_APP_DATA;
-
-  const prompt = `
-    Create a custom ERC20 Token contract with the following specifications:
-    - Name: ${name}
-    - Symbol: ${symbol}
-    - Total Supply: ${supply} (Adjusted for ${decimals} decimals)
-    - Decimals: ${decimals}
-
-    Include all standard security features (Anti-Whale, Fees, Pausable, ReentrancyGuard, Foreign Token Recovery).
-    The Frontend (React) should be a "Token Control Panel".
-  `;
-
+  // Re-use the main generator but with a specific token prompt
+  const prompt = `Create a robust ERC20 Token named '${name}' (${symbol}) with a supply of ${supply}. 
+  Features: 
+  1. Anti-Whale (Max Transaction Limit 2%).
+  2. Buy/Sell Tax (Marketing Wallet).
+  3. Auto-Liquidity mechanism.
+  4. Ensure code compiles with Solidity 0.8.20 and uses OpenZeppelin.`;
+  
   return generateAppConcept(prompt);
 };
 
