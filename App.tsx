@@ -35,6 +35,7 @@ export default function App() {
   const [appData, setAppData] = useState<GeneratedApp | null>(null);
   const [currentChain, setCurrentChain] = useState<ChainId>('SOL');
   const [selectedModule, setSelectedModule] = useState<ModuleId | undefined>(undefined);
+  const [userPrompt, setUserPrompt] = useState<string>("");
   
   const [walletConnected, setWalletConnected] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
@@ -52,7 +53,28 @@ export default function App() {
     INITIAL_TRANSACTIONS.map(tx => ({...tx, amount: `${tx.amount} ${CHAINS['SOL'].symbol}`}))
   );
 
+  // Persistence
+  useEffect(() => {
+      const saved = localStorage.getItem('limetred_state');
+      if (saved) {
+          try {
+              const parsed = JSON.parse(saved);
+              if (parsed.phase && parsed.appData) {
+                  // setPhase(parsed.phase); // Don't auto-restore phase to avoid confusing jumps on refresh
+                  setAppData(parsed.appData);
+              }
+          } catch (e) {}
+      }
+  }, []);
+
+  useEffect(() => {
+      if (appData) {
+          localStorage.setItem('limetred_state', JSON.stringify({ phase, appData }));
+      }
+  }, [phase, appData]);
+
   const handleGenerate = async (prompt: string, imageBase64?: string) => {
+    setUserPrompt(prompt);
     setPhase(AppPhase.LOADING);
     await new Promise(resolve => setTimeout(resolve, 500));
     const data = await generateAppConcept(prompt, imageBase64);
@@ -60,6 +82,7 @@ export default function App() {
   };
   
   const handleGenerateToken = async (name: string, symbol: string, supply: string, decimals: string) => {
+      setUserPrompt(`Create token ${name} (${symbol})`);
       setPhase(AppPhase.LOADING);
       const data = await generateTokenApp(name, symbol, supply, decimals);
       setAppData(data);
@@ -226,7 +249,11 @@ export default function App() {
 
           {phase === AppPhase.LOADING && (
             <div className="h-screen w-full fixed inset-0 z-50">
-               <GenerationTheater key="loading" onComplete={handleTheaterComplete} />
+               <GenerationTheater 
+                  key="loading" 
+                  onComplete={handleTheaterComplete} 
+                  prompt={userPrompt}
+               />
             </div>
           )}
 

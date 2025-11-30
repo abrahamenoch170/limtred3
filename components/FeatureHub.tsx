@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MODULES } from '../constants';
 import { ModuleId } from '../types';
 import { Button, Card, Badge } from './ui/GlintComponents';
-import { ArrowLeft, TrendingUp, Swords, Network, BarChart2, Users, Bot, Zap, Lock, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, Swords, Network, BarChart2, Users, Bot, Zap, AlertTriangle } from 'lucide-react';
 
 interface FeatureHubProps {
   onBack: () => void;

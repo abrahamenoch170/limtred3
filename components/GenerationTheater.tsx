@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { COLORS } from '../constants';
+import { playSound } from '../services/soundService';
 
 interface GenerationTheaterProps {
   onComplete: () => void;
+  prompt?: string;
 }
 
-const LOG_MESSAGES = [
+const BASE_LOGS = [
   "INITIALIZING NEURAL NET...",
-  "PARSING NATURAL LANGUAGE INTENT...",
-  "GENERATING SOLIDITY ARCHITECTURE...",
-  "OPTIMIZING GAS VARIABLES...",
-  "SCANNING FOR RUG VULNERABILITIES...",
-  "COMPILING REACT COMPONENT TREE...",
-  "MINTING GENESIS ASSETS...",
-  "FINALIZING PROTOCOL PARAMETERS..."
+  "ESTABLISHING SECURE RPC CONNECTION...",
 ];
 
 const ATTRIBUTES = [
@@ -23,17 +19,39 @@ const ATTRIBUTES = [
   { text: "LIQUIDITY LOCKED", rarity: "COMMON", color: COLORS.white },
 ];
 
-const GenerationTheater: React.FC<GenerationTheaterProps> = ({ onComplete }) => {
+const GenerationTheater: React.FC<GenerationTheaterProps> = ({ onComplete, prompt }) => {
   const [logs, setLogs] = useState<string[]>([]);
   const [currentAttr, setCurrentAttr] = useState<number>(-1);
 
   useEffect(() => {
     let delay = 0;
+    const isDeFi = prompt?.toLowerCase().includes('defi') || prompt?.toLowerCase().includes('swap') || prompt?.toLowerCase().includes('token');
+    const isNFT = prompt?.toLowerCase().includes('nft') || prompt?.toLowerCase().includes('art') || prompt?.toLowerCase().includes('mint');
     
+    // Dynamic Log Generation
+    const dynamicLogs = [...BASE_LOGS];
+    if (isDeFi) {
+        dynamicLogs.push("CALCULATING AMM INVARIANT CURVES...");
+        dynamicLogs.push("GENERATING YIELD FARMING LOGIC...");
+        dynamicLogs.push("CONFIGURING TOKENOMICS SUPPLY...");
+    } else if (isNFT) {
+        dynamicLogs.push("GENERATING IPFS METADATA HASHES...");
+        dynamicLogs.push("CONFIGURING ROYALTY ENFORCEMENT...");
+        dynamicLogs.push("OPTIMIZING SVG RENDERING ON-CHAIN...");
+    } else {
+        dynamicLogs.push("PARSING NATURAL LANGUAGE INTENT...");
+        dynamicLogs.push("GENERATING SOLIDITY ARCHITECTURE...");
+    }
+    
+    dynamicLogs.push("SCANNING FOR RUG VULNERABILITIES...");
+    dynamicLogs.push("COMPILING REACT COMPONENT TREE...");
+    dynamicLogs.push("FINALIZING PROTOCOL PARAMETERS...");
+
     // Accelerated Sequence for "High-Frequency" feel (Total ~3.5s)
-    LOG_MESSAGES.forEach((msg, i) => {
+    dynamicLogs.forEach((msg, i) => {
       setTimeout(() => {
         setLogs(prev => [...prev, `> ${msg}`]);
+        playSound('hover'); // Typing sound effect
       }, delay);
       delay += 200 + Math.random() * 200;
     });
@@ -42,17 +60,19 @@ const GenerationTheater: React.FC<GenerationTheaterProps> = ({ onComplete }) => 
     setTimeout(() => {
       setCurrentAttr(0);
       setLogs(prev => [...prev, `> ROLLING CONTRACT RARITY...`]);
+      playSound('success');
     }, 2000);
 
-    setTimeout(() => setCurrentAttr(1), 2500);
-    setTimeout(() => setCurrentAttr(2), 2900);
+    setTimeout(() => { setCurrentAttr(1); playSound('hover'); }, 2500);
+    setTimeout(() => { setCurrentAttr(2); playSound('hover'); }, 2900);
 
     // Finish
     setTimeout(() => {
       onComplete();
+      playSound('success');
     }, 3500);
 
-  }, [onComplete]);
+  }, [onComplete, prompt]);
 
   return (
     <div className="h-full flex flex-col justify-center items-center p-8 bg-[#0c0c0c] relative overflow-hidden font-mono">
