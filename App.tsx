@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId, LaunchpadProject } from './types';
+import { AppPhase, GeneratedApp, WalletBalance, Transaction, ChainId, LaunchpadProject, ModuleId } from './types';
 import { generateAppConcept, generateTokenApp } from './services/geminiService';
 import HeroSection from './components/HeroSection';
 import GenerationTheater from './components/GenerationTheater';
@@ -12,9 +11,9 @@ import LaunchpadFeed from './components/LaunchpadFeed';
 import WalletConnectModal from './components/WalletConnectModal';
 import Background3D from './components/Background3D';
 import AIAssistant from './components/AIAssistant';
+import FeatureHub from './components/FeatureHub';
 import { CHAINS } from './constants';
 
-// Default Demo App
 const DEMO_APP: GeneratedApp = {
   name: "Limetred Protocol",
   description: "The native governance and utility protocol for the Limetred ecosystem.",
@@ -24,7 +23,6 @@ const DEMO_APP: GeneratedApp = {
   attributes: ["GOVERNANCE", "YIELD FARMING", "DAO"]
 };
 
-// Mock Initial Transactions
 const INITIAL_TRANSACTIONS: Transaction[] = [
     { id: 'tx-1', type: 'YIELD', amount: '+0.042', status: 'PENDING', timestamp: 'Just now' },
     { id: 'tx-2', type: 'BUY_KEYS', amount: '-1.70', status: 'SUCCESS', timestamp: '2m ago' },
@@ -33,20 +31,20 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
 
 export default function App() {
   const [phase, setPhase] = useState<AppPhase>(AppPhase.HOME);
+  const [previousPhase, setPreviousPhase] = useState<AppPhase>(AppPhase.HOME);
   const [appData, setAppData] = useState<GeneratedApp | null>(null);
   const [currentChain, setCurrentChain] = useState<ChainId>('SOL');
+  const [selectedModule, setSelectedModule] = useState<ModuleId | undefined>(undefined);
   
-  // Wallet State
   const [walletConnected, setWalletConnected] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [showConnectModal, setShowConnectModal] = useState(false);
   
-  // AI Assistant State
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [aiContext, setAiContext] = useState<string | undefined>(undefined);
   
   const [walletBalance, setWalletBalance] = useState<WalletBalance>({
-    native: 12.5, // Generic 'native' token amount (SOL, ETH, etc)
+    native: 12.5, 
     lmt: 0,
     usdValue: 1812.50
   });
@@ -56,7 +54,6 @@ export default function App() {
 
   const handleGenerate = async (prompt: string, imageBase64?: string) => {
     setPhase(AppPhase.LOADING);
-    // Simulate thinking time before API call for effect
     await new Promise(resolve => setTimeout(resolve, 500));
     const data = await generateAppConcept(prompt, imageBase64);
     setAppData(data);
@@ -75,11 +72,10 @@ export default function App() {
   const handleDeploy = () => {
     setPhase(AppPhase.DASHBOARD);
     const chainConfig = CHAINS[currentChain];
-    // Simulate cost
     setWalletBalance(prev => ({
         ...prev,
         native: prev.native - 0.1,
-        usdValue: (prev.native - 0.1) * 145 + (prev.lmt * 0.85) // Simplified USD calc
+        usdValue: (prev.native - 0.1) * 145 + (prev.lmt * 0.85) 
     }));
     addTransaction({
         id: `tx-${Date.now()}`,
@@ -101,12 +97,11 @@ export default function App() {
   const handleConnectWallet = (provider: string) => {
     setWalletConnected(true);
     setShowConnectModal(false);
-    setIsWalletOpen(true); // Open drawer on connect to show success
+    setIsWalletOpen(true); 
     
-    // Add a mock transaction to show interaction
     addTransaction({
         id: `tx-conn-${Date.now()}`,
-        type: 'TRADE', // Using Trade type for general interaction
+        type: 'TRADE', 
         amount: `Connected ${provider}`,
         status: 'SUCCESS',
         timestamp: 'Just now'
@@ -144,7 +139,7 @@ export default function App() {
         return {
             ...prev,
             native: newNative,
-            usdValue: newNative * 145 + prev.lmt * 0.85 // Approx calc
+            usdValue: newNative * 145 + prev.lmt * 0.85 
         };
     });
     
@@ -159,7 +154,6 @@ export default function App() {
 
   const handleChainChange = (chainId: ChainId) => {
     setCurrentChain(chainId);
-    // Simulate different balance on different chain
     setWalletBalance(prev => ({
         ...prev,
         native: Math.random() * 10 
@@ -172,7 +166,6 @@ export default function App() {
 
   const handleBack = () => {
     if (phase === AppPhase.DASHBOARD) {
-        // If coming from Launchpad viewing a random project, go back to Launchpad
         if (appData?.id?.startsWith('proj-')) {
             setPhase(AppPhase.LAUNCHPAD);
         } else {
@@ -185,6 +178,16 @@ export default function App() {
 
   const handleOpenLaunchpad = () => {
       setPhase(AppPhase.LAUNCHPAD);
+  };
+
+  const handleOpenFeatureHub = (moduleId?: ModuleId) => {
+      setPreviousPhase(phase);
+      setSelectedModule(moduleId);
+      setPhase(AppPhase.FEATURE_HUB);
+  };
+
+  const handleCloseFeatureHub = () => {
+      setPhase(previousPhase);
   };
 
   const handleSelectProject = (project: LaunchpadProject) => {
@@ -200,7 +203,6 @@ export default function App() {
   return (
     <main className="min-h-screen w-full bg-[#0c0c0c] text-white selection:bg-[#39b54a] selection:text-black font-sans relative overflow-x-hidden">
       
-      {/* 3D Background - Fixed position */}
       <Background3D />
 
       <div className="relative z-10 w-full flex flex-col min-h-screen">
@@ -218,6 +220,7 @@ export default function App() {
               onOpenLaunchpad={handleOpenLaunchpad}
               onGenerateToken={handleGenerateToken}
               onOpenAI={handleOpenAI}
+              onOpenHub={handleOpenFeatureHub}
             />
           )}
 
@@ -258,8 +261,19 @@ export default function App() {
                   transactions={transactions}
                   currentChain={currentChain}
                   onTradeKeys={handleTradeKeys}
+                  onOpenHub={handleOpenFeatureHub}
                 />
             </div>
+          )}
+
+          {phase === AppPhase.FEATURE_HUB && (
+             <div className="min-h-screen w-full fixed inset-0 z-50 bg-[#0c0c0c] overflow-y-auto">
+                <FeatureHub 
+                   key="hub"
+                   onBack={handleCloseFeatureHub}
+                   initialModule={selectedModule}
+                />
+             </div>
           )}
 
         </AnimatePresence>

@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, TooltipProps } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Button, Badge } from './ui/GlintComponents';
-import { GeneratedApp, MarketData, Transaction, WalletBalance, ChainId } from '../types';
-import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat, DollarSign, User, Shield, ExternalLink } from 'lucide-react';
+import { GeneratedApp, MarketData, Transaction, WalletBalance, ChainId, ModuleId } from '../types';
+import { Flame, Lock, AlertTriangle, Globe, Activity, Wrench, Info, TrendingUp, Target, ArrowLeft, ArrowUpRight, ArrowDownLeft, Clock, CheckCircle2, Wallet, Repeat, DollarSign, User, Shield, ExternalLink, Network, History } from 'lucide-react';
 import { COLORS, CHAINS } from '../constants';
 
 interface DashboardProps {
@@ -16,6 +15,7 @@ interface DashboardProps {
   transactions: Transaction[];
   currentChain: ChainId;
   onTradeKeys: (action: 'BUY' | 'SELL', quantity: number, totalValue: number) => void;
+  onOpenHub?: (moduleId?: ModuleId) => void;
 }
 
 const Logo = () => (
@@ -25,18 +25,16 @@ const Logo = () => (
   </svg>
 );
 
-// Initialize with Market Cap scale values (approx 12k start)
 const generateInitialData = (startMC: number = 12000): MarketData[] => {
   const data = [];
   let val = startMC;
   for (let i = 0; i < 20; i++) {
-    val = val + (Math.random() * 200 - 50); // Random walk
+    val = val + (Math.random() * 200 - 50); 
     data.push({ time: i, price: Math.max(0, val) });
   }
   return data;
 };
 
-// Custom Tooltip Component
 const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
     return (
@@ -51,67 +49,55 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>)
   return null;
 };
 
-// Bonding Curve Config
 const BONDING_SLOPE = 0.0015;
-const BASE_KEY_PRICE = 0.12; // Start price lower for realism
+const BASE_KEY_PRICE = 0.12;
 
 const Dashboard: React.FC<DashboardProps> = ({ 
     appData, 
     isConnected, 
     onConnect, 
-    onBack,
+    onBack, 
     walletBalance,
     transactions,
     currentChain,
-    onTradeKeys
+    onTradeKeys,
+    onOpenHub
 }) => {
-  // If launching from launchpad, use its mcap, otherwise random 12k
   const initialMcap = appData.marketCap || 12450;
   
   const [marketData, setMarketData] = useState<MarketData[]>(generateInitialData(initialMcap));
   const [marketCap, setMarketCap] = useState(initialMcap);
-  const [timeLeft, setTimeLeft] = useState(48); // Minutes for tax drop
+  const [timeLeft, setTimeLeft] = useState(48); 
   
   const activeChain = CHAINS[currentChain];
   const explorerName = currentChain === 'SOL' ? 'Solscan' : currentChain === 'TON' ? 'Tonviewer' : 'Etherscan';
   
-  // App Simulation State
   const [keysSold, setKeysSold] = useState(482);
-  const [userKeys, setUserKeys] = useState(0); // Track user's keys
+  const [userKeys, setUserKeys] = useState(0); 
   const [showVerifier, setShowVerifier] = useState(false);
   
-  // Calculate price based on keys sold (Linear Curve: P = Base + Slope * Supply)
   const keyPrice = BASE_KEY_PRICE + (keysSold * BONDING_SLOPE);
 
   useEffect(() => {
-    // Market Simulation
     const interval = setInterval(() => {
       setMarketCap(prevMC => {
-        // Increment Market Cap
         const nextMC = prevMC + Math.floor(Math.random() * 150);
-        
-        // Update Chart Data to match new MC
         setMarketData(prevData => {
             const lastTime = prevData[prevData.length - 1].time;
             const newData = [...prevData.slice(1), { time: lastTime + 1, price: nextMC }];
             return newData;
         });
-        
         return nextMC;
       });
     }, 1000);
 
-    // Tax Timer Simulation
     const taxTimer = setInterval(() => {
         setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
     }, 60000);
 
-    // Keys Sales Simulation (Bonding Curve Logic)
     const keysTimer = setInterval(() => {
-      // Simulate market demand - Less frequent updates, bigger jumps
       if (Math.random() > 0.3) { 
         setKeysSold(prev => {
-            // Sell a random batch (2-5 keys) to make update feel significant
             const batch = Math.floor(Math.random() * 4) + 2;
             return prev + batch;
         });
@@ -143,12 +129,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         return;
     }
     if (userKeys > 0) {
-        // Tax logic: 20% if time > 0, else 1%
         const taxRate = timeLeft > 0 ? 0.20 : 0.01;
-        // Selling happens at current price (simplified) minus slippage/tax
-        // In real curve, selling reduces supply, thus price drops for next person
         const revenue = keyPrice * (1 - taxRate);
-        
         onTradeKeys('SELL', 1, revenue);
         setUserKeys(prev => prev - 1);
         setKeysSold(prev => Math.max(0, prev - 1));
@@ -178,8 +160,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
     >
-      
-      {/* Navbar / Streak */}
       <motion.header 
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -199,7 +179,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <Badge color="text-[#8b5cf6]">{activeChain.name} Network</Badge>
                   {appData.ticker && <Badge color="text-[#39b54a]">{appData.ticker}</Badge>}
                   
-                  {/* Contract Verification Tooltip - Click Activated */}
                   <div className="relative ml-1">
                       <button 
                         onClick={() => setShowVerifier(!showVerifier)}
@@ -255,25 +234,14 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div className="flex items-center gap-4 mt-4 md:mt-0">
-          {/* Module D: Streak with Tooltip */}
-          <div className="relative group cursor-help hidden xs:block">
-            <div className="flex items-center gap-2 text-[#39b54a] bg-[#39b54a]/10 px-4 py-2 border border-[#39b54a] sharp-corners transition-all hover:bg-[#39b54a]/20">
-                <Flame size={18} className="fill-current animate-pulse" />
-                <span className="font-bold text-sm">5 DAY STREAK</span>
-            </div>
-            
-            {/* Tooltip */}
-            <div className="absolute top-full mt-2 right-0 w-64 bg-[#111111] border border-[#1f1f1f] p-3 text-xs text-[#666666] hidden group-hover:block z-50 shadow-xl">
-                <div className="flex items-start gap-2">
-                    <Wrench size={14} className="text-[#666666] mt-1" />
-                    <div>
-                        <div className="font-bold text-white mb-1">STREAK AT RISK?</div>
-                        If streak is broken, pay <span className="text-[#39b54a]">0.5 {activeChain.symbol}</span> to repair and maintain multiplier.
-                    </div>
-                </div>
-            </div>
-          </div>
-          
+          <Button 
+             variant="outline" 
+             className="hidden md:flex py-2 text-xs flex items-center gap-2 hover:bg-[#39b54a]/10 hover:text-[#39b54a] hover:border-[#39b54a]"
+             onClick={() => onOpenHub && onOpenHub()}
+          >
+             <Network size={14} /> MODULES
+          </Button>
+
           <Button 
             variant={isConnected ? "outline" : "primary"} 
             className="py-2 text-xs flex items-center gap-2"
@@ -285,7 +253,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </motion.header>
 
-      {/* Bento Grid */}
       <motion.div 
         className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 flex-1 min-h-0"
         variants={containerVariants}
@@ -293,9 +260,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         animate="visible"
       >
         
-        {/* Module A: Bonding Curve (Span 2 cols) */}
         <motion.div variants={itemVariants} className="col-span-1 md:col-span-2 min-w-0">
-            {/* Removed overflow-hidden to allow tooltip to pop out if needed, though position is now adjusted */}
             <Card className="flex flex-col h-full min-h-[400px] relative group">
                 <div className="flex justify-between items-start mb-6 z-10 relative">
                     <div className="flex-1">
@@ -322,13 +287,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                                      <span className="text-[#39b54a] font-bold text-xs font-mono">$60,000 (GRADUATION)</span>
                                 </div>
                                 
-                                {/* Bonding Curve Info & Tooltip */}
                                 <div className="relative group/target cursor-help ml-1">
                                     <div className="p-1 hover:bg-[#333] transition-colors rounded-full">
                                         <Info size={14} className="text-[#666666] hover:text-[#39b54a] transition-colors" />
                                     </div>
                                     
-                                    {/* Tooltip - Positioned BELOW the icon since it's at top of card */}
                                     <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-72 bg-[#111111] border border-[#1f1f1f] p-4 text-xs text-[#666666] hidden group-hover/target:block z-50 shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl">
                                         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[6px] border-b-[#1f1f1f]"></div>
                                         
@@ -424,7 +387,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </Card>
         </motion.div>
 
-        {/* Module B: Bet on Builder */}
         <motion.div variants={itemVariants} className="col-span-1 min-w-0">
             <Card className="flex flex-col justify-between h-full min-h-[350px] border-t-4 border-t-[#8b5cf6]">
                 <div className="flex items-center justify-between mb-4">
@@ -474,7 +436,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </Card>
         </motion.div>
 
-        {/* Module C: App IPO Keys */}
         <motion.div variants={itemVariants} className="col-span-1 md:col-span-2 min-w-0">
             <Card className="flex flex-col justify-center h-full">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -545,7 +506,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </Card>
         </motion.div>
 
-        {/* Module E: Paper Hands Tax */}
         <motion.div variants={itemVariants} className="col-span-1 min-w-0">
             <Card className="h-full border-red-900/20 bg-gradient-to-br from-[#111] to-red-900/10 flex flex-col">
                 <div className="flex items-center gap-2 mb-4 text-red-500">
@@ -583,7 +543,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </Card>
         </motion.div>
 
-        {/* Module F: Transaction Ledger */}
         <motion.div variants={itemVariants} className="col-span-1 md:col-span-3 min-w-0">
              <Card className="h-full">
                 <div className="flex items-center justify-between mb-4 border-b border-[#1f1f1f] pb-2">
@@ -598,7 +557,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                     {transactions.map((tx) => (
                         <div key={tx.id} className="grid grid-cols-4 md:grid-cols-5 items-center p-3 bg-[#0c0c0c] border border-[#1f1f1f] hover:border-[#333] transition-colors group">
                             
-                            {/* Type */}
                             <div className="col-span-2 md:col-span-1 flex items-center gap-3">
                                 <div className={`p-2 rounded-none border ${
                                     tx.type === 'YIELD' ? 'border-[#39b54a] bg-[#39b54a]/10 text-[#39b54a]' : 
@@ -616,17 +574,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 <span className="text-xs font-bold font-mono text-white">{tx.type.replace('_', ' ')}</span>
                             </div>
 
-                            {/* ID (Hidden Mobile) */}
                             <div className="hidden md:block col-span-1 text-xs text-[#666666] font-mono">
                                 {tx.id.toUpperCase()}
                             </div>
 
-                            {/* Amount */}
                             <div className={`col-span-1 text-right md:text-left font-mono text-sm ${tx.amount.startsWith('+') ? 'text-[#39b54a]' : 'text-white'}`}>
                                 {tx.amount}
                             </div>
 
-                            {/* Status */}
                             <div className="hidden md:flex col-span-1 items-center gap-2">
                                 {tx.status === 'PENDING' ? (
                                     <Clock size={12} className="text-yellow-500 animate-pulse" />
@@ -638,7 +593,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 </span>
                             </div>
 
-                             {/* Time */}
                              <div className="col-span-1 text-right text-[10px] text-[#666666] font-mono">
                                 {tx.timestamp}
                             </div>

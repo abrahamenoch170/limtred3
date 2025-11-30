@@ -3,7 +3,8 @@ export enum AppPhase {
   LOADING = 'LOADING',
   PREVIEW = 'PREVIEW',
   DASHBOARD = 'DASHBOARD',
-  LAUNCHPAD = 'LAUNCHPAD'
+  LAUNCHPAD = 'LAUNCHPAD',
+  FEATURE_HUB = 'FEATURE_HUB'
 }
 
 export type ChainId = 'SOL' | 'ETH' | 'BASE' | 'TON' | 'ARB';
@@ -62,7 +63,7 @@ export interface MarketData {
 
 export interface Transaction {
   id: string;
-  type: 'DEPLOY' | 'BUY_KEYS' | 'SELL_KEYS' | 'YIELD' | 'TRADE' | 'SWAP';
+  type: 'DEPLOY' | 'BUY_KEYS' | 'SELL_KEYS' | 'YIELD' | 'TRADE' | 'SWAP' | 'BET' | 'LIQUIDATE';
   amount: string;
   token?: string;
   status: 'SUCCESS' | 'PENDING' | 'FAILED';
@@ -73,4 +74,14 @@ export interface WalletBalance {
   native: number; 
   lmt: number;
   usdValue: number;
+}
+
+export type ModuleId = 'PREDICTION' | 'PVP' | 'DERIVATIVES' | 'LEVERAGE' | 'SOCIAL' | 'AI_TOOLS';
+
+export interface ModuleConfig {
+  id: ModuleId;
+  title: string;
+  description: string;
+  icon: any; // Lucide icon
+  color: string;
 }

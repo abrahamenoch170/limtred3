@@ -2,9 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Badge, Card } from './ui/GlintComponents';
-import { MOCK_TICKER, CHAINS } from '../constants';
+import { MOCK_TICKER, CHAINS, MODULES } from '../constants';
 import { Zap, Shield, ChevronDown, ArrowRight, Activity, X, Wallet, BookOpen, Layers, Network, Image as ImageIcon, Paperclip, Bot, Loader2, CheckCircle, Clock, Coins, Menu, BarChart3, ArrowLeftRight, Droplets, ScanLine, Terminal, Plus, Globe, ShieldCheck, Search, AlertCircle, Twitter, Github, Disc } from 'lucide-react';
-import { WalletBalance, ChainId } from '../types';
+import { WalletBalance, ChainId, ModuleId } from '../types';
 import { TextReveal, ScrollFade } from './ui/MotionComponents';
 
 interface HeroSectionProps {
@@ -17,6 +17,7 @@ interface HeroSectionProps {
   onOpenLaunchpad?: () => void;
   onGenerateToken?: (name: string, symbol: string, supply: string, decimals: string) => void;
   onOpenAI?: (context?: string) => void;
+  onOpenHub?: (moduleId: ModuleId) => void;
 }
 
 const Logo = () => (
@@ -85,7 +86,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   currentChain, 
   onOpenLaunchpad, 
   onGenerateToken,
-  onOpenAI 
+  onOpenAI,
+  onOpenHub
 }) => {
   const [prompt, setPrompt] = useState('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -328,10 +330,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             <Bot size={24} className="text-[#39b54a]" /> AI Agents
                     </button>
                     <button 
-                        onClick={() => scrollToSection('token-factory')} 
-                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#8b5cf6]"
+                        onClick={() => scrollToSection('modules')} 
+                        className="text-xl font-bold uppercase text-white py-6 border-b border-[#1f1f1f] flex items-center gap-4 active:text-[#39b54a]"
                     >
-                            <Coins size={24} className="text-[#8b5cf6]" /> Token Factory
+                            <Network size={24} className="text-[#8b5cf6]" /> Modules
                     </button>
                     
                     <div className="mt-8 p-6 bg-[#111] border border-[#1f1f1f] rounded-none">
@@ -363,7 +365,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 <button onClick={() => onOpenLaunchpad && onOpenLaunchpad()} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Launchpad</button>
                 <button onClick={() => scrollToSection('dex')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">DEX</button>
                 <button onClick={() => scrollToSection('agents')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Agents</button>
-                <button onClick={() => scrollToSection('token-factory')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Factory</button>
+                <button onClick={() => scrollToSection('modules')} className="text-xs font-bold uppercase text-[#888] hover:text-[#39b54a] transition-colors tracking-widest">Modules</button>
                 
                 {!isConnected && (
                     <Button 
@@ -883,6 +885,37 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         </div>
                     </Card>
                 </div>
+            </div>
+        </ScrollFade>
+      </section>
+
+      {/* -------------------- NEW: ECOSYSTEM MODULES -------------------- */}
+      <section id="modules" className="bg-[#111111]/90 backdrop-blur-sm border-t border-[#1f1f1f] py-16 md:py-24 relative overflow-hidden z-20">
+        <ScrollFade className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-12">
+                <Badge color="text-yellow-500 border-yellow-500 bg-yellow-500/10">POST-DEPLOYMENT LAYERS</Badge>
+                <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mt-4 mb-4 text-white">Modular <span className="text-yellow-500">Feature Hub</span></h2>
+                <p className="text-[#666] max-w-xl mx-auto text-sm md:text-base">Extend your protocol utility with plug-and-play modules. Activate prediction markets, leverage trading, and gamification instantly.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {MODULES.map((module) => {
+                    const Icon = module.icon;
+                    return (
+                        <Card key={module.id} className="group hover:border-opacity-100 hover:border-white transition-all cursor-pointer h-full flex flex-col justify-between" onClick={() => onOpenHub && onOpenHub(module.id as any)}>
+                            <div>
+                                <div className="mb-4 p-3 bg-[#111] w-fit border border-[#333] group-hover:border-[color:var(--icon-color)]" style={{ '--icon-color': module.color } as any}>
+                                    <Icon size={24} style={{ color: module.color }} />
+                                </div>
+                                <h3 className="text-lg font-bold text-white uppercase mb-2">{module.title}</h3>
+                                <p className="text-[#666] text-xs leading-relaxed mb-4">{module.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: module.color }}>
+                                Explore Features <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </Card>
+                    );
+                })}
             </div>
         </ScrollFade>
       </section>

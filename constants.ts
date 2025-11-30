@@ -1,5 +1,6 @@
 
-import { TickerItem, ChainId, ChainConfig, LaunchpadProject, ProjectCategory } from './types';
+import { TickerItem, ChainId, ChainConfig, LaunchpadProject, ProjectCategory, ModuleConfig } from './types';
+import { TrendingUp, Swords, Network, BarChart2, Users, Bot } from 'lucide-react';
 
 export const COLORS = {
   void: '#0c0c0c',
@@ -18,6 +19,51 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
   TON: { id: 'TON', name: 'TON', symbol: 'TON', dex: 'Ston.fi', color: '#0098EA' },
   ARB: { id: 'ARB', name: 'Arbitrum', symbol: 'ETH', dex: 'Camelot', color: '#12AAFF' }
 };
+
+export const MODULES: ModuleConfig[] = [
+  {
+    id: 'PREDICTION',
+    title: 'Prediction Markets',
+    description: 'Launch binary outcome markets on protocol events.',
+    icon: TrendingUp,
+    color: '#39b54a'
+  },
+  {
+    id: 'PVP',
+    title: 'PvP Tournaments',
+    description: 'Host trading battles and winner-takes-all pools.',
+    icon: Swords,
+    color: '#ef4444'
+  },
+  {
+    id: 'DERIVATIVES',
+    title: 'Custom Derivatives',
+    description: 'Create P2P option pools and exotic pairs.',
+    icon: Network,
+    color: '#8b5cf6'
+  },
+  {
+    id: 'LEVERAGE',
+    title: 'Synthetic Leverage',
+    description: 'Offer up to 100x leverage via synthetic assets.',
+    icon: BarChart2,
+    color: '#f59e0b'
+  },
+  {
+    id: 'SOCIAL',
+    title: 'Social Gamification',
+    description: 'Leaderboards, badges, and copy-trading layers.',
+    icon: Users,
+    color: '#3b82f6'
+  },
+  {
+    id: 'AI_TOOLS',
+    title: 'AI Integration',
+    description: 'Automated risk scoring and contract optimization.',
+    icon: Bot,
+    color: '#ec4899'
+  }
+];
 
 export const MOCK_TICKER: TickerItem[] = [
   { user: '@davide', app: 'DogTinder', gain: '+4,000%' },
