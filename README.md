@@ -1,13 +1,16 @@
 Limetred — Operation Sage II Submission 🍋
+
 ​The First "Venture-as-a-Service" Protocol
+
 ​AI → Code → Launch → Liquidity → Gamify
+
 ​Limtred is a dual-sided protocol:
 
 ​For Builders: An AI engine that turns prompts into fully deployed Web3 businesses.
 
 ​For Users: A "Direct Access" arcade where anyone can connect a wallet (or create one instantly) to bet, battle, and trade on the modules deployed by the protocol.
 
-​🏗️ Current Status & Scope
+​Current Status & Scope
 
 ​Frontend: ✅ Completed Prototype 
 Live at https://limtred3.vercel.app
