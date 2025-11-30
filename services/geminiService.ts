@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedApp } from "../types";
 import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
@@ -6,18 +5,22 @@ import { PREBUILT_CODE, PREBUILT_REACT } from "../constants";
 const getClient = () => {
   try {
     let apiKey = undefined;
-    try {
-      if (typeof process !== 'undefined' && process && process.env) {
-        apiKey = process.env.API_KEY;
+    // Safe access to process.env that won't crash in browser
+    if (typeof process !== 'undefined' && process && process.env) {
+      apiKey = process.env.API_KEY;
+    }
+    // Fallback for some build tools
+    if (!apiKey && typeof import.meta !== 'undefined') {
+      const meta = import.meta as any;
+      if (meta.env) {
+        apiKey = meta.env.VITE_API_KEY || meta.env.REACT_APP_API_KEY;
       }
-    } catch (e) {
-      console.warn("Process env access failed, likely browser environment.", e);
     }
 
     if (!apiKey || apiKey.trim() === '') return null;
     return new GoogleGenAI({ apiKey });
   } catch (e) {
-    console.warn("Environment variable access failed, falling back to mock mode.");
+    console.warn("Environment variable access failed, falling back to mock mode.", e);
     return null;
   }
 };
